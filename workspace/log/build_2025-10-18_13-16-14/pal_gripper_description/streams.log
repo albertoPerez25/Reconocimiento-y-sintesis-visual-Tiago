@@ -1,0 +1,35 @@
+[0.067s] Invoking command in '/home/alberto/tiago_public_ws/build/pal_gripper_description': AMENT_PREFIX_PATH=/home/alberto/tiago_public_ws/install/urdf_test:/home/alberto/tiago_public_ws/install/pal_urdf_utils:${AMENT_PREFIX_PATH} CMAKE_PREFIX_PATH=/home/alberto/tiago_public_ws/install/urdf_test:/home/alberto/tiago_public_ws/install/pal_urdf_utils:/opt/ros/humble PYTHONPATH=/home/alberto/tiago_public_ws/install/urdf_test/local/lib/python3.10/dist-packages:${PYTHONPATH} /usr/bin/cmake --build /home/alberto/tiago_public_ws/build/pal_gripper_description -- -j12 -l12
+[0.137s] Invoked command in '/home/alberto/tiago_public_ws/build/pal_gripper_description' returned '0': AMENT_PREFIX_PATH=/home/alberto/tiago_public_ws/install/urdf_test:/home/alberto/tiago_public_ws/install/pal_urdf_utils:${AMENT_PREFIX_PATH} CMAKE_PREFIX_PATH=/home/alberto/tiago_public_ws/install/urdf_test:/home/alberto/tiago_public_ws/install/pal_urdf_utils:/opt/ros/humble PYTHONPATH=/home/alberto/tiago_public_ws/install/urdf_test/local/lib/python3.10/dist-packages:${PYTHONPATH} /usr/bin/cmake --build /home/alberto/tiago_public_ws/build/pal_gripper_description -- -j12 -l12
+[0.142s] Invoking command in '/home/alberto/tiago_public_ws/build/pal_gripper_description': AMENT_PREFIX_PATH=/home/alberto/tiago_public_ws/install/urdf_test:/home/alberto/tiago_public_ws/install/pal_urdf_utils:${AMENT_PREFIX_PATH} CMAKE_PREFIX_PATH=/home/alberto/tiago_public_ws/install/urdf_test:/home/alberto/tiago_public_ws/install/pal_urdf_utils:/opt/ros/humble PYTHONPATH=/home/alberto/tiago_public_ws/install/urdf_test/local/lib/python3.10/dist-packages:${PYTHONPATH} /usr/bin/cmake --install /home/alberto/tiago_public_ws/build/pal_gripper_description
+[0.151s] -- Install configuration: ""
+[0.152s] -- Execute custom install script
+[0.155s] -- Up-to-date symlink: /home/alberto/tiago_public_ws/install/pal_gripper_description/share/pal_gripper_description/gazebo/gazebo.urdf.xacro
+[0.156s] -- Up-to-date symlink: /home/alberto/tiago_public_ws/install/pal_gripper_description/share/pal_gripper_description/meshes/gripper_finger_link.stl
+[0.156s] -- Up-to-date symlink: /home/alberto/tiago_public_ws/install/pal_gripper_description/share/pal_gripper_description/meshes/gripper_finger_link_collision.stl
+[0.156s] -- Up-to-date symlink: /home/alberto/tiago_public_ws/install/pal_gripper_description/share/pal_gripper_description/meshes/gripper_link.stl
+[0.157s] -- Up-to-date symlink: /home/alberto/tiago_public_ws/install/pal_gripper_description/share/pal_gripper_description/meshes/gripper_link_collision.stl
+[0.158s] -- Up-to-date symlink: /home/alberto/tiago_public_ws/install/pal_gripper_description/share/pal_gripper_description/robots/gripper_test.urdf.xacro
+[0.158s] -- Up-to-date symlink: /home/alberto/tiago_public_ws/install/pal_gripper_description/share/pal_gripper_description/robots/upload.launch
+[0.158s] -- Up-to-date symlink: /home/alberto/tiago_public_ws/install/pal_gripper_description/share/pal_gripper_description/robots/upload_gripper.launch
+[0.160s] -- Up-to-date symlink: /home/alberto/tiago_public_ws/install/pal_gripper_description/share/pal_gripper_description/urdf/gripper.gazebo.xacro
+[0.160s] -- Up-to-date symlink: /home/alberto/tiago_public_ws/install/pal_gripper_description/share/pal_gripper_description/urdf/gripper.ros2_control.xacro
+[0.160s] -- Up-to-date symlink: /home/alberto/tiago_public_ws/install/pal_gripper_description/share/pal_gripper_description/urdf/gripper.transmission.xacro
+[0.161s] -- Up-to-date symlink: /home/alberto/tiago_public_ws/install/pal_gripper_description/share/pal_gripper_description/urdf/gripper.urdf.xacro
+[0.162s] -- Up-to-date symlink: /home/alberto/tiago_public_ws/install/pal_gripper_description/share/pal_gripper_description/ros2_control/ros2_control.urdf.xacro
+[0.164s] -- Up-to-date symlink: /home/alberto/tiago_public_ws/install/pal_gripper_description/share/ament_index/resource_index/package_run_dependencies/pal_gripper_description
+[0.164s] -- Up-to-date symlink: /home/alberto/tiago_public_ws/install/pal_gripper_description/share/ament_index/resource_index/parent_prefix_path/pal_gripper_description
+[0.165s] -- Up-to-date symlink: /home/alberto/tiago_public_ws/install/pal_gripper_description/share/pal_gripper_description/environment/ament_prefix_path.sh
+[0.165s] -- Up-to-date symlink: /home/alberto/tiago_public_ws/install/pal_gripper_description/share/pal_gripper_description/environment/ament_prefix_path.dsv
+[0.165s] -- Up-to-date symlink: /home/alberto/tiago_public_ws/install/pal_gripper_description/share/pal_gripper_description/environment/path.sh
+[0.166s] -- Up-to-date symlink: /home/alberto/tiago_public_ws/install/pal_gripper_description/share/pal_gripper_description/environment/path.dsv
+[0.166s] -- Up-to-date symlink: /home/alberto/tiago_public_ws/install/pal_gripper_description/share/pal_gripper_description/local_setup.bash
+[0.167s] -- Up-to-date symlink: /home/alberto/tiago_public_ws/install/pal_gripper_description/share/pal_gripper_description/local_setup.sh
+[0.167s] -- Up-to-date symlink: /home/alberto/tiago_public_ws/install/pal_gripper_description/share/pal_gripper_description/local_setup.zsh
+[0.167s] -- Up-to-date symlink: /home/alberto/tiago_public_ws/install/pal_gripper_description/share/pal_gripper_description/local_setup.dsv
+[0.167s] -- Symlinking: /home/alberto/tiago_public_ws/install/pal_gripper_description/share/pal_gripper_description/package.dsv
+[0.178s] -- Up-to-date symlink: /home/alberto/tiago_public_ws/install/pal_gripper_description/share/ament_index/resource_index/packages/pal_gripper_description
+[0.178s] -- Up-to-date symlink: /home/alberto/tiago_public_ws/install/pal_gripper_description/share/pal_gripper_description/cmake/ament_cmake_export_dependencies-extras.cmake
+[0.179s] -- Up-to-date symlink: /home/alberto/tiago_public_ws/install/pal_gripper_description/share/pal_gripper_description/cmake/pal_gripper_descriptionConfig.cmake
+[0.179s] -- Up-to-date symlink: /home/alberto/tiago_public_ws/install/pal_gripper_description/share/pal_gripper_description/cmake/pal_gripper_descriptionConfig-version.cmake
+[0.180s] -- Up-to-date symlink: /home/alberto/tiago_public_ws/install/pal_gripper_description/share/pal_gripper_description/package.xml
+[0.201s] Invoked command in '/home/alberto/tiago_public_ws/build/pal_gripper_description' returned '0': AMENT_PREFIX_PATH=/home/alberto/tiago_public_ws/install/urdf_test:/home/alberto/tiago_public_ws/install/pal_urdf_utils:${AMENT_PREFIX_PATH} CMAKE_PREFIX_PATH=/home/alberto/tiago_public_ws/install/urdf_test:/home/alberto/tiago_public_ws/install/pal_urdf_utils:/opt/ros/humble PYTHONPATH=/home/alberto/tiago_public_ws/install/urdf_test/local/lib/python3.10/dist-packages:${PYTHONPATH} /usr/bin/cmake --install /home/alberto/tiago_public_ws/build/pal_gripper_description

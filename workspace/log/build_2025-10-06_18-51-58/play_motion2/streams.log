@@ -1,0 +1,158 @@
+[0.011s] Invoking command in '/home/alberto/tiago_public_ws/build/play_motion2': AMENT_PREFIX_PATH=/home/alberto/tiago_public_ws/install/play_motion2_msgs:${AMENT_PREFIX_PATH} CMAKE_PREFIX_PATH=/home/alberto/tiago_public_ws/install/play_motion2_msgs:/opt/ros/humble LD_LIBRARY_PATH=/home/alberto/tiago_public_ws/install/play_motion2_msgs/lib:${LD_LIBRARY_PATH} PYTHONPATH=/home/alberto/tiago_public_ws/install/play_motion2_msgs/local/lib/python3.10/dist-packages:${PYTHONPATH} /usr/bin/cmake /home/alberto/tiago_public_ws/src/play_motion2/play_motion2 -DAMENT_CMAKE_SYMLINK_INSTALL=1 -DCMAKE_INSTALL_PREFIX=/home/alberto/tiago_public_ws/install/play_motion2
+[0.076s] -- The C compiler identification is GNU 11.4.0
+[0.141s] -- The CXX compiler identification is GNU 11.4.0
+[0.149s] -- Detecting C compiler ABI info
+[0.236s] -- Detecting C compiler ABI info - done
+[0.244s] -- Check for working C compiler: /usr/bin/cc - skipped
+[0.245s] -- Detecting C compile features
+[0.245s] -- Detecting C compile features - done
+[0.249s] -- Detecting CXX compiler ABI info
+[0.350s] -- Detecting CXX compiler ABI info - done
+[0.358s] -- Check for working CXX compiler: /usr/bin/c++ - skipped
+[0.358s] -- Detecting CXX compile features
+[0.359s] -- Detecting CXX compile features - done
+[0.362s] -- Found ament_cmake_auto: 1.3.12 (/opt/ros/humble/share/ament_cmake_auto/cmake)
+[0.536s] -- Found Python3: /usr/bin/python3 (found version "3.10.12") found components: Interpreter 
+[0.604s] -- Override CMake install command with custom implementation using symlinks instead of copying resources
+[0.771s] -- Found rosidl_generator_c: 3.1.7 (/opt/ros/humble/share/rosidl_generator_c/cmake)
+[0.778s] -- Found rosidl_adapter: 3.1.7 (/opt/ros/humble/share/rosidl_adapter/cmake)
+[0.790s] -- Found rosidl_generator_cpp: 3.1.7 (/opt/ros/humble/share/rosidl_generator_cpp/cmake)
+[0.807s] -- Using all available rosidl_typesupport_c: rosidl_typesupport_fastrtps_c;rosidl_typesupport_introspection_c
+[0.827s] -- Using all available rosidl_typesupport_cpp: rosidl_typesupport_fastrtps_cpp;rosidl_typesupport_introspection_cpp
+[1.383s] -- Found Boost: /usr/lib/x86_64-linux-gnu/cmake/Boost-1.74.0/BoostConfig.cmake (found version "1.74.0") found components: date_time filesystem program_options system thread 
+[1.542s] -- Found Boost: /usr/lib/x86_64-linux-gnu/cmake/Boost-1.74.0/BoostConfig.cmake (found version "1.74.0") found components: chrono date_time filesystem iostreams program_options regex serialization system thread 
+[1.618s] -- Found parameter_traits: 0.5.0 (/opt/ros/humble/share/parameter_traits/cmake)
+[1.667s] -- Found rmw_implementation_cmake: 6.1.2 (/opt/ros/humble/share/rmw_implementation_cmake/cmake)
+[1.671s] -- Found rmw_fastrtps_cpp: 6.2.8 (/opt/ros/humble/share/rmw_fastrtps_cpp/cmake)
+[1.783s] -- Found OpenSSL: /usr/lib/x86_64-linux-gnu/libcrypto.so (found version "3.0.2")  
+[1.813s] -- Found FastRTPS: /opt/ros/humble/include  
+[1.864s] -- Using RMW implementation 'rmw_fastrtps_cpp' as default
+[1.875s] -- Found Threads: TRUE  
+[1.948s] -- Found rclcpp_lifecycle: 16.0.15 (/opt/ros/humble/share/rclcpp_lifecycle/cmake)
+[1.972s] -- Found Boost: /usr/lib/x86_64-linux-gnu/cmake/Boost-1.74.0/BoostConfig.cmake (found version "1.74.0") found components: filesystem 
+[2.111s] -- library: /usr/lib/x86_64-linux-gnu/libcurl.so
+[2.166s] -- Found Eigen3: TRUE (found version "3.4.0") 
+[2.167s] -- Ensuring Eigen3 include directory is part of orocos-kdl CMake target
+[2.413s] -- Found Boost: /usr/lib/x86_64-linux-gnu/cmake/Boost-1.74.0/BoostConfig.cmake (found version "1.74.0") found components: system filesystem date_time program_options thread chrono 
+[2.446s] -- Found Boost: /usr/lib/x86_64-linux-gnu/cmake/Boost-1.74.0/BoostConfig.cmake (found version "1.74.0") found components: thread system filesystem regex date_time program_options 
+[2.470s] -- Found Boost: /usr/lib/x86_64-linux-gnu/cmake/Boost-1.74.0/BoostConfig.cmake (found version "1.74.0") found components: system filesystem date_time program_options thread 
+[2.711s] -- Found python_cmake_module: 0.10.0 (/opt/ros/humble/share/python_cmake_module/cmake)
+[2.735s] -- Found PythonInterp: /usr/bin/python3 (found suitable version "3.10.12", minimum required is "3.6") 
+[2.740s] -- Found PythonLibs: /usr/lib/x86_64-linux-gnu/libpython3.10.so (found suitable version "3.10.12", minimum required is "3.5") 
+[2.740s] -- Using PYTHON_EXECUTABLE: /usr/bin/python3
+[2.740s] -- Using PYTHON_INCLUDE_DIRS: /usr/include/python3.10
+[2.741s] -- Using PYTHON_LIBRARIES: /usr/lib/x86_64-linux-gnu/libpython3.10.so
+[2.765s] -- Found PythonExtra: .so  
+[2.805s] -- Found gtest sources under '/opt/ros/humble/src/gtest_vendor': C++ tests using 'Google Test' will be built
+[3.348s] -- Added test 'copyright' to check source files copyright and LICENSE
+[3.352s] -- Added test 'cppcheck' to perform static code analysis on C / C++ code
+[3.353s] -- Configured cppcheck include dirs: /home/alberto/tiago_public_ws/src/play_motion2/play_motion2/include
+[3.353s] -- Configured cppcheck exclude dirs and/or files: 
+[3.356s] -- Added test 'cpplint' to check C / C++ code against the Google style
+[3.356s] -- Configured cpplint exclude dirs and/or files: 
+[3.357s] -- Added test 'flake8' to check Python code syntax and style conventions
+[3.358s] -- Added test 'lint_cmake' to check CMake code style
+[3.359s] -- Added test 'pep257' to check Python code against some of the docstring style conventions in PEP 257
+[3.363s] -- Added test 'uncrustify' to check C / C++ code style
+[3.363s] -- Configured uncrustify additional arguments: 
+[3.363s] -- Added test 'xmllint' to check XML markup files
+[3.368s] -- Configuring done
+[3.529s] -- Generating done
+[3.562s] -- Build files have been written to: /home/alberto/tiago_public_ws/build/play_motion2
+[3.586s] Invoked command in '/home/alberto/tiago_public_ws/build/play_motion2' returned '0': AMENT_PREFIX_PATH=/home/alberto/tiago_public_ws/install/play_motion2_msgs:${AMENT_PREFIX_PATH} CMAKE_PREFIX_PATH=/home/alberto/tiago_public_ws/install/play_motion2_msgs:/opt/ros/humble LD_LIBRARY_PATH=/home/alberto/tiago_public_ws/install/play_motion2_msgs/lib:${LD_LIBRARY_PATH} PYTHONPATH=/home/alberto/tiago_public_ws/install/play_motion2_msgs/local/lib/python3.10/dist-packages:${PYTHONPATH} /usr/bin/cmake /home/alberto/tiago_public_ws/src/play_motion2/play_motion2 -DAMENT_CMAKE_SYMLINK_INSTALL=1 -DCMAKE_INSTALL_PREFIX=/home/alberto/tiago_public_ws/install/play_motion2
+[3.588s] Invoking command in '/home/alberto/tiago_public_ws/build/play_motion2': AMENT_PREFIX_PATH=/home/alberto/tiago_public_ws/install/play_motion2_msgs:${AMENT_PREFIX_PATH} CMAKE_PREFIX_PATH=/home/alberto/tiago_public_ws/install/play_motion2_msgs:/opt/ros/humble LD_LIBRARY_PATH=/home/alberto/tiago_public_ws/install/play_motion2_msgs/lib:${LD_LIBRARY_PATH} PYTHONPATH=/home/alberto/tiago_public_ws/install/play_motion2_msgs/local/lib/python3.10/dist-packages:${PYTHONPATH} /usr/bin/cmake --build /home/alberto/tiago_public_ws/build/play_motion2 -- -j8 -l8
+[3.661s] [ 12%] [32mBuilding CXX object CMakeFiles/client.dir/src/play_motion2/client.cpp.o[0m
+[3.662s] [ 12%] [32mBuilding CXX object CMakeFiles/play_motion2_node.dir/src/play_motion2_main.cpp.o[0m
+[3.662s] [ 12%] [34m[1mRunning `/opt/ros/humble/bin/generate_parameter_library_cpp /home/alberto/tiago_public_ws/build/play_motion2/include/play_motion2/passthrough_controller_parameters.hpp /home/alberto/tiago_public_ws/src/play_motion2/play_motion2/test/controllers/src/passthrough_controller_parameters.yaml `[0m
+[3.662s] [ 20%] [32mBuilding CXX object gtest/CMakeFiles/gtest_main.dir/src/gtest_main.cc.o[0m
+[3.662s] [ 24%] [32mBuilding CXX object CMakeFiles/play_motion2_node.dir/src/play_motion2/play_motion2_executor.cpp.o[0m
+[3.662s] [ 24%] [32mBuilding CXX object gtest/CMakeFiles/gtest.dir/src/gtest-all.cc.o[0m
+[3.662s] [ 28%] [32mBuilding CXX object CMakeFiles/play_motion2_node.dir/src/play_motion2/play_motion2_mgr.cpp.o[0m
+[3.671s] [ 28%] Built target ament_cmake_python_symlink_play_motion2
+[3.687s] [ 32%] [32mBuilding CXX object CMakeFiles/play_motion2_node.dir/src/utils/motion_planner.cpp.o[0m
+[3.914s] [ 36%] [34m[1mCreating deprecated header file /home/alberto/tiago_public_ws/build/play_motion2/include/passthrough_controller_parameters.hpp[0m
+[3.935s] [ 36%] Built target passthrough_controller_parameters
+[4.233s] running egg_info
+[4.233s] creating play_motion2.egg-info
+[4.233s] writing play_motion2.egg-info/PKG-INFO
+[4.234s] writing dependency_links to play_motion2.egg-info/dependency_links.txt
+[4.234s] writing top-level names to play_motion2.egg-info/top_level.txt
+[4.234s] writing manifest file 'play_motion2.egg-info/SOURCES.txt'
+[4.237s] reading manifest file 'play_motion2.egg-info/SOURCES.txt'
+[4.237s] writing manifest file 'play_motion2.egg-info/SOURCES.txt'
+[4.281s] [ 36%] Built target ament_cmake_python_build_play_motion2_egg
+[4.313s] [ 40%] [32mBuilding CXX object CMakeFiles/passthrough_controller.dir/test/controllers/src/passthrough_controller.cpp.o[0m
+[4.884s] [ 44%] [32m[1mLinking CXX static library libgtest_main.a[0m
+[4.964s] [ 44%] Built target gtest_main
+[4.980s] [ 48%] [32mBuilding CXX object CMakeFiles/play_motion2_node.dir/src/utils/motion_loader.cpp.o[0m
+[8.355s] [ 52%] [32m[1mLinking CXX static library libgtest.a[0m
+[8.528s] [ 52%] Built target gtest
+[8.565s] [ 56%] [32mBuilding CXX object CMakeFiles/play_motion2_node_test.dir/test/play_motion2_node_test.cpp.o[0m
+[22.743s] [ 60%] [32m[1mLinking CXX shared library libclient.so[0m
+[24.028s] [ 64%] [32m[1mLinking CXX shared library libpassthrough_controller.so[0m
+[24.502s] [ 64%] Built target client
+[24.557s] [ 72%] [32mBuilding CXX object CMakeFiles/rrbot_system.dir/test/rrbot/rrbot_system.cpp.o[0m
+[24.557s] [ 72%] [32mBuilding CXX object CMakeFiles/run_motion.dir/src/run_motion.cpp.o[0m
+[24.582s] [ 72%] Built target passthrough_controller
+[26.590s] [ 76%] [32m[1mLinking CXX shared library librrbot_system.so[0m
+[27.531s] [ 76%] Built target rrbot_system
+[27.564s] [ 80%] [32mBuilding CXX object CMakeFiles/motion_loader_test.dir/test/motion_loader_test.cpp.o[0m
+[27.573s] [ 84%] [32mBuilding CXX object CMakeFiles/motion_loader_test.dir/src/utils/motion_loader.cpp.o[0m
+[27.718s] [ 88%] [32m[1mLinking CXX executable run_motion[0m
+[28.291s] [ 88%] Built target run_motion
+[32.091s] [ 92%] [32m[1mLinking CXX executable motion_loader_test[0m
+[32.749s] [ 92%] Built target motion_loader_test
+[34.245s] [ 96%] [32m[1mLinking CXX executable play_motion2_node_test[0m
+[35.129s] [ 96%] Built target play_motion2_node_test
+[38.049s] [100%] [32m[1mLinking CXX executable play_motion2_node[0m
+[39.921s] [100%] Built target play_motion2_node
+[40.088s] Invoked command in '/home/alberto/tiago_public_ws/build/play_motion2' returned '0': AMENT_PREFIX_PATH=/home/alberto/tiago_public_ws/install/play_motion2_msgs:${AMENT_PREFIX_PATH} CMAKE_PREFIX_PATH=/home/alberto/tiago_public_ws/install/play_motion2_msgs:/opt/ros/humble LD_LIBRARY_PATH=/home/alberto/tiago_public_ws/install/play_motion2_msgs/lib:${LD_LIBRARY_PATH} PYTHONPATH=/home/alberto/tiago_public_ws/install/play_motion2_msgs/local/lib/python3.10/dist-packages:${PYTHONPATH} /usr/bin/cmake --build /home/alberto/tiago_public_ws/build/play_motion2 -- -j8 -l8
+[40.169s] Invoking command in '/home/alberto/tiago_public_ws/build/play_motion2': AMENT_PREFIX_PATH=/home/alberto/tiago_public_ws/install/play_motion2_msgs:${AMENT_PREFIX_PATH} CMAKE_PREFIX_PATH=/home/alberto/tiago_public_ws/install/play_motion2_msgs:/opt/ros/humble LD_LIBRARY_PATH=/home/alberto/tiago_public_ws/install/play_motion2_msgs/lib:${LD_LIBRARY_PATH} PYTHONPATH=/home/alberto/tiago_public_ws/install/play_motion2_msgs/local/lib/python3.10/dist-packages:${PYTHONPATH} /usr/bin/cmake --install /home/alberto/tiago_public_ws/build/play_motion2
+[40.205s] -- Install configuration: ""
+[40.207s] -- Execute custom install script
+[40.208s] -- Symlinking: /home/alberto/tiago_public_ws/install/play_motion2/share/play_motion2/environment/pythonpath.sh
+[40.219s] -- Symlinking: /home/alberto/tiago_public_ws/install/play_motion2/share/play_motion2/environment/pythonpath.dsv
+[40.231s] -- Symlinking: /home/alberto/tiago_public_ws/install/play_motion2/local/lib/python3.10/dist-packages/play_motion2-1.7.0-py3.10.egg-info/PKG-INFO
+[40.241s] -- Symlinking: /home/alberto/tiago_public_ws/install/play_motion2/local/lib/python3.10/dist-packages/play_motion2-1.7.0-py3.10.egg-info/SOURCES.txt
+[40.252s] -- Symlinking: /home/alberto/tiago_public_ws/install/play_motion2/local/lib/python3.10/dist-packages/play_motion2-1.7.0-py3.10.egg-info/dependency_links.txt
+[40.262s] -- Symlinking: /home/alberto/tiago_public_ws/install/play_motion2/local/lib/python3.10/dist-packages/play_motion2-1.7.0-py3.10.egg-info/top_level.txt
+[40.276s] -- Symlinking: /home/alberto/tiago_public_ws/install/play_motion2/local/lib/python3.10/dist-packages/play_motion2/__init__.py
+[40.289s] -- Symlinking: /home/alberto/tiago_public_ws/install/play_motion2/share/play_motion2/test/rrbot/rrbot_system.xml
+[40.302s] -- Symlinking: /home/alberto/tiago_public_ws/install/play_motion2/include/play_motion2/passthrough_controller_parameters.hpp
+[40.314s] -- Symlinking: /home/alberto/tiago_public_ws/install/play_motion2/share/play_motion2/test/controllers/passthrough_controller.xml
+[40.325s] -- Symlinking: /home/alberto/tiago_public_ws/install/play_motion2/lib/libpassthrough_controller.so
+[40.336s] -- Symlinking: /home/alberto/tiago_public_ws/install/play_motion2/lib/play_motion2/play_motion2_node_test
+[40.347s] -- Symlinking: /home/alberto/tiago_public_ws/install/play_motion2/include/play_motion2/play_motion2/client.hpp
+[40.358s] -- Symlinking: /home/alberto/tiago_public_ws/install/play_motion2/include/play_motion2/play_motion2/motion_loader.hpp
+[40.368s] -- Symlinking: /home/alberto/tiago_public_ws/install/play_motion2/include/play_motion2/play_motion2/types.hpp
+[40.383s] -- Symlinking: /home/alberto/tiago_public_ws/install/play_motion2/share/play_motion2/environment/library_path.sh
+[40.395s] -- Symlinking: /home/alberto/tiago_public_ws/install/play_motion2/share/play_motion2/environment/library_path.dsv
+[40.406s] -- Symlinking: /home/alberto/tiago_public_ws/install/play_motion2/lib/libclient.so
+[40.417s] -- Symlinking: /home/alberto/tiago_public_ws/install/play_motion2/lib/librrbot_system.so
+[40.428s] -- Symlinking: /home/alberto/tiago_public_ws/install/play_motion2/lib/play_motion2/play_motion2_node
+[40.438s] -- Symlinking: /home/alberto/tiago_public_ws/install/play_motion2/lib/play_motion2/run_motion
+[40.450s] -- Symlinking: /home/alberto/tiago_public_ws/install/play_motion2/share/play_motion2/config/motion_planner_config.yaml
+[40.462s] -- Symlinking: /home/alberto/tiago_public_ws/install/play_motion2/share/play_motion2/launch/play_motion2.launch.py
+[40.473s] -- Symlinking: /home/alberto/tiago_public_ws/install/play_motion2/share/ament_index/resource_index/package_run_dependencies/play_motion2
+[40.485s] -- Symlinking: /home/alberto/tiago_public_ws/install/play_motion2/share/ament_index/resource_index/parent_prefix_path/play_motion2
+[40.501s] -- Symlinking: /home/alberto/tiago_public_ws/install/play_motion2/share/play_motion2/environment/ament_prefix_path.sh
+[40.512s] -- Symlinking: /home/alberto/tiago_public_ws/install/play_motion2/share/play_motion2/environment/ament_prefix_path.dsv
+[40.522s] -- Symlinking: /home/alberto/tiago_public_ws/install/play_motion2/share/play_motion2/environment/path.sh
+[40.532s] -- Symlinking: /home/alberto/tiago_public_ws/install/play_motion2/share/play_motion2/environment/path.dsv
+[40.542s] -- Symlinking: /home/alberto/tiago_public_ws/install/play_motion2/share/play_motion2/local_setup.bash
+[40.553s] -- Symlinking: /home/alberto/tiago_public_ws/install/play_motion2/share/play_motion2/local_setup.sh
+[40.563s] -- Symlinking: /home/alberto/tiago_public_ws/install/play_motion2/share/play_motion2/local_setup.zsh
+[40.574s] -- Symlinking: /home/alberto/tiago_public_ws/install/play_motion2/share/play_motion2/local_setup.dsv
+[40.587s] -- Symlinking: /home/alberto/tiago_public_ws/install/play_motion2/share/play_motion2/package.dsv
+[40.599s] -- Symlinking: /home/alberto/tiago_public_ws/install/play_motion2/share/ament_index/resource_index/packages/play_motion2
+[40.609s] -- Symlinking: /home/alberto/tiago_public_ws/install/play_motion2/share/ament_index/resource_index/hardware_interface__pluginlib__plugin/play_motion2
+[40.620s] -- Symlinking: /home/alberto/tiago_public_ws/install/play_motion2/share/ament_index/resource_index/controller_interface__pluginlib__plugin/play_motion2
+[40.631s] -- Symlinking: /home/alberto/tiago_public_ws/install/play_motion2/share/play_motion2/cmake/ament_cmake_export_dependencies-extras.cmake
+[40.642s] -- Symlinking: /home/alberto/tiago_public_ws/install/play_motion2/share/play_motion2/cmake/ament_cmake_export_include_directories-extras.cmake
+[40.652s] -- Symlinking: /home/alberto/tiago_public_ws/install/play_motion2/share/play_motion2/cmake/ament_cmake_export_libraries-extras.cmake
+[40.662s] -- Symlinking: /home/alberto/tiago_public_ws/install/play_motion2/share/play_motion2/cmake/play_motion2Config.cmake
+[40.672s] -- Symlinking: /home/alberto/tiago_public_ws/install/play_motion2/share/play_motion2/cmake/play_motion2Config-version.cmake
+[40.685s] -- Symlinking: /home/alberto/tiago_public_ws/install/play_motion2/share/play_motion2/package.xml
+[40.795s] Listing '/home/alberto/tiago_public_ws/install/play_motion2/local/lib/python3.10/dist-packages/play_motion2'...
+[40.795s] Compiling '/home/alberto/tiago_public_ws/install/play_motion2/local/lib/python3.10/dist-packages/play_motion2/__init__.py'...
+[40.821s] Invoked command in '/home/alberto/tiago_public_ws/build/play_motion2' returned '0': AMENT_PREFIX_PATH=/home/alberto/tiago_public_ws/install/play_motion2_msgs:${AMENT_PREFIX_PATH} CMAKE_PREFIX_PATH=/home/alberto/tiago_public_ws/install/play_motion2_msgs:/opt/ros/humble LD_LIBRARY_PATH=/home/alberto/tiago_public_ws/install/play_motion2_msgs/lib:${LD_LIBRARY_PATH} PYTHONPATH=/home/alberto/tiago_public_ws/install/play_motion2_msgs/local/lib/python3.10/dist-packages:${PYTHONPATH} /usr/bin/cmake --install /home/alberto/tiago_public_ws/build/play_motion2

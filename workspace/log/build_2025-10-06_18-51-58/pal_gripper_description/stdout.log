@@ -1,0 +1,54 @@
+-- The C compiler identification is GNU 11.4.0
+-- The CXX compiler identification is GNU 11.4.0
+-- Detecting C compiler ABI info
+-- Detecting C compiler ABI info - done
+-- Check for working C compiler: /usr/bin/cc - skipped
+-- Detecting C compile features
+-- Detecting C compile features - done
+-- Detecting CXX compiler ABI info
+-- Detecting CXX compiler ABI info - done
+-- Check for working CXX compiler: /usr/bin/c++ - skipped
+-- Detecting CXX compile features
+-- Detecting CXX compile features - done
+-- Found ament_cmake_auto: 1.3.12 (/opt/ros/humble/share/ament_cmake_auto/cmake)
+-- Found Python3: /usr/bin/python3 (found version "3.10.12") found components: Interpreter 
+-- Override CMake install command with custom implementation using symlinks instead of copying resources
+-- Found xacro: 2.1.1 (/opt/ros/humble/share/xacro/cmake)
+-- Found ament_lint_auto: 0.12.14 (/opt/ros/humble/share/ament_lint_auto/cmake)
+-- Added test 'copyright' to check source files copyright and LICENSE
+-- Added test 'lint_cmake' to check CMake code style
+-- Added test 'xmllint' to check XML markup files
+-- Configuring done
+-- Generating done
+-- Build files have been written to: /home/alberto/tiago_public_ws/build/pal_gripper_description
+-- Install configuration: ""
+-- Execute custom install script
+-- Symlinking: /home/alberto/tiago_public_ws/install/pal_gripper_description/share/pal_gripper_description/gazebo/gazebo.urdf.xacro
+-- Symlinking: /home/alberto/tiago_public_ws/install/pal_gripper_description/share/pal_gripper_description/meshes/gripper_finger_link.stl
+-- Symlinking: /home/alberto/tiago_public_ws/install/pal_gripper_description/share/pal_gripper_description/meshes/gripper_finger_link_collision.stl
+-- Symlinking: /home/alberto/tiago_public_ws/install/pal_gripper_description/share/pal_gripper_description/meshes/gripper_link.stl
+-- Symlinking: /home/alberto/tiago_public_ws/install/pal_gripper_description/share/pal_gripper_description/meshes/gripper_link_collision.stl
+-- Symlinking: /home/alberto/tiago_public_ws/install/pal_gripper_description/share/pal_gripper_description/robots/gripper_test.urdf.xacro
+-- Symlinking: /home/alberto/tiago_public_ws/install/pal_gripper_description/share/pal_gripper_description/robots/upload.launch
+-- Symlinking: /home/alberto/tiago_public_ws/install/pal_gripper_description/share/pal_gripper_description/robots/upload_gripper.launch
+-- Symlinking: /home/alberto/tiago_public_ws/install/pal_gripper_description/share/pal_gripper_description/urdf/gripper.gazebo.xacro
+-- Symlinking: /home/alberto/tiago_public_ws/install/pal_gripper_description/share/pal_gripper_description/urdf/gripper.ros2_control.xacro
+-- Symlinking: /home/alberto/tiago_public_ws/install/pal_gripper_description/share/pal_gripper_description/urdf/gripper.transmission.xacro
+-- Symlinking: /home/alberto/tiago_public_ws/install/pal_gripper_description/share/pal_gripper_description/urdf/gripper.urdf.xacro
+-- Symlinking: /home/alberto/tiago_public_ws/install/pal_gripper_description/share/pal_gripper_description/ros2_control/ros2_control.urdf.xacro
+-- Symlinking: /home/alberto/tiago_public_ws/install/pal_gripper_description/share/ament_index/resource_index/package_run_dependencies/pal_gripper_description
+-- Symlinking: /home/alberto/tiago_public_ws/install/pal_gripper_description/share/ament_index/resource_index/parent_prefix_path/pal_gripper_description
+-- Symlinking: /home/alberto/tiago_public_ws/install/pal_gripper_description/share/pal_gripper_description/environment/ament_prefix_path.sh
+-- Symlinking: /home/alberto/tiago_public_ws/install/pal_gripper_description/share/pal_gripper_description/environment/ament_prefix_path.dsv
+-- Symlinking: /home/alberto/tiago_public_ws/install/pal_gripper_description/share/pal_gripper_description/environment/path.sh
+-- Symlinking: /home/alberto/tiago_public_ws/install/pal_gripper_description/share/pal_gripper_description/environment/path.dsv
+-- Symlinking: /home/alberto/tiago_public_ws/install/pal_gripper_description/share/pal_gripper_description/local_setup.bash
+-- Symlinking: /home/alberto/tiago_public_ws/install/pal_gripper_description/share/pal_gripper_description/local_setup.sh
+-- Symlinking: /home/alberto/tiago_public_ws/install/pal_gripper_description/share/pal_gripper_description/local_setup.zsh
+-- Symlinking: /home/alberto/tiago_public_ws/install/pal_gripper_description/share/pal_gripper_description/local_setup.dsv
+-- Symlinking: /home/alberto/tiago_public_ws/install/pal_gripper_description/share/pal_gripper_description/package.dsv
+-- Symlinking: /home/alberto/tiago_public_ws/install/pal_gripper_description/share/ament_index/resource_index/packages/pal_gripper_description
+-- Symlinking: /home/alberto/tiago_public_ws/install/pal_gripper_description/share/pal_gripper_description/cmake/ament_cmake_export_dependencies-extras.cmake
+-- Symlinking: /home/alberto/tiago_public_ws/install/pal_gripper_description/share/pal_gripper_description/cmake/pal_gripper_descriptionConfig.cmake
+-- Symlinking: /home/alberto/tiago_public_ws/install/pal_gripper_description/share/pal_gripper_description/cmake/pal_gripper_descriptionConfig-version.cmake
+-- Symlinking: /home/alberto/tiago_public_ws/install/pal_gripper_description/share/pal_gripper_description/package.xml

@@ -1,0 +1,35 @@
+-- The C compiler identification is GNU 11.4.0
+-- The CXX compiler identification is GNU 11.4.0
+-- Detecting C compiler ABI info
+-- Detecting C compiler ABI info - done
+-- Check for working C compiler: /usr/bin/cc - skipped
+-- Detecting C compile features
+-- Detecting C compile features - done
+-- Detecting CXX compiler ABI info
+-- Detecting CXX compiler ABI info - done
+-- Check for working CXX compiler: /usr/bin/c++ - skipped
+-- Detecting CXX compile features
+-- Detecting CXX compile features - done
+-- Found ament_cmake: 1.3.12 (/opt/ros/humble/share/ament_cmake/cmake)
+-- Found Python3: /usr/bin/python3 (found version "3.10.12") found components: Interpreter 
+-- Override CMake install command with custom implementation using symlinks instead of copying resources
+-- Configuring done
+-- Generating done
+-- Build files have been written to: /home/alberto/tiago_public_ws/build/pmb2_robot
+-- Install configuration: ""
+-- Execute custom install script
+-- Symlinking: /home/alberto/tiago_public_ws/install/pmb2_robot/share/ament_index/resource_index/package_run_dependencies/pmb2_robot
+-- Symlinking: /home/alberto/tiago_public_ws/install/pmb2_robot/share/ament_index/resource_index/parent_prefix_path/pmb2_robot
+-- Symlinking: /home/alberto/tiago_public_ws/install/pmb2_robot/share/pmb2_robot/environment/ament_prefix_path.sh
+-- Symlinking: /home/alberto/tiago_public_ws/install/pmb2_robot/share/pmb2_robot/environment/ament_prefix_path.dsv
+-- Symlinking: /home/alberto/tiago_public_ws/install/pmb2_robot/share/pmb2_robot/environment/path.sh
+-- Symlinking: /home/alberto/tiago_public_ws/install/pmb2_robot/share/pmb2_robot/environment/path.dsv
+-- Symlinking: /home/alberto/tiago_public_ws/install/pmb2_robot/share/pmb2_robot/local_setup.bash
+-- Symlinking: /home/alberto/tiago_public_ws/install/pmb2_robot/share/pmb2_robot/local_setup.sh
+-- Symlinking: /home/alberto/tiago_public_ws/install/pmb2_robot/share/pmb2_robot/local_setup.zsh
+-- Symlinking: /home/alberto/tiago_public_ws/install/pmb2_robot/share/pmb2_robot/local_setup.dsv
+-- Symlinking: /home/alberto/tiago_public_ws/install/pmb2_robot/share/pmb2_robot/package.dsv
+-- Symlinking: /home/alberto/tiago_public_ws/install/pmb2_robot/share/ament_index/resource_index/packages/pmb2_robot
+-- Symlinking: /home/alberto/tiago_public_ws/install/pmb2_robot/share/pmb2_robot/cmake/pmb2_robotConfig.cmake
+-- Symlinking: /home/alberto/tiago_public_ws/install/pmb2_robot/share/pmb2_robot/cmake/pmb2_robotConfig-version.cmake
+-- Symlinking: /home/alberto/tiago_public_ws/install/pmb2_robot/share/pmb2_robot/package.xml

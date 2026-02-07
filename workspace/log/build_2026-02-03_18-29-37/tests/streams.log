@@ -1,0 +1,19 @@
+[0.638s] Invoking command in '/home/alberto/tfg/tests/tiago_tests/build/tests': PYTHONPATH=/home/alberto/tfg/tests/tiago_tests/build/tests/prefix_override:/usr/lib/python3/dist-packages/colcon_core/task/python/colcon_distutils_commands:/home/alberto/tfg/tests/tiago_tests/install/tests/lib/python3.10/site-packages:${PYTHONPATH} /usr/bin/python3 -W ignore:setup.py install is deprecated -W ignore:easy_install command is deprecated setup.py develop --editable --build-directory /home/alberto/tfg/tests/tiago_tests/build/tests/build --no-deps symlink_data
+[0.854s] running develop
+[0.999s] running egg_info
+[0.999s] writing tests.egg-info/PKG-INFO
+[0.999s] writing dependency_links to tests.egg-info/dependency_links.txt
+[0.999s] writing entry points to tests.egg-info/entry_points.txt
+[0.999s] writing requirements to tests.egg-info/requires.txt
+[0.999s] writing top-level names to tests.egg-info/top_level.txt
+[1.001s] reading manifest file 'tests.egg-info/SOURCES.txt'
+[1.001s] writing manifest file 'tests.egg-info/SOURCES.txt'
+[1.002s] running build_ext
+[1.002s] Creating /home/alberto/tfg/tests/tiago_tests/install/tests/lib/python3.10/site-packages/tests.egg-link (link to .)
+[1.003s] Installing explorer_node script to /home/alberto/tfg/tests/tiago_tests/install/tests/lib/tests
+[1.003s] Installing patrol_node script to /home/alberto/tfg/tests/tiago_tests/install/tests/lib/tests
+[1.004s] Installing simple_mover script to /home/alberto/tfg/tests/tiago_tests/install/tests/lib/tests
+[1.004s] 
+[1.004s] Installed /home/alberto/tfg/tests/tiago_tests/build/tests
+[1.004s] running symlink_data
+[1.026s] Invoked command in '/home/alberto/tfg/tests/tiago_tests/build/tests' returned '0': PYTHONPATH=/home/alberto/tfg/tests/tiago_tests/build/tests/prefix_override:/usr/lib/python3/dist-packages/colcon_core/task/python/colcon_distutils_commands:/home/alberto/tfg/tests/tiago_tests/install/tests/lib/python3.10/site-packages:${PYTHONPATH} /usr/bin/python3 -W ignore:setup.py install is deprecated -W ignore:easy_install command is deprecated setup.py develop --editable --build-directory /home/alberto/tfg/tests/tiago_tests/build/tests/build --no-deps symlink_data

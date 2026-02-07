@@ -1,0 +1,41 @@
+[0.047s] Invoking command in '/home/alberto/tiago_public_ws/build/pal_hey5': AMENT_PREFIX_PATH=/home/alberto/tiago_public_ws/install/pal_hey5_description:/home/alberto/tiago_public_ws/install/pal_urdf_utils:/home/alberto/tiago_public_ws/install/pal_hey5_controller_configuration:${AMENT_PREFIX_PATH} CMAKE_PREFIX_PATH=/home/alberto/tiago_public_ws/install/pal_hey5_description:/home/alberto/tiago_public_ws/install/pal_urdf_utils:/home/alberto/tiago_public_ws/install/pal_hey5_controller_configuration:/opt/ros/humble /usr/bin/cmake /home/alberto/tiago_public_ws/src/pal_hey5/pal_hey5 -DAMENT_CMAKE_SYMLINK_INSTALL=1 -DCMAKE_INSTALL_PREFIX=/home/alberto/tiago_public_ws/install/pal_hey5
+[0.213s] -- The C compiler identification is GNU 11.4.0
+[0.397s] -- The CXX compiler identification is GNU 11.4.0
+[0.413s] -- Detecting C compiler ABI info
+[0.659s] -- Detecting C compiler ABI info - done
+[0.675s] -- Check for working C compiler: /usr/bin/cc - skipped
+[0.675s] -- Detecting C compile features
+[0.675s] -- Detecting C compile features - done
+[0.682s] -- Detecting CXX compiler ABI info
+[0.908s] -- Detecting CXX compiler ABI info - done
+[0.931s] -- Check for working CXX compiler: /usr/bin/c++ - skipped
+[0.932s] -- Detecting CXX compile features
+[0.932s] -- Detecting CXX compile features - done
+[0.939s] -- Found ament_cmake_auto: 1.3.12 (/opt/ros/humble/share/ament_cmake_auto/cmake)
+[1.288s] -- Found Python3: /usr/bin/python3 (found version "3.10.12") found components: Interpreter 
+[1.484s] -- Override CMake install command with custom implementation using symlinks instead of copying resources
+[1.839s] -- Configuring done
+[1.845s] -- Generating done
+[1.847s] -- Build files have been written to: /home/alberto/tiago_public_ws/build/pal_hey5
+[1.863s] Invoked command in '/home/alberto/tiago_public_ws/build/pal_hey5' returned '0': AMENT_PREFIX_PATH=/home/alberto/tiago_public_ws/install/pal_hey5_description:/home/alberto/tiago_public_ws/install/pal_urdf_utils:/home/alberto/tiago_public_ws/install/pal_hey5_controller_configuration:${AMENT_PREFIX_PATH} CMAKE_PREFIX_PATH=/home/alberto/tiago_public_ws/install/pal_hey5_description:/home/alberto/tiago_public_ws/install/pal_urdf_utils:/home/alberto/tiago_public_ws/install/pal_hey5_controller_configuration:/opt/ros/humble /usr/bin/cmake /home/alberto/tiago_public_ws/src/pal_hey5/pal_hey5 -DAMENT_CMAKE_SYMLINK_INSTALL=1 -DCMAKE_INSTALL_PREFIX=/home/alberto/tiago_public_ws/install/pal_hey5
+[1.863s] Invoking command in '/home/alberto/tiago_public_ws/build/pal_hey5': AMENT_PREFIX_PATH=/home/alberto/tiago_public_ws/install/pal_hey5_description:/home/alberto/tiago_public_ws/install/pal_urdf_utils:/home/alberto/tiago_public_ws/install/pal_hey5_controller_configuration:${AMENT_PREFIX_PATH} CMAKE_PREFIX_PATH=/home/alberto/tiago_public_ws/install/pal_hey5_description:/home/alberto/tiago_public_ws/install/pal_urdf_utils:/home/alberto/tiago_public_ws/install/pal_hey5_controller_configuration:/opt/ros/humble /usr/bin/cmake --build /home/alberto/tiago_public_ws/build/pal_hey5 -- -j8 -l8
+[2.209s] Invoked command in '/home/alberto/tiago_public_ws/build/pal_hey5' returned '0': AMENT_PREFIX_PATH=/home/alberto/tiago_public_ws/install/pal_hey5_description:/home/alberto/tiago_public_ws/install/pal_urdf_utils:/home/alberto/tiago_public_ws/install/pal_hey5_controller_configuration:${AMENT_PREFIX_PATH} CMAKE_PREFIX_PATH=/home/alberto/tiago_public_ws/install/pal_hey5_description:/home/alberto/tiago_public_ws/install/pal_urdf_utils:/home/alberto/tiago_public_ws/install/pal_hey5_controller_configuration:/opt/ros/humble /usr/bin/cmake --build /home/alberto/tiago_public_ws/build/pal_hey5 -- -j8 -l8
+[2.212s] Invoking command in '/home/alberto/tiago_public_ws/build/pal_hey5': AMENT_PREFIX_PATH=/home/alberto/tiago_public_ws/install/pal_hey5_description:/home/alberto/tiago_public_ws/install/pal_urdf_utils:/home/alberto/tiago_public_ws/install/pal_hey5_controller_configuration:${AMENT_PREFIX_PATH} CMAKE_PREFIX_PATH=/home/alberto/tiago_public_ws/install/pal_hey5_description:/home/alberto/tiago_public_ws/install/pal_urdf_utils:/home/alberto/tiago_public_ws/install/pal_hey5_controller_configuration:/opt/ros/humble /usr/bin/cmake --install /home/alberto/tiago_public_ws/build/pal_hey5
+[2.248s] -- Install configuration: ""
+[2.248s] -- Execute custom install script
+[2.248s] -- Symlinking: /home/alberto/tiago_public_ws/install/pal_hey5/share/ament_index/resource_index/package_run_dependencies/pal_hey5
+[2.270s] -- Symlinking: /home/alberto/tiago_public_ws/install/pal_hey5/share/ament_index/resource_index/parent_prefix_path/pal_hey5
+[2.295s] -- Symlinking: /home/alberto/tiago_public_ws/install/pal_hey5/share/pal_hey5/environment/ament_prefix_path.sh
+[2.310s] -- Symlinking: /home/alberto/tiago_public_ws/install/pal_hey5/share/pal_hey5/environment/ament_prefix_path.dsv
+[2.325s] -- Symlinking: /home/alberto/tiago_public_ws/install/pal_hey5/share/pal_hey5/environment/path.sh
+[2.366s] -- Symlinking: /home/alberto/tiago_public_ws/install/pal_hey5/share/pal_hey5/environment/path.dsv
+[2.396s] -- Symlinking: /home/alberto/tiago_public_ws/install/pal_hey5/share/pal_hey5/local_setup.bash
+[2.428s] -- Symlinking: /home/alberto/tiago_public_ws/install/pal_hey5/share/pal_hey5/local_setup.sh
+[2.461s] -- Symlinking: /home/alberto/tiago_public_ws/install/pal_hey5/share/pal_hey5/local_setup.zsh
+[2.487s] -- Symlinking: /home/alberto/tiago_public_ws/install/pal_hey5/share/pal_hey5/local_setup.dsv
+[2.510s] -- Symlinking: /home/alberto/tiago_public_ws/install/pal_hey5/share/pal_hey5/package.dsv
+[2.525s] -- Symlinking: /home/alberto/tiago_public_ws/install/pal_hey5/share/ament_index/resource_index/packages/pal_hey5
+[2.541s] -- Symlinking: /home/alberto/tiago_public_ws/install/pal_hey5/share/pal_hey5/cmake/pal_hey5Config.cmake
+[2.575s] -- Symlinking: /home/alberto/tiago_public_ws/install/pal_hey5/share/pal_hey5/cmake/pal_hey5Config-version.cmake
+[2.611s] -- Symlinking: /home/alberto/tiago_public_ws/install/pal_hey5/share/pal_hey5/package.xml
+[2.646s] Invoked command in '/home/alberto/tiago_public_ws/build/pal_hey5' returned '0': AMENT_PREFIX_PATH=/home/alberto/tiago_public_ws/install/pal_hey5_description:/home/alberto/tiago_public_ws/install/pal_urdf_utils:/home/alberto/tiago_public_ws/install/pal_hey5_controller_configuration:${AMENT_PREFIX_PATH} CMAKE_PREFIX_PATH=/home/alberto/tiago_public_ws/install/pal_hey5_description:/home/alberto/tiago_public_ws/install/pal_urdf_utils:/home/alberto/tiago_public_ws/install/pal_hey5_controller_configuration:/opt/ros/humble /usr/bin/cmake --install /home/alberto/tiago_public_ws/build/pal_hey5

@@ -1,0 +1,113 @@
+[0.356s] Invoking command in '/home/alberto/tiago_public_ws/build/pal_urdf_utils': CMAKE_PREFIX_PATH=/opt/ros/humble /usr/bin/cmake /home/alberto/tiago_public_ws/src/pal_urdf_utils -DAMENT_CMAKE_SYMLINK_INSTALL=1 -DCMAKE_INSTALL_PREFIX=/home/alberto/tiago_public_ws/install/pal_urdf_utils
+[0.576s] -- The C compiler identification is GNU 11.4.0
+[0.733s] -- The CXX compiler identification is GNU 11.4.0
+[0.756s] -- Detecting C compiler ABI info
+[0.857s] -- Detecting C compiler ABI info - done
+[0.863s] -- Check for working C compiler: /usr/bin/cc - skipped
+[0.863s] -- Detecting C compile features
+[0.864s] -- Detecting C compile features - done
+[0.871s] -- Detecting CXX compiler ABI info
+[0.999s] -- Detecting CXX compiler ABI info - done
+[1.007s] -- Check for working CXX compiler: /usr/bin/c++ - skipped
+[1.007s] -- Detecting CXX compile features
+[1.008s] -- Detecting CXX compile features - done
+[1.011s] -- Found ament_cmake_auto: 1.3.12 (/opt/ros/humble/share/ament_cmake_auto/cmake)
+[1.231s] -- Found Python3: /usr/bin/python3 (found version "3.10.12") found components: Interpreter 
+[1.324s] -- Override CMake install command with custom implementation using symlinks instead of copying resources
+[1.494s] -- Found ament_lint_auto: 0.12.14 (/opt/ros/humble/share/ament_lint_auto/cmake)
+[1.527s] -- Added test 'copyright' to check source files copyright and LICENSE
+[1.556s] -- Added test 'lint_cmake' to check CMake code style
+[1.568s] -- Added test 'xmllint' to check XML markup files
+[1.569s] -- Configuring done
+[1.573s] -- Generating done
+[1.576s] -- Build files have been written to: /home/alberto/tiago_public_ws/build/pal_urdf_utils
+[1.583s] Invoked command in '/home/alberto/tiago_public_ws/build/pal_urdf_utils' returned '0': CMAKE_PREFIX_PATH=/opt/ros/humble /usr/bin/cmake /home/alberto/tiago_public_ws/src/pal_urdf_utils -DAMENT_CMAKE_SYMLINK_INSTALL=1 -DCMAKE_INSTALL_PREFIX=/home/alberto/tiago_public_ws/install/pal_urdf_utils
+[1.587s] Invoking command in '/home/alberto/tiago_public_ws/build/pal_urdf_utils': CMAKE_PREFIX_PATH=/opt/ros/humble /usr/bin/cmake --build /home/alberto/tiago_public_ws/build/pal_urdf_utils -- -j8 -l8
+[1.653s] Invoked command in '/home/alberto/tiago_public_ws/build/pal_urdf_utils' returned '0': CMAKE_PREFIX_PATH=/opt/ros/humble /usr/bin/cmake --build /home/alberto/tiago_public_ws/build/pal_urdf_utils -- -j8 -l8
+[1.656s] Invoking command in '/home/alberto/tiago_public_ws/build/pal_urdf_utils': CMAKE_PREFIX_PATH=/opt/ros/humble /usr/bin/cmake --install /home/alberto/tiago_public_ws/build/pal_urdf_utils
+[1.860s] -- Install configuration: ""
+[1.860s] -- Execute custom install script
+[1.860s] -- Symlinking: /home/alberto/tiago_public_ws/install/pal_urdf_utils/share/pal_urdf_utils/urdf/camera/OS1-64.urdf.xacro
+[1.860s] -- Symlinking: /home/alberto/tiago_public_ws/install/pal_urdf_utils/share/pal_urdf_utils/urdf/camera/elp_rgb.gazebo.xacro
+[1.860s] -- Symlinking: /home/alberto/tiago_public_ws/install/pal_urdf_utils/share/pal_urdf_utils/urdf/camera/elp_rgb.urdf.xacro
+[1.860s] -- Symlinking: /home/alberto/tiago_public_ws/install/pal_urdf_utils/share/pal_urdf_utils/urdf/camera/imx179_camera.gazebo.xacro
+[1.860s] -- Symlinking: /home/alberto/tiago_public_ws/install/pal_urdf_utils/share/pal_urdf_utils/urdf/camera/openni.gazebo.xacro
+[1.860s] -- Symlinking: /home/alberto/tiago_public_ws/install/pal_urdf_utils/share/pal_urdf_utils/urdf/camera/openni_talos.gazebo.xacro
+[1.861s] -- Symlinking: /home/alberto/tiago_public_ws/install/pal_urdf_utils/share/pal_urdf_utils/urdf/camera/orbbec_astra.urdf.xacro
+[1.861s] -- Symlinking: /home/alberto/tiago_public_ws/install/pal_urdf_utils/share/pal_urdf_utils/urdf/camera/orbbec_astra_pro.gazebo.xacro
+[1.861s] -- Symlinking: /home/alberto/tiago_public_ws/install/pal_urdf_utils/share/pal_urdf_utils/urdf/camera/orbbec_astra_pro.urdf.xacro
+[1.861s] -- Symlinking: /home/alberto/tiago_public_ws/install/pal_urdf_utils/share/pal_urdf_utils/urdf/camera/realsense_d435.gazebo.xacro
+[1.861s] -- Symlinking: /home/alberto/tiago_public_ws/install/pal_urdf_utils/share/pal_urdf_utils/urdf/camera/realsense_d435.urdf.xacro
+[1.861s] -- Symlinking: /home/alberto/tiago_public_ws/install/pal_urdf_utils/share/pal_urdf_utils/urdf/camera/realsense_d435i.gazebo.xacro
+[1.861s] -- Symlinking: /home/alberto/tiago_public_ws/install/pal_urdf_utils/share/pal_urdf_utils/urdf/camera/realsense_d435i.urdf.xacro
+[1.861s] -- Symlinking: /home/alberto/tiago_public_ws/install/pal_urdf_utils/share/pal_urdf_utils/urdf/camera/realsense_d455.gazebo.xacro
+[1.861s] -- Symlinking: /home/alberto/tiago_public_ws/install/pal_urdf_utils/share/pal_urdf_utils/urdf/camera/realsense_d455.urdf.xacro
+[1.865s] -- Symlinking: /home/alberto/tiago_public_ws/install/pal_urdf_utils/share/pal_urdf_utils/urdf/camera/realsense_t265.gazebo.xacro
+[1.878s] -- Symlinking: /home/alberto/tiago_public_ws/install/pal_urdf_utils/share/pal_urdf_utils/urdf/camera/realsense_t265.urdf.xacro
+[1.889s] -- Symlinking: /home/alberto/tiago_public_ws/install/pal_urdf_utils/share/pal_urdf_utils/urdf/camera/rpi_camera.gazebo.xacro
+[1.909s] -- Symlinking: /home/alberto/tiago_public_ws/install/pal_urdf_utils/share/pal_urdf_utils/urdf/camera/structure_sensor.gazebo.xacro
+[1.928s] -- Symlinking: /home/alberto/tiago_public_ws/install/pal_urdf_utils/share/pal_urdf_utils/urdf/camera/structure_sensor.urdf.xacro
+[1.944s] -- Symlinking: /home/alberto/tiago_public_ws/install/pal_urdf_utils/share/pal_urdf_utils/urdf/camera/xtion_pro_live.urdf.xacro
+[1.962s] -- Symlinking: /home/alberto/tiago_public_ws/install/pal_urdf_utils/share/pal_urdf_utils/urdf/deg_to_rad.urdf.xacro
+[1.976s] -- Symlinking: /home/alberto/tiago_public_ws/install/pal_urdf_utils/share/pal_urdf_utils/urdf/ft_sensors/ati.urdf.xacro
+[1.992s] -- Symlinking: /home/alberto/tiago_public_ws/install/pal_urdf_utils/share/pal_urdf_utils/urdf/ft_sensors/ati_talos.gazebo.xacro
+[2.013s] -- Symlinking: /home/alberto/tiago_public_ws/install/pal_urdf_utils/share/pal_urdf_utils/urdf/ft_sensors/ati_talos.urdf.xacro
+[2.033s] -- Symlinking: /home/alberto/tiago_public_ws/install/pal_urdf_utils/share/pal_urdf_utils/urdf/ft_sensors/ft_sensor.gazebo.xacro
+[2.046s] -- Symlinking: /home/alberto/tiago_public_ws/install/pal_urdf_utils/share/pal_urdf_utils/urdf/ft_sensors/ft_sensor.urdf.xacro
+[2.058s] -- Symlinking: /home/alberto/tiago_public_ws/install/pal_urdf_utils/share/pal_urdf_utils/urdf/ft_sensors/ftsensor.ros2_control.xacro
+[2.075s] -- Symlinking: /home/alberto/tiago_public_ws/install/pal_urdf_utils/share/pal_urdf_utils/urdf/ft_sensors/rokubi.urdf.xacro
+[2.092s] -- Symlinking: /home/alberto/tiago_public_ws/install/pal_urdf_utils/share/pal_urdf_utils/urdf/ft_sensors/schunk.gazebo.xacro
+[2.115s] -- Symlinking: /home/alberto/tiago_public_ws/install/pal_urdf_utils/share/pal_urdf_utils/urdf/ft_sensors/schunk.urdf.xacro
+[2.133s] -- Symlinking: /home/alberto/tiago_public_ws/install/pal_urdf_utils/share/pal_urdf_utils/urdf/interaction_sensors/imu.gazebo.xacro
+[2.147s] -- Symlinking: /home/alberto/tiago_public_ws/install/pal_urdf_utils/share/pal_urdf_utils/urdf/interaction_sensors/imu.urdf.xacro
+[2.159s] -- Symlinking: /home/alberto/tiago_public_ws/install/pal_urdf_utils/share/pal_urdf_utils/urdf/interaction_sensors/imu_sensors.ros2_control.xacro
+[2.170s] -- Symlinking: /home/alberto/tiago_public_ws/install/pal_urdf_utils/share/pal_urdf_utils/urdf/interaction_sensors/imu_talos.gazebo.xacro
+[2.183s] -- Symlinking: /home/alberto/tiago_public_ws/install/pal_urdf_utils/share/pal_urdf_utils/urdf/interaction_sensors/imu_talos.urdf.xacro
+[2.196s] -- Symlinking: /home/alberto/tiago_public_ws/install/pal_urdf_utils/share/pal_urdf_utils/urdf/interaction_sensors/microphone.urdf.xacro
+[2.214s] -- Symlinking: /home/alberto/tiago_public_ws/install/pal_urdf_utils/share/pal_urdf_utils/urdf/laser/hokuyo_urg_04lx_ug01_laser.gazebo.xacro
+[2.238s] -- Symlinking: /home/alberto/tiago_public_ws/install/pal_urdf_utils/share/pal_urdf_utils/urdf/laser/hokuyo_urg_04lx_ug01_laser.urdf.xacro
+[2.250s] -- Symlinking: /home/alberto/tiago_public_ws/install/pal_urdf_utils/share/pal_urdf_utils/urdf/laser/range.gazebo.xacro
+[2.265s] -- Symlinking: /home/alberto/tiago_public_ws/install/pal_urdf_utils/share/pal_urdf_utils/urdf/laser/range.urdf.xacro
+[2.277s] -- Symlinking: /home/alberto/tiago_public_ws/install/pal_urdf_utils/share/pal_urdf_utils/urdf/laser/sick_nanoscan3_laser.gazebo.xacro
+[2.287s] -- Symlinking: /home/alberto/tiago_public_ws/install/pal_urdf_utils/share/pal_urdf_utils/urdf/laser/sick_nanoscan3_laser.urdf.xacro
+[2.300s] -- Symlinking: /home/alberto/tiago_public_ws/install/pal_urdf_utils/share/pal_urdf_utils/urdf/laser/sick_tim551_laser.gazebo.xacro
+[2.311s] -- Symlinking: /home/alberto/tiago_public_ws/install/pal_urdf_utils/share/pal_urdf_utils/urdf/laser/sick_tim551_laser.urdf.xacro
+[2.326s] -- Symlinking: /home/alberto/tiago_public_ws/install/pal_urdf_utils/share/pal_urdf_utils/urdf/laser/sick_tim561_laser.gazebo.xacro
+[2.345s] -- Symlinking: /home/alberto/tiago_public_ws/install/pal_urdf_utils/share/pal_urdf_utils/urdf/laser/sick_tim561_laser.urdf.xacro
+[2.361s] -- Symlinking: /home/alberto/tiago_public_ws/install/pal_urdf_utils/share/pal_urdf_utils/urdf/laser/sick_tim571_laser.gazebo.xacro
+[2.378s] -- Symlinking: /home/alberto/tiago_public_ws/install/pal_urdf_utils/share/pal_urdf_utils/urdf/laser/sick_tim571_laser.urdf.xacro
+[2.396s] -- Symlinking: /home/alberto/tiago_public_ws/install/pal_urdf_utils/share/pal_urdf_utils/urdf/laser/ydlidar_tg15_laser.gazebo.xacro
+[2.421s] -- Symlinking: /home/alberto/tiago_public_ws/install/pal_urdf_utils/share/pal_urdf_utils/urdf/laser/ydlidar_tg15_laser.urdf.xacro
+[2.436s] -- Symlinking: /home/alberto/tiago_public_ws/install/pal_urdf_utils/share/pal_urdf_utils/urdf/laser/ydlidar_tg30_laser.gazebo.xacro
+[2.452s] -- Symlinking: /home/alberto/tiago_public_ws/install/pal_urdf_utils/share/pal_urdf_utils/urdf/laser/ydlidar_tg30_laser.urdf.xacro
+[2.466s] -- Symlinking: /home/alberto/tiago_public_ws/install/pal_urdf_utils/share/pal_urdf_utils/urdf/materials.urdf.xacro
+[2.477s] -- Symlinking: /home/alberto/tiago_public_ws/install/pal_urdf_utils/share/pal_urdf_utils/urdf/pi.urdf.xacro
+[2.490s] -- Symlinking: /home/alberto/tiago_public_ws/install/pal_urdf_utils/share/pal_urdf_utils/meshes/camera/elp_camera.stl
+[2.504s] -- Symlinking: /home/alberto/tiago_public_ws/install/pal_urdf_utils/share/pal_urdf_utils/meshes/camera/head_front_camera.stl
+[2.517s] -- Symlinking: /home/alberto/tiago_public_ws/install/pal_urdf_utils/share/pal_urdf_utils/meshes/camera/orbbec.STL
+[2.535s] -- Symlinking: /home/alberto/tiago_public_ws/install/pal_urdf_utils/share/pal_urdf_utils/meshes/camera/os1_64.dae
+[2.550s] -- Symlinking: /home/alberto/tiago_public_ws/install/pal_urdf_utils/share/pal_urdf_utils/meshes/camera/structure_sensor.stl
+[2.566s] -- Symlinking: /home/alberto/tiago_public_ws/install/pal_urdf_utils/share/pal_urdf_utils/meshes/camera/t265.stl
+[2.579s] -- Symlinking: /home/alberto/tiago_public_ws/install/pal_urdf_utils/share/pal_urdf_utils/meshes/camera/xtion_pro_live.dae
+[2.592s] -- Symlinking: /home/alberto/tiago_public_ws/install/pal_urdf_utils/share/pal_urdf_utils/meshes/ft_sensors/ati_ft_sensor.stl
+[2.605s] -- Symlinking: /home/alberto/tiago_public_ws/install/pal_urdf_utils/share/pal_urdf_utils/meshes/ft_sensors/rokubi_ft_sensor.stl
+[2.617s] -- Symlinking: /home/alberto/tiago_public_ws/install/pal_urdf_utils/share/pal_urdf_utils/meshes/laser/hokuyo_urg_04lx_ug01.stl
+[2.633s] -- Symlinking: /home/alberto/tiago_public_ws/install/pal_urdf_utils/share/pal_urdf_utils/meshes/laser/sick_tim551.stl
+[2.647s] -- Symlinking: /home/alberto/tiago_public_ws/install/pal_urdf_utils/share/pal_urdf_utils/meshes/laser/srf05.stl
+[2.662s] -- Symlinking: /home/alberto/tiago_public_ws/install/pal_urdf_utils/share/pal_urdf_utils/meshes/laser/ydlidar.dae
+[2.676s] -- Symlinking: /home/alberto/tiago_public_ws/install/pal_urdf_utils/share/ament_index/resource_index/package_run_dependencies/pal_urdf_utils
+[2.688s] -- Symlinking: /home/alberto/tiago_public_ws/install/pal_urdf_utils/share/ament_index/resource_index/parent_prefix_path/pal_urdf_utils
+[2.708s] -- Symlinking: /home/alberto/tiago_public_ws/install/pal_urdf_utils/share/pal_urdf_utils/environment/ament_prefix_path.sh
+[2.716s] -- Symlinking: /home/alberto/tiago_public_ws/install/pal_urdf_utils/share/pal_urdf_utils/environment/ament_prefix_path.dsv
+[2.731s] -- Symlinking: /home/alberto/tiago_public_ws/install/pal_urdf_utils/share/pal_urdf_utils/environment/path.sh
+[2.747s] -- Symlinking: /home/alberto/tiago_public_ws/install/pal_urdf_utils/share/pal_urdf_utils/environment/path.dsv
+[2.759s] -- Symlinking: /home/alberto/tiago_public_ws/install/pal_urdf_utils/share/pal_urdf_utils/local_setup.bash
+[2.771s] -- Symlinking: /home/alberto/tiago_public_ws/install/pal_urdf_utils/share/pal_urdf_utils/local_setup.sh
+[2.784s] -- Symlinking: /home/alberto/tiago_public_ws/install/pal_urdf_utils/share/pal_urdf_utils/local_setup.zsh
+[2.796s] -- Symlinking: /home/alberto/tiago_public_ws/install/pal_urdf_utils/share/pal_urdf_utils/local_setup.dsv
+[2.806s] -- Symlinking: /home/alberto/tiago_public_ws/install/pal_urdf_utils/share/pal_urdf_utils/package.dsv
+[2.817s] -- Symlinking: /home/alberto/tiago_public_ws/install/pal_urdf_utils/share/ament_index/resource_index/packages/pal_urdf_utils
+[2.830s] -- Symlinking: /home/alberto/tiago_public_ws/install/pal_urdf_utils/share/pal_urdf_utils/cmake/pal_urdf_utilsConfig.cmake
+[2.857s] -- Symlinking: /home/alberto/tiago_public_ws/install/pal_urdf_utils/share/pal_urdf_utils/cmake/pal_urdf_utilsConfig-version.cmake
+[2.860s] -- Symlinking: /home/alberto/tiago_public_ws/install/pal_urdf_utils/share/pal_urdf_utils/package.xml
+[2.883s] Invoked command in '/home/alberto/tiago_public_ws/build/pal_urdf_utils' returned '0': CMAKE_PREFIX_PATH=/opt/ros/humble /usr/bin/cmake --install /home/alberto/tiago_public_ws/build/pal_urdf_utils

@@ -1,0 +1,72 @@
+Built target ament_cmake_python_symlink_pmb2_description
+running egg_info
+writing pmb2_description.egg-info/PKG-INFO
+writing dependency_links to pmb2_description.egg-info/dependency_links.txt
+writing top-level names to pmb2_description.egg-info/top_level.txt
+reading manifest file 'pmb2_description.egg-info/SOURCES.txt'
+writing manifest file 'pmb2_description.egg-info/SOURCES.txt'
+Built target ament_cmake_python_build_pmb2_description_egg
+-- Install configuration: ""
+-- Execute custom install script
+-- Up-to-date symlink: /home/alberto/tiago_public_ws/install/pmb2_description/share/pmb2_description/environment/pythonpath.sh
+-- Up-to-date symlink: /home/alberto/tiago_public_ws/install/pmb2_description/share/pmb2_description/environment/pythonpath.dsv
+-- Up-to-date symlink: /home/alberto/tiago_public_ws/install/pmb2_description/local/lib/python3.10/dist-packages/pmb2_description-5.10.2-py3.10.egg-info/PKG-INFO
+-- Up-to-date symlink: /home/alberto/tiago_public_ws/install/pmb2_description/local/lib/python3.10/dist-packages/pmb2_description-5.10.2-py3.10.egg-info/SOURCES.txt
+-- Up-to-date symlink: /home/alberto/tiago_public_ws/install/pmb2_description/local/lib/python3.10/dist-packages/pmb2_description-5.10.2-py3.10.egg-info/dependency_links.txt
+-- Up-to-date symlink: /home/alberto/tiago_public_ws/install/pmb2_description/local/lib/python3.10/dist-packages/pmb2_description-5.10.2-py3.10.egg-info/top_level.txt
+-- Up-to-date symlink: /home/alberto/tiago_public_ws/install/pmb2_description/local/lib/python3.10/dist-packages/pmb2_description/__init__.py
+-- Up-to-date symlink: /home/alberto/tiago_public_ws/install/pmb2_description/local/lib/python3.10/dist-packages/pmb2_description/launch_arguments.py
+-- Up-to-date symlink: /home/alberto/tiago_public_ws/install/pmb2_description/share/pmb2_description/rviz/pmb2.rviz
+-- Up-to-date symlink: /home/alberto/tiago_public_ws/install/pmb2_description/share/pmb2_description/launch/robot_state_publisher.launch.py
+-- Up-to-date symlink: /home/alberto/tiago_public_ws/install/pmb2_description/share/pmb2_description/launch/show.launch.py
+-- Up-to-date symlink: /home/alberto/tiago_public_ws/install/pmb2_description/share/pmb2_description/meshes/base/base.stl
+-- Up-to-date symlink: /home/alberto/tiago_public_ws/install/pmb2_description/share/pmb2_description/meshes/base/base_collision.dae
+-- Up-to-date symlink: /home/alberto/tiago_public_ws/install/pmb2_description/share/pmb2_description/meshes/base/base_dock_link.stl
+-- Up-to-date symlink: /home/alberto/tiago_public_ws/install/pmb2_description/share/pmb2_description/meshes/base/base_ring.stl
+-- Up-to-date symlink: /home/alberto/tiago_public_ws/install/pmb2_description/share/pmb2_description/meshes/base/high_resolution/base.stl
+-- Up-to-date symlink: /home/alberto/tiago_public_ws/install/pmb2_description/share/pmb2_description/meshes/base/high_resolution/base_collision.stl
+-- Up-to-date symlink: /home/alberto/tiago_public_ws/install/pmb2_description/share/pmb2_description/meshes/cameras_add_on/cameras_add_on.stl
+-- Up-to-date symlink: /home/alberto/tiago_public_ws/install/pmb2_description/share/pmb2_description/meshes/cameras_add_on/cameras_add_on_collision.stl
+-- Up-to-date symlink: /home/alberto/tiago_public_ws/install/pmb2_description/share/pmb2_description/meshes/dock/dock.stl
+-- Up-to-date symlink: /home/alberto/tiago_public_ws/install/pmb2_description/share/pmb2_description/meshes/dock/dock_collision.stl
+-- Up-to-date symlink: /home/alberto/tiago_public_ws/install/pmb2_description/share/pmb2_description/meshes/objects/antenna.stl
+-- Up-to-date symlink: /home/alberto/tiago_public_ws/install/pmb2_description/share/pmb2_description/meshes/objects/cover.stl
+-- Up-to-date symlink: /home/alberto/tiago_public_ws/install/pmb2_description/share/pmb2_description/meshes/objects/high_resolution/cover.stl
+-- Up-to-date symlink: /home/alberto/tiago_public_ws/install/pmb2_description/share/pmb2_description/meshes/wheels/caster_1.stl
+-- Up-to-date symlink: /home/alberto/tiago_public_ws/install/pmb2_description/share/pmb2_description/meshes/wheels/caster_2.stl
+-- Up-to-date symlink: /home/alberto/tiago_public_ws/install/pmb2_description/share/pmb2_description/meshes/wheels/high_resolution/caster_1.stl
+-- Up-to-date symlink: /home/alberto/tiago_public_ws/install/pmb2_description/share/pmb2_description/meshes/wheels/high_resolution/caster_2.stl
+-- Up-to-date symlink: /home/alberto/tiago_public_ws/install/pmb2_description/share/pmb2_description/meshes/wheels/high_resolution/wheel.stl
+-- Up-to-date symlink: /home/alberto/tiago_public_ws/install/pmb2_description/share/pmb2_description/meshes/wheels/wheel.stl
+-- Up-to-date symlink: /home/alberto/tiago_public_ws/install/pmb2_description/share/pmb2_description/config/pmb2_configuration.yaml
+-- Up-to-date symlink: /home/alberto/tiago_public_ws/install/pmb2_description/share/pmb2_description/robots/pmb2.urdf.xacro
+-- Up-to-date symlink: /home/alberto/tiago_public_ws/install/pmb2_description/share/pmb2_description/ros2_control/gazebo_controller_manager_cfg.yaml
+-- Up-to-date symlink: /home/alberto/tiago_public_ws/install/pmb2_description/share/pmb2_description/ros2_control/ros2_control.urdf.xacro
+-- Up-to-date symlink: /home/alberto/tiago_public_ws/install/pmb2_description/share/pmb2_description/urdf/base/base.gazebo.xacro
+-- Up-to-date symlink: /home/alberto/tiago_public_ws/install/pmb2_description/share/pmb2_description/urdf/base/base.urdf.xacro
+-- Up-to-date symlink: /home/alberto/tiago_public_ws/install/pmb2_description/share/pmb2_description/urdf/base/base_sensors.urdf.xacro
+-- Up-to-date symlink: /home/alberto/tiago_public_ws/install/pmb2_description/share/pmb2_description/urdf/cameras_add_on/cameras_add_on.urdf.xacro
+-- Up-to-date symlink: /home/alberto/tiago_public_ws/install/pmb2_description/share/pmb2_description/urdf/dock/dock.urdf.xacro
+-- Up-to-date symlink: /home/alberto/tiago_public_ws/install/pmb2_description/share/pmb2_description/urdf/objects/antenna.urdf.xacro
+-- Up-to-date symlink: /home/alberto/tiago_public_ws/install/pmb2_description/share/pmb2_description/urdf/objects/cover.urdf.xacro
+-- Up-to-date symlink: /home/alberto/tiago_public_ws/install/pmb2_description/share/pmb2_description/urdf/wheels/caster.gazebo.xacro
+-- Up-to-date symlink: /home/alberto/tiago_public_ws/install/pmb2_description/share/pmb2_description/urdf/wheels/caster.urdf.xacro
+-- Up-to-date symlink: /home/alberto/tiago_public_ws/install/pmb2_description/share/pmb2_description/urdf/wheels/wheel.gazebo.xacro
+-- Up-to-date symlink: /home/alberto/tiago_public_ws/install/pmb2_description/share/pmb2_description/urdf/wheels/wheel.ros2_control.xacro
+-- Up-to-date symlink: /home/alberto/tiago_public_ws/install/pmb2_description/share/pmb2_description/urdf/wheels/wheel.urdf.xacro
+-- Up-to-date symlink: /home/alberto/tiago_public_ws/install/pmb2_description/share/ament_index/resource_index/package_run_dependencies/pmb2_description
+-- Up-to-date symlink: /home/alberto/tiago_public_ws/install/pmb2_description/share/ament_index/resource_index/parent_prefix_path/pmb2_description
+-- Up-to-date symlink: /home/alberto/tiago_public_ws/install/pmb2_description/share/pmb2_description/environment/ament_prefix_path.sh
+-- Up-to-date symlink: /home/alberto/tiago_public_ws/install/pmb2_description/share/pmb2_description/environment/ament_prefix_path.dsv
+-- Up-to-date symlink: /home/alberto/tiago_public_ws/install/pmb2_description/share/pmb2_description/environment/path.sh
+-- Up-to-date symlink: /home/alberto/tiago_public_ws/install/pmb2_description/share/pmb2_description/environment/path.dsv
+-- Up-to-date symlink: /home/alberto/tiago_public_ws/install/pmb2_description/share/pmb2_description/local_setup.bash
+-- Up-to-date symlink: /home/alberto/tiago_public_ws/install/pmb2_description/share/pmb2_description/local_setup.sh
+-- Up-to-date symlink: /home/alberto/tiago_public_ws/install/pmb2_description/share/pmb2_description/local_setup.zsh
+-- Up-to-date symlink: /home/alberto/tiago_public_ws/install/pmb2_description/share/pmb2_description/local_setup.dsv
+-- Symlinking: /home/alberto/tiago_public_ws/install/pmb2_description/share/pmb2_description/package.dsv
+-- Up-to-date symlink: /home/alberto/tiago_public_ws/install/pmb2_description/share/ament_index/resource_index/packages/pmb2_description
+-- Up-to-date symlink: /home/alberto/tiago_public_ws/install/pmb2_description/share/pmb2_description/cmake/pmb2_descriptionConfig.cmake
+-- Up-to-date symlink: /home/alberto/tiago_public_ws/install/pmb2_description/share/pmb2_description/cmake/pmb2_descriptionConfig-version.cmake
+-- Up-to-date symlink: /home/alberto/tiago_public_ws/install/pmb2_description/share/pmb2_description/package.xml
+Listing '/home/alberto/tiago_public_ws/install/pmb2_description/local/lib/python3.10/dist-packages/pmb2_description'...

@@ -1,0 +1,1 @@
+/home/alberto/tiago_public_ws/src/tiago_moveit_config/launch/moveit_rviz.launch.py

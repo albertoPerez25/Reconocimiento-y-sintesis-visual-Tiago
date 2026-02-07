@@ -1,0 +1,27 @@
+[0.025s] Invoking command in '/home/alberto/tiago_public_ws/build/pmb2_2dnav': AMENT_PREFIX_PATH=/home/alberto/tiago_public_ws/install/launch_pal:${AMENT_PREFIX_PATH} CMAKE_PREFIX_PATH=/opt/ros/humble PYTHONPATH=/home/alberto/tiago_public_ws/build/launch_pal:/home/alberto/tiago_public_ws/install/launch_pal/lib/python3.10/site-packages:${PYTHONPATH} /usr/bin/cmake --build /home/alberto/tiago_public_ws/build/pmb2_2dnav -- -j12 -l12
+[0.082s] Invoked command in '/home/alberto/tiago_public_ws/build/pmb2_2dnav' returned '0': AMENT_PREFIX_PATH=/home/alberto/tiago_public_ws/install/launch_pal:${AMENT_PREFIX_PATH} CMAKE_PREFIX_PATH=/opt/ros/humble PYTHONPATH=/home/alberto/tiago_public_ws/build/launch_pal:/home/alberto/tiago_public_ws/install/launch_pal/lib/python3.10/site-packages:${PYTHONPATH} /usr/bin/cmake --build /home/alberto/tiago_public_ws/build/pmb2_2dnav -- -j12 -l12
+[0.086s] Invoking command in '/home/alberto/tiago_public_ws/build/pmb2_2dnav': AMENT_PREFIX_PATH=/home/alberto/tiago_public_ws/install/launch_pal:${AMENT_PREFIX_PATH} CMAKE_PREFIX_PATH=/opt/ros/humble PYTHONPATH=/home/alberto/tiago_public_ws/build/launch_pal:/home/alberto/tiago_public_ws/install/launch_pal/lib/python3.10/site-packages:${PYTHONPATH} /usr/bin/cmake --install /home/alberto/tiago_public_ws/build/pmb2_2dnav
+[0.102s] -- Install configuration: ""
+[0.104s] -- Execute custom install script
+[0.107s] -- Up-to-date symlink: /home/alberto/tiago_public_ws/install/pmb2_2dnav/share/pmb2_2dnav/config/nav2_analyzers.yaml
+[0.107s] -- Up-to-date symlink: /home/alberto/tiago_public_ws/install/pmb2_2dnav/share/pmb2_2dnav/config/nav_public_sim.yaml
+[0.108s] -- Up-to-date symlink: /home/alberto/tiago_public_ws/install/pmb2_2dnav/share/pmb2_2dnav/config/rviz/navigation.rviz
+[0.113s] -- Up-to-date symlink: /home/alberto/tiago_public_ws/install/pmb2_2dnav/share/pmb2_2dnav/launch/localization.launch.py
+[0.113s] -- Up-to-date symlink: /home/alberto/tiago_public_ws/install/pmb2_2dnav/share/pmb2_2dnav/launch/navigation.launch.py
+[0.113s] -- Up-to-date symlink: /home/alberto/tiago_public_ws/install/pmb2_2dnav/share/pmb2_2dnav/launch/slam.launch.py
+[0.113s] -- Up-to-date symlink: /home/alberto/tiago_public_ws/install/pmb2_2dnav/share/ament_index/resource_index/package_run_dependencies/pmb2_2dnav
+[0.114s] -- Up-to-date symlink: /home/alberto/tiago_public_ws/install/pmb2_2dnav/share/ament_index/resource_index/parent_prefix_path/pmb2_2dnav
+[0.115s] -- Up-to-date symlink: /home/alberto/tiago_public_ws/install/pmb2_2dnav/share/pmb2_2dnav/environment/ament_prefix_path.sh
+[0.115s] -- Up-to-date symlink: /home/alberto/tiago_public_ws/install/pmb2_2dnav/share/pmb2_2dnav/environment/ament_prefix_path.dsv
+[0.116s] -- Up-to-date symlink: /home/alberto/tiago_public_ws/install/pmb2_2dnav/share/pmb2_2dnav/environment/path.sh
+[0.116s] -- Up-to-date symlink: /home/alberto/tiago_public_ws/install/pmb2_2dnav/share/pmb2_2dnav/environment/path.dsv
+[0.116s] -- Up-to-date symlink: /home/alberto/tiago_public_ws/install/pmb2_2dnav/share/pmb2_2dnav/local_setup.bash
+[0.117s] -- Up-to-date symlink: /home/alberto/tiago_public_ws/install/pmb2_2dnav/share/pmb2_2dnav/local_setup.sh
+[0.117s] -- Up-to-date symlink: /home/alberto/tiago_public_ws/install/pmb2_2dnav/share/pmb2_2dnav/local_setup.zsh
+[0.117s] -- Up-to-date symlink: /home/alberto/tiago_public_ws/install/pmb2_2dnav/share/pmb2_2dnav/local_setup.dsv
+[0.117s] -- Symlinking: /home/alberto/tiago_public_ws/install/pmb2_2dnav/share/pmb2_2dnav/package.dsv
+[0.131s] -- Up-to-date symlink: /home/alberto/tiago_public_ws/install/pmb2_2dnav/share/ament_index/resource_index/packages/pmb2_2dnav
+[0.132s] -- Up-to-date symlink: /home/alberto/tiago_public_ws/install/pmb2_2dnav/share/pmb2_2dnav/cmake/pmb2_2dnavConfig.cmake
+[0.133s] -- Up-to-date symlink: /home/alberto/tiago_public_ws/install/pmb2_2dnav/share/pmb2_2dnav/cmake/pmb2_2dnavConfig-version.cmake
+[0.133s] -- Up-to-date symlink: /home/alberto/tiago_public_ws/install/pmb2_2dnav/share/pmb2_2dnav/package.xml
+[0.137s] Invoked command in '/home/alberto/tiago_public_ws/build/pmb2_2dnav' returned '0': AMENT_PREFIX_PATH=/home/alberto/tiago_public_ws/install/launch_pal:${AMENT_PREFIX_PATH} CMAKE_PREFIX_PATH=/opt/ros/humble PYTHONPATH=/home/alberto/tiago_public_ws/build/launch_pal:/home/alberto/tiago_public_ws/install/launch_pal/lib/python3.10/site-packages:${PYTHONPATH} /usr/bin/cmake --install /home/alberto/tiago_public_ws/build/pmb2_2dnav

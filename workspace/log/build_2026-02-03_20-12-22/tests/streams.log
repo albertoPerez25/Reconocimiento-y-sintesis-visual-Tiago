@@ -1,0 +1,21 @@
+[0.559s] Invoking command in '/home/alberto/tfg/tests/tiago_tests/build/tests': PYTHONPATH=/home/alberto/tfg/tests/tiago_tests/build/tests/prefix_override:/usr/lib/python3/dist-packages/colcon_core/task/python/colcon_distutils_commands:/home/alberto/tfg/tests/tiago_tests/install/tests/lib/python3.10/site-packages:${PYTHONPATH} /usr/bin/python3 -W ignore:setup.py install is deprecated -W ignore:easy_install command is deprecated setup.py develop --editable --build-directory /home/alberto/tfg/tests/tiago_tests/build/tests/build --no-deps symlink_data
+[0.782s] running develop
+[0.935s] running egg_info
+[0.935s] writing tests.egg-info/PKG-INFO
+[0.935s] writing dependency_links to tests.egg-info/dependency_links.txt
+[0.936s] writing entry points to tests.egg-info/entry_points.txt
+[0.936s] writing requirements to tests.egg-info/requires.txt
+[0.936s] writing top-level names to tests.egg-info/top_level.txt
+[0.937s] reading manifest file 'tests.egg-info/SOURCES.txt'
+[0.938s] writing manifest file 'tests.egg-info/SOURCES.txt'
+[0.939s] running build_ext
+[0.939s] Creating /home/alberto/tfg/tests/tiago_tests/install/tests/lib/python3.10/site-packages/tests.egg-link (link to .)
+[0.940s] Installing debug_laser script to /home/alberto/tfg/tests/tiago_tests/install/tests/lib/tests
+[0.940s] Installing explorer_node script to /home/alberto/tfg/tests/tiago_tests/install/tests/lib/tests
+[0.940s] Installing patrol_node script to /home/alberto/tfg/tests/tiago_tests/install/tests/lib/tests
+[0.940s] Installing simple_mover script to /home/alberto/tfg/tests/tiago_tests/install/tests/lib/tests
+[0.940s] Installing wall_follower script to /home/alberto/tfg/tests/tiago_tests/install/tests/lib/tests
+[0.940s] 
+[0.940s] Installed /home/alberto/tfg/tests/tiago_tests/build/tests
+[0.941s] running symlink_data
+[0.964s] Invoked command in '/home/alberto/tfg/tests/tiago_tests/build/tests' returned '0': PYTHONPATH=/home/alberto/tfg/tests/tiago_tests/build/tests/prefix_override:/usr/lib/python3/dist-packages/colcon_core/task/python/colcon_distutils_commands:/home/alberto/tfg/tests/tiago_tests/install/tests/lib/python3.10/site-packages:${PYTHONPATH} /usr/bin/python3 -W ignore:setup.py install is deprecated -W ignore:easy_install command is deprecated setup.py develop --editable --build-directory /home/alberto/tfg/tests/tiago_tests/build/tests/build --no-deps symlink_data

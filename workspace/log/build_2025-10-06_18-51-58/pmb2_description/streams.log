@@ -1,0 +1,113 @@
+[0.029s] Invoking command in '/home/alberto/tiago_public_ws/build/pmb2_description': AMENT_PREFIX_PATH=/home/alberto/tiago_public_ws/install/urdf_test:/home/alberto/tiago_public_ws/install/pal_urdf_utils:/home/alberto/tiago_public_ws/install/launch_pal:${AMENT_PREFIX_PATH} CMAKE_PREFIX_PATH=/home/alberto/tiago_public_ws/install/urdf_test:/home/alberto/tiago_public_ws/install/pal_urdf_utils:/opt/ros/humble PYTHONPATH=/home/alberto/tiago_public_ws/install/urdf_test/local/lib/python3.10/dist-packages:/home/alberto/tiago_public_ws/build/launch_pal:/home/alberto/tiago_public_ws/install/launch_pal/lib/python3.10/site-packages:${PYTHONPATH} /usr/bin/cmake /home/alberto/tiago_public_ws/src/pmb2_robot/pmb2_description -DAMENT_CMAKE_SYMLINK_INSTALL=1 -DCMAKE_INSTALL_PREFIX=/home/alberto/tiago_public_ws/install/pmb2_description
+[0.460s] -- The C compiler identification is GNU 11.4.0
+[0.460s] -- The CXX compiler identification is GNU 11.4.0
+[0.460s] -- Detecting C compiler ABI info
+[0.460s] -- Detecting C compiler ABI info - done
+[0.460s] -- Check for working C compiler: /usr/bin/cc - skipped
+[0.460s] -- Detecting C compile features
+[0.460s] -- Detecting C compile features - done
+[0.460s] -- Detecting CXX compiler ABI info
+[0.523s] -- Detecting CXX compiler ABI info - done
+[0.534s] -- Check for working CXX compiler: /usr/bin/c++ - skipped
+[0.534s] -- Detecting CXX compile features
+[0.534s] -- Detecting CXX compile features - done
+[0.534s] -- Found ament_cmake_auto: 1.3.12 (/opt/ros/humble/share/ament_cmake_auto/cmake)
+[0.733s] -- Found Python3: /usr/bin/python3 (found version "3.10.12") found components: Interpreter 
+[0.820s] -- Override CMake install command with custom implementation using symlinks instead of copying resources
+[0.979s] -- Found ament_lint_auto: 0.12.14 (/opt/ros/humble/share/ament_lint_auto/cmake)
+[1.039s] -- Found python_cmake_module: 0.10.0 (/opt/ros/humble/share/python_cmake_module/cmake)
+[1.077s] -- Found PythonInterp: /usr/bin/python3 (found suitable version "3.10.12", minimum required is "3.6") 
+[1.097s] -- Found PythonLibs: /usr/lib/x86_64-linux-gnu/libpython3.10.so (found suitable version "3.10.12", minimum required is "3.5") 
+[1.097s] -- Using PYTHON_EXECUTABLE: /usr/bin/python3
+[1.098s] -- Using PYTHON_INCLUDE_DIRS: /usr/include/python3.10
+[1.098s] -- Using PYTHON_LIBRARIES: /usr/lib/x86_64-linux-gnu/libpython3.10.so
+[1.134s] -- Found PythonExtra: .so  
+[1.958s] -- Added test 'copyright' to check source files copyright and LICENSE
+[1.973s] -- Added test 'flake8' to check Python code syntax and style conventions
+[1.978s] -- Added test 'lint_cmake' to check CMake code style
+[1.979s] -- Added test 'pep257' to check Python code against some of the docstring style conventions in PEP 257
+[1.988s] -- Added test 'xmllint' to check XML markup files
+[1.992s] -- Configuring done
+[1.999s] -- Generating done
+[2.001s] -- Build files have been written to: /home/alberto/tiago_public_ws/build/pmb2_description
+[2.013s] Invoked command in '/home/alberto/tiago_public_ws/build/pmb2_description' returned '0': AMENT_PREFIX_PATH=/home/alberto/tiago_public_ws/install/urdf_test:/home/alberto/tiago_public_ws/install/pal_urdf_utils:/home/alberto/tiago_public_ws/install/launch_pal:${AMENT_PREFIX_PATH} CMAKE_PREFIX_PATH=/home/alberto/tiago_public_ws/install/urdf_test:/home/alberto/tiago_public_ws/install/pal_urdf_utils:/opt/ros/humble PYTHONPATH=/home/alberto/tiago_public_ws/install/urdf_test/local/lib/python3.10/dist-packages:/home/alberto/tiago_public_ws/build/launch_pal:/home/alberto/tiago_public_ws/install/launch_pal/lib/python3.10/site-packages:${PYTHONPATH} /usr/bin/cmake /home/alberto/tiago_public_ws/src/pmb2_robot/pmb2_description -DAMENT_CMAKE_SYMLINK_INSTALL=1 -DCMAKE_INSTALL_PREFIX=/home/alberto/tiago_public_ws/install/pmb2_description
+[2.025s] Invoking command in '/home/alberto/tiago_public_ws/build/pmb2_description': AMENT_PREFIX_PATH=/home/alberto/tiago_public_ws/install/urdf_test:/home/alberto/tiago_public_ws/install/pal_urdf_utils:/home/alberto/tiago_public_ws/install/launch_pal:${AMENT_PREFIX_PATH} CMAKE_PREFIX_PATH=/home/alberto/tiago_public_ws/install/urdf_test:/home/alberto/tiago_public_ws/install/pal_urdf_utils:/opt/ros/humble PYTHONPATH=/home/alberto/tiago_public_ws/install/urdf_test/local/lib/python3.10/dist-packages:/home/alberto/tiago_public_ws/build/launch_pal:/home/alberto/tiago_public_ws/install/launch_pal/lib/python3.10/site-packages:${PYTHONPATH} /usr/bin/cmake --build /home/alberto/tiago_public_ws/build/pmb2_description -- -j8 -l8
+[2.394s] Built target ament_cmake_python_symlink_pmb2_description
+[2.505s] running egg_info
+[2.506s] creating pmb2_description.egg-info
+[2.506s] writing pmb2_description.egg-info/PKG-INFO
+[2.506s] writing dependency_links to pmb2_description.egg-info/dependency_links.txt
+[2.506s] writing top-level names to pmb2_description.egg-info/top_level.txt
+[2.506s] writing manifest file 'pmb2_description.egg-info/SOURCES.txt'
+[2.508s] reading manifest file 'pmb2_description.egg-info/SOURCES.txt'
+[2.510s] writing manifest file 'pmb2_description.egg-info/SOURCES.txt'
+[2.572s] Built target ament_cmake_python_build_pmb2_description_egg
+[2.593s] Invoked command in '/home/alberto/tiago_public_ws/build/pmb2_description' returned '0': AMENT_PREFIX_PATH=/home/alberto/tiago_public_ws/install/urdf_test:/home/alberto/tiago_public_ws/install/pal_urdf_utils:/home/alberto/tiago_public_ws/install/launch_pal:${AMENT_PREFIX_PATH} CMAKE_PREFIX_PATH=/home/alberto/tiago_public_ws/install/urdf_test:/home/alberto/tiago_public_ws/install/pal_urdf_utils:/opt/ros/humble PYTHONPATH=/home/alberto/tiago_public_ws/install/urdf_test/local/lib/python3.10/dist-packages:/home/alberto/tiago_public_ws/build/launch_pal:/home/alberto/tiago_public_ws/install/launch_pal/lib/python3.10/site-packages:${PYTHONPATH} /usr/bin/cmake --build /home/alberto/tiago_public_ws/build/pmb2_description -- -j8 -l8
+[2.594s] Invoking command in '/home/alberto/tiago_public_ws/build/pmb2_description': AMENT_PREFIX_PATH=/home/alberto/tiago_public_ws/install/urdf_test:/home/alberto/tiago_public_ws/install/pal_urdf_utils:/home/alberto/tiago_public_ws/install/launch_pal:${AMENT_PREFIX_PATH} CMAKE_PREFIX_PATH=/home/alberto/tiago_public_ws/install/urdf_test:/home/alberto/tiago_public_ws/install/pal_urdf_utils:/opt/ros/humble PYTHONPATH=/home/alberto/tiago_public_ws/install/urdf_test/local/lib/python3.10/dist-packages:/home/alberto/tiago_public_ws/build/launch_pal:/home/alberto/tiago_public_ws/install/launch_pal/lib/python3.10/site-packages:${PYTHONPATH} /usr/bin/cmake --install /home/alberto/tiago_public_ws/build/pmb2_description
+[2.656s] -- Install configuration: ""
+[2.656s] -- Execute custom install script
+[2.657s] -- Symlinking: /home/alberto/tiago_public_ws/install/pmb2_description/share/pmb2_description/environment/pythonpath.sh
+[2.657s] -- Symlinking: /home/alberto/tiago_public_ws/install/pmb2_description/share/pmb2_description/environment/pythonpath.dsv
+[2.660s] -- Symlinking: /home/alberto/tiago_public_ws/install/pmb2_description/local/lib/python3.10/dist-packages/pmb2_description-5.10.2-py3.10.egg-info/PKG-INFO
+[2.688s] -- Symlinking: /home/alberto/tiago_public_ws/install/pmb2_description/local/lib/python3.10/dist-packages/pmb2_description-5.10.2-py3.10.egg-info/SOURCES.txt
+[2.713s] -- Symlinking: /home/alberto/tiago_public_ws/install/pmb2_description/local/lib/python3.10/dist-packages/pmb2_description-5.10.2-py3.10.egg-info/dependency_links.txt
+[2.758s] -- Symlinking: /home/alberto/tiago_public_ws/install/pmb2_description/local/lib/python3.10/dist-packages/pmb2_description-5.10.2-py3.10.egg-info/top_level.txt
+[2.795s] -- Symlinking: /home/alberto/tiago_public_ws/install/pmb2_description/local/lib/python3.10/dist-packages/pmb2_description/__init__.py
+[2.837s] -- Symlinking: /home/alberto/tiago_public_ws/install/pmb2_description/local/lib/python3.10/dist-packages/pmb2_description/launch_arguments.py
+[2.864s] -- Symlinking: /home/alberto/tiago_public_ws/install/pmb2_description/share/pmb2_description/rviz/pmb2.rviz
+[2.889s] -- Symlinking: /home/alberto/tiago_public_ws/install/pmb2_description/share/pmb2_description/launch/robot_state_publisher.launch.py
+[2.917s] -- Symlinking: /home/alberto/tiago_public_ws/install/pmb2_description/share/pmb2_description/launch/show.launch.py
+[2.953s] -- Symlinking: /home/alberto/tiago_public_ws/install/pmb2_description/share/pmb2_description/meshes/base/base.stl
+[2.979s] -- Symlinking: /home/alberto/tiago_public_ws/install/pmb2_description/share/pmb2_description/meshes/base/base_collision.dae
+[3.015s] -- Symlinking: /home/alberto/tiago_public_ws/install/pmb2_description/share/pmb2_description/meshes/base/base_dock_link.stl
+[3.035s] -- Symlinking: /home/alberto/tiago_public_ws/install/pmb2_description/share/pmb2_description/meshes/base/base_ring.stl
+[3.089s] -- Symlinking: /home/alberto/tiago_public_ws/install/pmb2_description/share/pmb2_description/meshes/base/high_resolution/base.stl
+[3.109s] -- Symlinking: /home/alberto/tiago_public_ws/install/pmb2_description/share/pmb2_description/meshes/base/high_resolution/base_collision.stl
+[3.140s] -- Symlinking: /home/alberto/tiago_public_ws/install/pmb2_description/share/pmb2_description/meshes/cameras_add_on/cameras_add_on.stl
+[3.153s] -- Symlinking: /home/alberto/tiago_public_ws/install/pmb2_description/share/pmb2_description/meshes/cameras_add_on/cameras_add_on_collision.stl
+[3.187s] -- Symlinking: /home/alberto/tiago_public_ws/install/pmb2_description/share/pmb2_description/meshes/dock/dock.stl
+[3.214s] -- Symlinking: /home/alberto/tiago_public_ws/install/pmb2_description/share/pmb2_description/meshes/dock/dock_collision.stl
+[3.248s] -- Symlinking: /home/alberto/tiago_public_ws/install/pmb2_description/share/pmb2_description/meshes/objects/antenna.stl
+[3.266s] -- Symlinking: /home/alberto/tiago_public_ws/install/pmb2_description/share/pmb2_description/meshes/objects/cover.stl
+[3.288s] -- Symlinking: /home/alberto/tiago_public_ws/install/pmb2_description/share/pmb2_description/meshes/objects/high_resolution/cover.stl
+[3.328s] -- Symlinking: /home/alberto/tiago_public_ws/install/pmb2_description/share/pmb2_description/meshes/wheels/caster_1.stl
+[3.363s] -- Symlinking: /home/alberto/tiago_public_ws/install/pmb2_description/share/pmb2_description/meshes/wheels/caster_2.stl
+[3.388s] -- Symlinking: /home/alberto/tiago_public_ws/install/pmb2_description/share/pmb2_description/meshes/wheels/high_resolution/caster_1.stl
+[3.415s] -- Symlinking: /home/alberto/tiago_public_ws/install/pmb2_description/share/pmb2_description/meshes/wheels/high_resolution/caster_2.stl
+[3.436s] -- Symlinking: /home/alberto/tiago_public_ws/install/pmb2_description/share/pmb2_description/meshes/wheels/high_resolution/wheel.stl
+[3.483s] -- Symlinking: /home/alberto/tiago_public_ws/install/pmb2_description/share/pmb2_description/meshes/wheels/wheel.stl
+[3.561s] -- Symlinking: /home/alberto/tiago_public_ws/install/pmb2_description/share/pmb2_description/config/pmb2_configuration.yaml
+[3.593s] -- Symlinking: /home/alberto/tiago_public_ws/install/pmb2_description/share/pmb2_description/robots/pmb2.urdf.xacro
+[3.617s] -- Symlinking: /home/alberto/tiago_public_ws/install/pmb2_description/share/pmb2_description/ros2_control/gazebo_controller_manager_cfg.yaml
+[3.637s] -- Symlinking: /home/alberto/tiago_public_ws/install/pmb2_description/share/pmb2_description/ros2_control/ros2_control.urdf.xacro
+[3.663s] -- Symlinking: /home/alberto/tiago_public_ws/install/pmb2_description/share/pmb2_description/urdf/base/base.gazebo.xacro
+[3.690s] -- Symlinking: /home/alberto/tiago_public_ws/install/pmb2_description/share/pmb2_description/urdf/base/base.urdf.xacro
+[3.717s] -- Symlinking: /home/alberto/tiago_public_ws/install/pmb2_description/share/pmb2_description/urdf/base/base_sensors.urdf.xacro
+[3.738s] -- Symlinking: /home/alberto/tiago_public_ws/install/pmb2_description/share/pmb2_description/urdf/cameras_add_on/cameras_add_on.urdf.xacro
+[3.769s] -- Symlinking: /home/alberto/tiago_public_ws/install/pmb2_description/share/pmb2_description/urdf/dock/dock.urdf.xacro
+[3.796s] -- Symlinking: /home/alberto/tiago_public_ws/install/pmb2_description/share/pmb2_description/urdf/objects/antenna.urdf.xacro
+[3.823s] -- Symlinking: /home/alberto/tiago_public_ws/install/pmb2_description/share/pmb2_description/urdf/objects/cover.urdf.xacro
+[3.841s] -- Symlinking: /home/alberto/tiago_public_ws/install/pmb2_description/share/pmb2_description/urdf/wheels/caster.gazebo.xacro
+[3.874s] -- Symlinking: /home/alberto/tiago_public_ws/install/pmb2_description/share/pmb2_description/urdf/wheels/caster.urdf.xacro
+[3.917s] -- Symlinking: /home/alberto/tiago_public_ws/install/pmb2_description/share/pmb2_description/urdf/wheels/wheel.gazebo.xacro
+[3.933s] -- Symlinking: /home/alberto/tiago_public_ws/install/pmb2_description/share/pmb2_description/urdf/wheels/wheel.ros2_control.xacro
+[3.969s] -- Symlinking: /home/alberto/tiago_public_ws/install/pmb2_description/share/pmb2_description/urdf/wheels/wheel.urdf.xacro
+[4.007s] -- Symlinking: /home/alberto/tiago_public_ws/install/pmb2_description/share/ament_index/resource_index/package_run_dependencies/pmb2_description
+[4.036s] -- Symlinking: /home/alberto/tiago_public_ws/install/pmb2_description/share/ament_index/resource_index/parent_prefix_path/pmb2_description
+[4.060s] -- Symlinking: /home/alberto/tiago_public_ws/install/pmb2_description/share/pmb2_description/environment/ament_prefix_path.sh
+[4.100s] -- Symlinking: /home/alberto/tiago_public_ws/install/pmb2_description/share/pmb2_description/environment/ament_prefix_path.dsv
+[4.128s] -- Symlinking: /home/alberto/tiago_public_ws/install/pmb2_description/share/pmb2_description/environment/path.sh
+[4.157s] -- Symlinking: /home/alberto/tiago_public_ws/install/pmb2_description/share/pmb2_description/environment/path.dsv
+[4.186s] -- Symlinking: /home/alberto/tiago_public_ws/install/pmb2_description/share/pmb2_description/local_setup.bash
+[4.210s] -- Symlinking: /home/alberto/tiago_public_ws/install/pmb2_description/share/pmb2_description/local_setup.sh
+[4.236s] -- Symlinking: /home/alberto/tiago_public_ws/install/pmb2_description/share/pmb2_description/local_setup.zsh
+[4.264s] -- Symlinking: /home/alberto/tiago_public_ws/install/pmb2_description/share/pmb2_description/local_setup.dsv
+[4.296s] -- Symlinking: /home/alberto/tiago_public_ws/install/pmb2_description/share/pmb2_description/package.dsv
+[4.318s] -- Symlinking: /home/alberto/tiago_public_ws/install/pmb2_description/share/ament_index/resource_index/packages/pmb2_description
+[4.341s] -- Symlinking: /home/alberto/tiago_public_ws/install/pmb2_description/share/pmb2_description/cmake/pmb2_descriptionConfig.cmake
+[4.367s] -- Symlinking: /home/alberto/tiago_public_ws/install/pmb2_description/share/pmb2_description/cmake/pmb2_descriptionConfig-version.cmake
+[4.390s] -- Symlinking: /home/alberto/tiago_public_ws/install/pmb2_description/share/pmb2_description/package.xml
+[4.469s] Listing '/home/alberto/tiago_public_ws/install/pmb2_description/local/lib/python3.10/dist-packages/pmb2_description'...
+[4.470s] Compiling '/home/alberto/tiago_public_ws/install/pmb2_description/local/lib/python3.10/dist-packages/pmb2_description/__init__.py'...
+[4.470s] Compiling '/home/alberto/tiago_public_ws/install/pmb2_description/local/lib/python3.10/dist-packages/pmb2_description/launch_arguments.py'...
+[4.511s] Invoked command in '/home/alberto/tiago_public_ws/build/pmb2_description' returned '0': AMENT_PREFIX_PATH=/home/alberto/tiago_public_ws/install/urdf_test:/home/alberto/tiago_public_ws/install/pal_urdf_utils:/home/alberto/tiago_public_ws/install/launch_pal:${AMENT_PREFIX_PATH} CMAKE_PREFIX_PATH=/home/alberto/tiago_public_ws/install/urdf_test:/home/alberto/tiago_public_ws/install/pal_urdf_utils:/opt/ros/humble PYTHONPATH=/home/alberto/tiago_public_ws/install/urdf_test/local/lib/python3.10/dist-packages:/home/alberto/tiago_public_ws/build/launch_pal:/home/alberto/tiago_public_ws/install/launch_pal/lib/python3.10/site-packages:${PYTHONPATH} /usr/bin/cmake --install /home/alberto/tiago_public_ws/build/pmb2_description
