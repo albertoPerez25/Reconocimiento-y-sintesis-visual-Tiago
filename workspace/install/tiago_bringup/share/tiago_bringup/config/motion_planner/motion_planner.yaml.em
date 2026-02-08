@@ -1,1 +1,1 @@
-/home/alberto/tiago_public_ws/src/tiago_robot/tiago_bringup/config/motion_planner/motion_planner.yaml.em
+/home/alberto/tfg/Reconocimiento-y-sintesis-visual-Tiago/workspace/src/tiago_robot/tiago_bringup/config/motion_planner/motion_planner.yaml.em

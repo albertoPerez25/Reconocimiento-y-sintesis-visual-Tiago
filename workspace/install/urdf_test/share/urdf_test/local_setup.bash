@@ -1,1 +1,1 @@
-/home/alberto/tiago_public_ws/build/urdf_test/ament_cmake_environment_hooks/local_setup.bash
+/home/alberto/tfg/Reconocimiento-y-sintesis-visual-Tiago/workspace/build/urdf_test/ament_cmake_environment_hooks/local_setup.bash

@@ -1,1 +1,1 @@
-/home/alberto/tiago_public_ws/src/pal_robotiq_gripper/pal_robotiq_description/launch/robot_state_publisher.launch.py
+/home/alberto/tfg/Reconocimiento-y-sintesis-visual-Tiago/workspace/src/pal_robotiq_gripper/pal_robotiq_description/launch/robot_state_publisher.launch.py

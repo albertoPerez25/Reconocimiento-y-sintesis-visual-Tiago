@@ -1,1 +1,1 @@
-/home/alberto/tiago_public_ws/build/pal_gripper_simulation/ament_cmake_environment_hooks/local_setup.bash
+/home/alberto/tfg/Reconocimiento-y-sintesis-visual-Tiago/workspace/build/pal_gripper_simulation/ament_cmake_environment_hooks/local_setup.bash

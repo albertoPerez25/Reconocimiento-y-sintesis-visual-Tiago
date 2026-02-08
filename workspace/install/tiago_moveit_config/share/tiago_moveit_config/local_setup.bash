@@ -1,1 +1,1 @@
-/home/alberto/tiago_public_ws/build/tiago_moveit_config/ament_cmake_environment_hooks/local_setup.bash
+/home/alberto/tfg/Reconocimiento-y-sintesis-visual-Tiago/workspace/build/tiago_moveit_config/ament_cmake_environment_hooks/local_setup.bash

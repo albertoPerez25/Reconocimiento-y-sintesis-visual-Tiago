@@ -1,1 +1,1 @@
-/home/alberto/tiago_public_ws/build/pal_navigation_cfg_bringup/ament_cmake_core/pal_navigation_cfg_bringupConfig-version.cmake
+/home/alberto/tfg/Reconocimiento-y-sintesis-visual-Tiago/workspace/build/pal_navigation_cfg_bringup/ament_cmake_core/pal_navigation_cfg_bringupConfig-version.cmake

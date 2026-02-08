@@ -1,1 +1,1 @@
-/home/alberto/tiago_public_ws/build/play_motion2_msgs/rosidl_cmake/srv/IsJointListReady_Request.msg
+/home/alberto/tfg/Reconocimiento-y-sintesis-visual-Tiago/workspace/build/play_motion2_msgs/rosidl_cmake/srv/IsJointListReady_Request.msg

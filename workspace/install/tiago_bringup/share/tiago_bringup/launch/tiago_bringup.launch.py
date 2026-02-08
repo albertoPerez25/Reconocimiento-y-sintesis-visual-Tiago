@@ -1,1 +1,1 @@
-/home/alberto/tiago_public_ws/src/tiago_robot/tiago_bringup/launch/tiago_bringup.launch.py
+/home/alberto/tfg/Reconocimiento-y-sintesis-visual-Tiago/workspace/src/tiago_robot/tiago_bringup/launch/tiago_bringup.launch.py

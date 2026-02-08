@@ -1,1 +1,1 @@
-/home/alberto/tiago_public_ws/src/pmb2_navigation/pmb2_2dnav/launch/navigation.launch.py
+/home/alberto/tfg/Reconocimiento-y-sintesis-visual-Tiago/workspace/src/pmb2_navigation/pmb2_2dnav/launch/navigation.launch.py

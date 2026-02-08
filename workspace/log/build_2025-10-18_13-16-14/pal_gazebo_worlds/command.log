@@ -1,4 +1,0 @@
-Invoking command in '/home/alberto/tiago_public_ws/build/pal_gazebo_worlds': CMAKE_PREFIX_PATH=/opt/ros/humble /usr/bin/cmake --build /home/alberto/tiago_public_ws/build/pal_gazebo_worlds -- -j12 -l12
-Invoked command in '/home/alberto/tiago_public_ws/build/pal_gazebo_worlds' returned '0': CMAKE_PREFIX_PATH=/opt/ros/humble /usr/bin/cmake --build /home/alberto/tiago_public_ws/build/pal_gazebo_worlds -- -j12 -l12
-Invoking command in '/home/alberto/tiago_public_ws/build/pal_gazebo_worlds': CMAKE_PREFIX_PATH=/opt/ros/humble /usr/bin/cmake --install /home/alberto/tiago_public_ws/build/pal_gazebo_worlds
-Invoked command in '/home/alberto/tiago_public_ws/build/pal_gazebo_worlds' returned '0': CMAKE_PREFIX_PATH=/opt/ros/humble /usr/bin/cmake --install /home/alberto/tiago_public_ws/build/pal_gazebo_worlds

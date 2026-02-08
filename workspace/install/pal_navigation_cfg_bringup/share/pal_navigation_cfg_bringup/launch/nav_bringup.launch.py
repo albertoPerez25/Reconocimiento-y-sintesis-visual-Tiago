@@ -1,1 +1,1 @@
-/home/alberto/tiago_public_ws/src/pal_navigation_cfg_public/pal_navigation_cfg_bringup/launch/nav_bringup.launch.py
+/home/alberto/tfg/Reconocimiento-y-sintesis-visual-Tiago/workspace/src/pal_navigation_cfg_public/pal_navigation_cfg_bringup/launch/nav_bringup.launch.py

@@ -1,1 +1,1 @@
-/home/alberto/tiago_public_ws/build/pal_hey5_description/ament_cmake_environment_hooks/local_setup.sh
+/home/alberto/tfg/Reconocimiento-y-sintesis-visual-Tiago/workspace/build/pal_hey5_description/ament_cmake_environment_hooks/local_setup.sh

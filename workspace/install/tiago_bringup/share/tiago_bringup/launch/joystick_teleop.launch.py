@@ -1,1 +1,1 @@
-/home/alberto/tiago_public_ws/src/tiago_robot/tiago_bringup/launch/joystick_teleop.launch.py
+/home/alberto/tfg/Reconocimiento-y-sintesis-visual-Tiago/workspace/src/tiago_robot/tiago_bringup/launch/joystick_teleop.launch.py

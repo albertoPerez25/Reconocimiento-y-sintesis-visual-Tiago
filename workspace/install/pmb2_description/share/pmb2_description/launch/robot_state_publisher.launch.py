@@ -1,1 +1,1 @@
-/home/alberto/tiago_public_ws/src/pmb2_robot/pmb2_description/launch/robot_state_publisher.launch.py
+/home/alberto/tfg/Reconocimiento-y-sintesis-visual-Tiago/workspace/src/pmb2_robot/pmb2_description/launch/robot_state_publisher.launch.py
