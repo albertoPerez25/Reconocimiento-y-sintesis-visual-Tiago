@@ -1,0 +1,49 @@
+[0.269s] Invoking command in '/home/alberto/tfg/Reconocimiento-y-sintesis-visual-Tiago/workspace/build/pal_hey5_controller_configuration': CMAKE_PREFIX_PATH=${CMAKE_PREFIX_PATH}:/home/alberto/tfg/Reconocimiento-y-sintesis-visual-Tiago/workspace/install/tests:/home/alberto/tfg/Reconocimiento-y-sintesis-visual-Tiago/workspace/install/launch_pal:/opt/ros/humble /usr/bin/cmake /home/alberto/tfg/Reconocimiento-y-sintesis-visual-Tiago/workspace/src/pal_hey5/pal_hey5_controller_configuration -DAMENT_CMAKE_SYMLINK_INSTALL=1 -DCMAKE_INSTALL_PREFIX=/home/alberto/tfg/Reconocimiento-y-sintesis-visual-Tiago/workspace/install/pal_hey5_controller_configuration
+[0.374s] -- The C compiler identification is GNU 11.4.0
+[0.482s] -- The CXX compiler identification is GNU 11.4.0
+[0.502s] -- Detecting C compiler ABI info
+[0.603s] -- Detecting C compiler ABI info - done
+[0.613s] -- Check for working C compiler: /usr/bin/cc - skipped
+[0.614s] -- Detecting C compile features
+[0.614s] -- Detecting C compile features - done
+[0.618s] -- Detecting CXX compiler ABI info
+[0.745s] -- Detecting CXX compiler ABI info - done
+[0.756s] -- Check for working CXX compiler: /usr/bin/c++ - skipped
+[0.756s] -- Detecting CXX compile features
+[0.757s] -- Detecting CXX compile features - done
+[0.761s] -- Found ament_cmake_auto: 1.3.12 (/opt/ros/humble/share/ament_cmake_auto/cmake)
+[1.013s] -- Found Python3: /usr/bin/python3 (found version "3.10.12") found components: Interpreter 
+[1.116s] -- Override CMake install command with custom implementation using symlinks instead of copying resources
+[1.158s] -- Found ament_lint_auto: 0.12.14 (/opt/ros/humble/share/ament_lint_auto/cmake)
+[1.260s] -- Added test 'copyright' to check source files copyright and LICENSE
+[1.263s] -- Added test 'flake8' to check Python code syntax and style conventions
+[1.264s] -- Added test 'lint_cmake' to check CMake code style
+[1.266s] -- Added test 'pep257' to check Python code against some of the docstring style conventions in PEP 257
+[1.268s] -- Added test 'xmllint' to check XML markup files
+[1.271s] -- Configuring done
+[1.275s] -- Generating done
+[1.277s] -- Build files have been written to: /home/alberto/tfg/Reconocimiento-y-sintesis-visual-Tiago/workspace/build/pal_hey5_controller_configuration
+[1.288s] Invoked command in '/home/alberto/tfg/Reconocimiento-y-sintesis-visual-Tiago/workspace/build/pal_hey5_controller_configuration' returned '0': CMAKE_PREFIX_PATH=${CMAKE_PREFIX_PATH}:/home/alberto/tfg/Reconocimiento-y-sintesis-visual-Tiago/workspace/install/tests:/home/alberto/tfg/Reconocimiento-y-sintesis-visual-Tiago/workspace/install/launch_pal:/opt/ros/humble /usr/bin/cmake /home/alberto/tfg/Reconocimiento-y-sintesis-visual-Tiago/workspace/src/pal_hey5/pal_hey5_controller_configuration -DAMENT_CMAKE_SYMLINK_INSTALL=1 -DCMAKE_INSTALL_PREFIX=/home/alberto/tfg/Reconocimiento-y-sintesis-visual-Tiago/workspace/install/pal_hey5_controller_configuration
+[1.289s] Invoking command in '/home/alberto/tfg/Reconocimiento-y-sintesis-visual-Tiago/workspace/build/pal_hey5_controller_configuration': CMAKE_PREFIX_PATH=${CMAKE_PREFIX_PATH}:/home/alberto/tfg/Reconocimiento-y-sintesis-visual-Tiago/workspace/install/tests:/home/alberto/tfg/Reconocimiento-y-sintesis-visual-Tiago/workspace/install/launch_pal:/opt/ros/humble /usr/bin/cmake --build /home/alberto/tfg/Reconocimiento-y-sintesis-visual-Tiago/workspace/build/pal_hey5_controller_configuration -- -j16 -l16
+[1.346s] Invoked command in '/home/alberto/tfg/Reconocimiento-y-sintesis-visual-Tiago/workspace/build/pal_hey5_controller_configuration' returned '0': CMAKE_PREFIX_PATH=${CMAKE_PREFIX_PATH}:/home/alberto/tfg/Reconocimiento-y-sintesis-visual-Tiago/workspace/install/tests:/home/alberto/tfg/Reconocimiento-y-sintesis-visual-Tiago/workspace/install/launch_pal:/opt/ros/humble /usr/bin/cmake --build /home/alberto/tfg/Reconocimiento-y-sintesis-visual-Tiago/workspace/build/pal_hey5_controller_configuration -- -j16 -l16
+[1.360s] Invoking command in '/home/alberto/tfg/Reconocimiento-y-sintesis-visual-Tiago/workspace/build/pal_hey5_controller_configuration': CMAKE_PREFIX_PATH=${CMAKE_PREFIX_PATH}:/home/alberto/tfg/Reconocimiento-y-sintesis-visual-Tiago/workspace/install/tests:/home/alberto/tfg/Reconocimiento-y-sintesis-visual-Tiago/workspace/install/launch_pal:/opt/ros/humble /usr/bin/cmake --install /home/alberto/tfg/Reconocimiento-y-sintesis-visual-Tiago/workspace/build/pal_hey5_controller_configuration
+[1.375s] -- Install configuration: ""
+[1.375s] -- Execute custom install script
+[1.376s] -- Symlinking: /home/alberto/tfg/Reconocimiento-y-sintesis-visual-Tiago/workspace/install/pal_hey5_controller_configuration/share/pal_hey5_controller_configuration/config/pal_hey5_controller.yaml
+[1.390s] -- Symlinking: /home/alberto/tfg/Reconocimiento-y-sintesis-visual-Tiago/workspace/install/pal_hey5_controller_configuration/share/pal_hey5_controller_configuration/launch/pal_hey5_controller.launch.py
+[1.403s] -- Symlinking: /home/alberto/tfg/Reconocimiento-y-sintesis-visual-Tiago/workspace/install/pal_hey5_controller_configuration/share/ament_index/resource_index/package_run_dependencies/pal_hey5_controller_configuration
+[1.420s] -- Symlinking: /home/alberto/tfg/Reconocimiento-y-sintesis-visual-Tiago/workspace/install/pal_hey5_controller_configuration/share/ament_index/resource_index/parent_prefix_path/pal_hey5_controller_configuration
+[1.431s] -- Symlinking: /home/alberto/tfg/Reconocimiento-y-sintesis-visual-Tiago/workspace/install/pal_hey5_controller_configuration/share/pal_hey5_controller_configuration/environment/ament_prefix_path.sh
+[1.444s] -- Symlinking: /home/alberto/tfg/Reconocimiento-y-sintesis-visual-Tiago/workspace/install/pal_hey5_controller_configuration/share/pal_hey5_controller_configuration/environment/ament_prefix_path.dsv
+[1.459s] -- Symlinking: /home/alberto/tfg/Reconocimiento-y-sintesis-visual-Tiago/workspace/install/pal_hey5_controller_configuration/share/pal_hey5_controller_configuration/environment/path.sh
+[1.476s] -- Symlinking: /home/alberto/tfg/Reconocimiento-y-sintesis-visual-Tiago/workspace/install/pal_hey5_controller_configuration/share/pal_hey5_controller_configuration/environment/path.dsv
+[1.492s] -- Symlinking: /home/alberto/tfg/Reconocimiento-y-sintesis-visual-Tiago/workspace/install/pal_hey5_controller_configuration/share/pal_hey5_controller_configuration/local_setup.bash
+[1.504s] -- Symlinking: /home/alberto/tfg/Reconocimiento-y-sintesis-visual-Tiago/workspace/install/pal_hey5_controller_configuration/share/pal_hey5_controller_configuration/local_setup.sh
+[1.517s] -- Symlinking: /home/alberto/tfg/Reconocimiento-y-sintesis-visual-Tiago/workspace/install/pal_hey5_controller_configuration/share/pal_hey5_controller_configuration/local_setup.zsh
+[1.531s] -- Symlinking: /home/alberto/tfg/Reconocimiento-y-sintesis-visual-Tiago/workspace/install/pal_hey5_controller_configuration/share/pal_hey5_controller_configuration/local_setup.dsv
+[1.545s] -- Symlinking: /home/alberto/tfg/Reconocimiento-y-sintesis-visual-Tiago/workspace/install/pal_hey5_controller_configuration/share/pal_hey5_controller_configuration/package.dsv
+[1.558s] -- Symlinking: /home/alberto/tfg/Reconocimiento-y-sintesis-visual-Tiago/workspace/install/pal_hey5_controller_configuration/share/ament_index/resource_index/packages/pal_hey5_controller_configuration
+[1.572s] -- Symlinking: /home/alberto/tfg/Reconocimiento-y-sintesis-visual-Tiago/workspace/install/pal_hey5_controller_configuration/share/pal_hey5_controller_configuration/cmake/pal_hey5_controller_configurationConfig.cmake
+[1.583s] -- Symlinking: /home/alberto/tfg/Reconocimiento-y-sintesis-visual-Tiago/workspace/install/pal_hey5_controller_configuration/share/pal_hey5_controller_configuration/cmake/pal_hey5_controller_configurationConfig-version.cmake
+[1.597s] -- Symlinking: /home/alberto/tfg/Reconocimiento-y-sintesis-visual-Tiago/workspace/install/pal_hey5_controller_configuration/share/pal_hey5_controller_configuration/package.xml
+[1.615s] Invoked command in '/home/alberto/tfg/Reconocimiento-y-sintesis-visual-Tiago/workspace/build/pal_hey5_controller_configuration' returned '0': CMAKE_PREFIX_PATH=${CMAKE_PREFIX_PATH}:/home/alberto/tfg/Reconocimiento-y-sintesis-visual-Tiago/workspace/install/tests:/home/alberto/tfg/Reconocimiento-y-sintesis-visual-Tiago/workspace/install/launch_pal:/opt/ros/humble /usr/bin/cmake --install /home/alberto/tfg/Reconocimiento-y-sintesis-visual-Tiago/workspace/build/pal_hey5_controller_configuration

@@ -1,0 +1,51 @@
+[0.268s] Invoking command in '/home/alberto/tfg/Reconocimiento-y-sintesis-visual-Tiago/workspace/build/pmb2_laser_sensors': CMAKE_PREFIX_PATH=${CMAKE_PREFIX_PATH}:/home/alberto/tfg/Reconocimiento-y-sintesis-visual-Tiago/workspace/install/tests:/home/alberto/tfg/Reconocimiento-y-sintesis-visual-Tiago/workspace/install/launch_pal:/opt/ros/humble /usr/bin/cmake /home/alberto/tfg/Reconocimiento-y-sintesis-visual-Tiago/workspace/src/pmb2_navigation/pmb2_laser_sensors -DAMENT_CMAKE_SYMLINK_INSTALL=1 -DCMAKE_INSTALL_PREFIX=/home/alberto/tfg/Reconocimiento-y-sintesis-visual-Tiago/workspace/install/pmb2_laser_sensors
+[0.370s] -- The C compiler identification is GNU 11.4.0
+[0.470s] -- The CXX compiler identification is GNU 11.4.0
+[0.482s] -- Detecting C compiler ABI info
+[0.586s] -- Detecting C compiler ABI info - done
+[0.597s] -- Check for working C compiler: /usr/bin/cc - skipped
+[0.597s] -- Detecting C compile features
+[0.598s] -- Detecting C compile features - done
+[0.602s] -- Detecting CXX compiler ABI info
+[0.733s] -- Detecting CXX compiler ABI info - done
+[0.745s] -- Check for working CXX compiler: /usr/bin/c++ - skipped
+[0.745s] -- Detecting CXX compile features
+[0.745s] -- Detecting CXX compile features - done
+[0.749s] -- Found ament_cmake_auto: 1.3.12 (/opt/ros/humble/share/ament_cmake_auto/cmake)
+[1.022s] -- Found Python3: /usr/bin/python3 (found version "3.10.12") found components: Interpreter 
+[1.131s] -- Override CMake install command with custom implementation using symlinks instead of copying resources
+[1.325s] -- Added test 'copyright' to check source files copyright and LICENSE
+[1.329s] -- Added test 'flake8' to check Python code syntax and style conventions
+[1.336s] -- Added test 'lint_cmake' to check CMake code style
+[1.337s] -- Added test 'pep257' to check Python code against some of the docstring style conventions in PEP 257
+[1.338s] -- Added test 'xmllint' to check XML markup files
+[1.345s] -- Configuring done
+[1.348s] -- Generating done
+[1.351s] -- Build files have been written to: /home/alberto/tfg/Reconocimiento-y-sintesis-visual-Tiago/workspace/build/pmb2_laser_sensors
+[1.373s] Invoked command in '/home/alberto/tfg/Reconocimiento-y-sintesis-visual-Tiago/workspace/build/pmb2_laser_sensors' returned '0': CMAKE_PREFIX_PATH=${CMAKE_PREFIX_PATH}:/home/alberto/tfg/Reconocimiento-y-sintesis-visual-Tiago/workspace/install/tests:/home/alberto/tfg/Reconocimiento-y-sintesis-visual-Tiago/workspace/install/launch_pal:/opt/ros/humble /usr/bin/cmake /home/alberto/tfg/Reconocimiento-y-sintesis-visual-Tiago/workspace/src/pmb2_navigation/pmb2_laser_sensors -DAMENT_CMAKE_SYMLINK_INSTALL=1 -DCMAKE_INSTALL_PREFIX=/home/alberto/tfg/Reconocimiento-y-sintesis-visual-Tiago/workspace/install/pmb2_laser_sensors
+[1.376s] Invoking command in '/home/alberto/tfg/Reconocimiento-y-sintesis-visual-Tiago/workspace/build/pmb2_laser_sensors': CMAKE_PREFIX_PATH=${CMAKE_PREFIX_PATH}:/home/alberto/tfg/Reconocimiento-y-sintesis-visual-Tiago/workspace/install/tests:/home/alberto/tfg/Reconocimiento-y-sintesis-visual-Tiago/workspace/install/launch_pal:/opt/ros/humble /usr/bin/cmake --build /home/alberto/tfg/Reconocimiento-y-sintesis-visual-Tiago/workspace/build/pmb2_laser_sensors -- -j16 -l16
+[1.447s] Invoked command in '/home/alberto/tfg/Reconocimiento-y-sintesis-visual-Tiago/workspace/build/pmb2_laser_sensors' returned '0': CMAKE_PREFIX_PATH=${CMAKE_PREFIX_PATH}:/home/alberto/tfg/Reconocimiento-y-sintesis-visual-Tiago/workspace/install/tests:/home/alberto/tfg/Reconocimiento-y-sintesis-visual-Tiago/workspace/install/launch_pal:/opt/ros/humble /usr/bin/cmake --build /home/alberto/tfg/Reconocimiento-y-sintesis-visual-Tiago/workspace/build/pmb2_laser_sensors -- -j16 -l16
+[1.448s] Invoking command in '/home/alberto/tfg/Reconocimiento-y-sintesis-visual-Tiago/workspace/build/pmb2_laser_sensors': CMAKE_PREFIX_PATH=${CMAKE_PREFIX_PATH}:/home/alberto/tfg/Reconocimiento-y-sintesis-visual-Tiago/workspace/install/tests:/home/alberto/tfg/Reconocimiento-y-sintesis-visual-Tiago/workspace/install/launch_pal:/opt/ros/humble /usr/bin/cmake --install /home/alberto/tfg/Reconocimiento-y-sintesis-visual-Tiago/workspace/build/pmb2_laser_sensors
+[1.605s] -- Install configuration: ""
+[1.605s] -- Execute custom install script
+[1.605s] -- Symlinking: /home/alberto/tfg/Reconocimiento-y-sintesis-visual-Tiago/workspace/install/pmb2_laser_sensors/share/pmb2_laser_sensors/config/laser_analyzers.yaml
+[1.605s] -- Symlinking: /home/alberto/tfg/Reconocimiento-y-sintesis-visual-Tiago/workspace/install/pmb2_laser_sensors/share/pmb2_laser_sensors/launch/laser_hokuyo.launch.py
+[1.605s] -- Symlinking: /home/alberto/tfg/Reconocimiento-y-sintesis-visual-Tiago/workspace/install/pmb2_laser_sensors/share/pmb2_laser_sensors/launch/laser_sick-561.launch.py
+[1.605s] -- Symlinking: /home/alberto/tfg/Reconocimiento-y-sintesis-visual-Tiago/workspace/install/pmb2_laser_sensors/share/pmb2_laser_sensors/launch/laser_sick-571.launch.py
+[1.605s] -- Symlinking: /home/alberto/tfg/Reconocimiento-y-sintesis-visual-Tiago/workspace/install/pmb2_laser_sensors/share/pmb2_laser_sensors/launch/laser_sim.launch.py
+[1.605s] -- Symlinking: /home/alberto/tfg/Reconocimiento-y-sintesis-visual-Tiago/workspace/install/pmb2_laser_sensors/share/ament_index/resource_index/package_run_dependencies/pmb2_laser_sensors
+[1.605s] -- Symlinking: /home/alberto/tfg/Reconocimiento-y-sintesis-visual-Tiago/workspace/install/pmb2_laser_sensors/share/ament_index/resource_index/parent_prefix_path/pmb2_laser_sensors
+[1.605s] -- Symlinking: /home/alberto/tfg/Reconocimiento-y-sintesis-visual-Tiago/workspace/install/pmb2_laser_sensors/share/pmb2_laser_sensors/environment/ament_prefix_path.sh
+[1.605s] -- Symlinking: /home/alberto/tfg/Reconocimiento-y-sintesis-visual-Tiago/workspace/install/pmb2_laser_sensors/share/pmb2_laser_sensors/environment/ament_prefix_path.dsv
+[1.605s] -- Symlinking: /home/alberto/tfg/Reconocimiento-y-sintesis-visual-Tiago/workspace/install/pmb2_laser_sensors/share/pmb2_laser_sensors/environment/path.sh
+[1.606s] -- Symlinking: /home/alberto/tfg/Reconocimiento-y-sintesis-visual-Tiago/workspace/install/pmb2_laser_sensors/share/pmb2_laser_sensors/environment/path.dsv
+[1.617s] -- Symlinking: /home/alberto/tfg/Reconocimiento-y-sintesis-visual-Tiago/workspace/install/pmb2_laser_sensors/share/pmb2_laser_sensors/local_setup.bash
+[1.628s] -- Symlinking: /home/alberto/tfg/Reconocimiento-y-sintesis-visual-Tiago/workspace/install/pmb2_laser_sensors/share/pmb2_laser_sensors/local_setup.sh
+[1.637s] -- Symlinking: /home/alberto/tfg/Reconocimiento-y-sintesis-visual-Tiago/workspace/install/pmb2_laser_sensors/share/pmb2_laser_sensors/local_setup.zsh
+[1.649s] -- Symlinking: /home/alberto/tfg/Reconocimiento-y-sintesis-visual-Tiago/workspace/install/pmb2_laser_sensors/share/pmb2_laser_sensors/local_setup.dsv
+[1.660s] -- Symlinking: /home/alberto/tfg/Reconocimiento-y-sintesis-visual-Tiago/workspace/install/pmb2_laser_sensors/share/pmb2_laser_sensors/package.dsv
+[1.670s] -- Symlinking: /home/alberto/tfg/Reconocimiento-y-sintesis-visual-Tiago/workspace/install/pmb2_laser_sensors/share/ament_index/resource_index/packages/pmb2_laser_sensors
+[1.680s] -- Symlinking: /home/alberto/tfg/Reconocimiento-y-sintesis-visual-Tiago/workspace/install/pmb2_laser_sensors/share/pmb2_laser_sensors/cmake/pmb2_laser_sensorsConfig.cmake
+[1.690s] -- Symlinking: /home/alberto/tfg/Reconocimiento-y-sintesis-visual-Tiago/workspace/install/pmb2_laser_sensors/share/pmb2_laser_sensors/cmake/pmb2_laser_sensorsConfig-version.cmake
+[1.700s] -- Symlinking: /home/alberto/tfg/Reconocimiento-y-sintesis-visual-Tiago/workspace/install/pmb2_laser_sensors/share/pmb2_laser_sensors/package.xml
+[1.731s] Invoked command in '/home/alberto/tfg/Reconocimiento-y-sintesis-visual-Tiago/workspace/build/pmb2_laser_sensors' returned '0': CMAKE_PREFIX_PATH=${CMAKE_PREFIX_PATH}:/home/alberto/tfg/Reconocimiento-y-sintesis-visual-Tiago/workspace/install/tests:/home/alberto/tfg/Reconocimiento-y-sintesis-visual-Tiago/workspace/install/launch_pal:/opt/ros/humble /usr/bin/cmake --install /home/alberto/tfg/Reconocimiento-y-sintesis-visual-Tiago/workspace/build/pmb2_laser_sensors

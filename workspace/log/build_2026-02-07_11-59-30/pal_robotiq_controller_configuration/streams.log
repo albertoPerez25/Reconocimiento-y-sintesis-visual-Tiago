@@ -1,0 +1,49 @@
+[0.268s] Invoking command in '/home/alberto/tfg/Reconocimiento-y-sintesis-visual-Tiago/workspace/build/pal_robotiq_controller_configuration': CMAKE_PREFIX_PATH=${CMAKE_PREFIX_PATH}:/home/alberto/tfg/Reconocimiento-y-sintesis-visual-Tiago/workspace/install/tests:/home/alberto/tfg/Reconocimiento-y-sintesis-visual-Tiago/workspace/install/launch_pal:/opt/ros/humble /usr/bin/cmake /home/alberto/tfg/Reconocimiento-y-sintesis-visual-Tiago/workspace/src/pal_robotiq_gripper/pal_robotiq_controller_configuration -DAMENT_CMAKE_SYMLINK_INSTALL=1 -DCMAKE_INSTALL_PREFIX=/home/alberto/tfg/Reconocimiento-y-sintesis-visual-Tiago/workspace/install/pal_robotiq_controller_configuration
+[0.364s] -- The C compiler identification is GNU 11.4.0
+[0.459s] -- The CXX compiler identification is GNU 11.4.0
+[0.470s] -- Detecting C compiler ABI info
+[0.583s] -- Detecting C compiler ABI info - done
+[0.593s] -- Check for working C compiler: /usr/bin/cc - skipped
+[0.593s] -- Detecting C compile features
+[0.593s] -- Detecting C compile features - done
+[0.596s] -- Detecting CXX compiler ABI info
+[0.726s] -- Detecting CXX compiler ABI info - done
+[0.735s] -- Check for working CXX compiler: /usr/bin/c++ - skipped
+[0.736s] -- Detecting CXX compile features
+[0.736s] -- Detecting CXX compile features - done
+[0.740s] -- Found ament_cmake_auto: 1.3.12 (/opt/ros/humble/share/ament_cmake_auto/cmake)
+[1.003s] -- Found Python3: /usr/bin/python3 (found version "3.10.12") found components: Interpreter 
+[1.109s] -- Override CMake install command with custom implementation using symlinks instead of copying resources
+[1.246s] -- Found ament_lint_auto: 0.12.14 (/opt/ros/humble/share/ament_lint_auto/cmake)
+[1.279s] -- Added test 'copyright' to check source files copyright and LICENSE
+[1.286s] -- Added test 'flake8' to check Python code syntax and style conventions
+[1.286s] -- Added test 'lint_cmake' to check CMake code style
+[1.286s] -- Added test 'pep257' to check Python code against some of the docstring style conventions in PEP 257
+[1.287s] -- Added test 'xmllint' to check XML markup files
+[1.290s] -- Configuring done
+[1.294s] -- Generating done
+[1.297s] -- Build files have been written to: /home/alberto/tfg/Reconocimiento-y-sintesis-visual-Tiago/workspace/build/pal_robotiq_controller_configuration
+[1.305s] Invoked command in '/home/alberto/tfg/Reconocimiento-y-sintesis-visual-Tiago/workspace/build/pal_robotiq_controller_configuration' returned '0': CMAKE_PREFIX_PATH=${CMAKE_PREFIX_PATH}:/home/alberto/tfg/Reconocimiento-y-sintesis-visual-Tiago/workspace/install/tests:/home/alberto/tfg/Reconocimiento-y-sintesis-visual-Tiago/workspace/install/launch_pal:/opt/ros/humble /usr/bin/cmake /home/alberto/tfg/Reconocimiento-y-sintesis-visual-Tiago/workspace/src/pal_robotiq_gripper/pal_robotiq_controller_configuration -DAMENT_CMAKE_SYMLINK_INSTALL=1 -DCMAKE_INSTALL_PREFIX=/home/alberto/tfg/Reconocimiento-y-sintesis-visual-Tiago/workspace/install/pal_robotiq_controller_configuration
+[1.308s] Invoking command in '/home/alberto/tfg/Reconocimiento-y-sintesis-visual-Tiago/workspace/build/pal_robotiq_controller_configuration': CMAKE_PREFIX_PATH=${CMAKE_PREFIX_PATH}:/home/alberto/tfg/Reconocimiento-y-sintesis-visual-Tiago/workspace/install/tests:/home/alberto/tfg/Reconocimiento-y-sintesis-visual-Tiago/workspace/install/launch_pal:/opt/ros/humble /usr/bin/cmake --build /home/alberto/tfg/Reconocimiento-y-sintesis-visual-Tiago/workspace/build/pal_robotiq_controller_configuration -- -j16 -l16
+[1.376s] Invoked command in '/home/alberto/tfg/Reconocimiento-y-sintesis-visual-Tiago/workspace/build/pal_robotiq_controller_configuration' returned '0': CMAKE_PREFIX_PATH=${CMAKE_PREFIX_PATH}:/home/alberto/tfg/Reconocimiento-y-sintesis-visual-Tiago/workspace/install/tests:/home/alberto/tfg/Reconocimiento-y-sintesis-visual-Tiago/workspace/install/launch_pal:/opt/ros/humble /usr/bin/cmake --build /home/alberto/tfg/Reconocimiento-y-sintesis-visual-Tiago/workspace/build/pal_robotiq_controller_configuration -- -j16 -l16
+[1.378s] Invoking command in '/home/alberto/tfg/Reconocimiento-y-sintesis-visual-Tiago/workspace/build/pal_robotiq_controller_configuration': CMAKE_PREFIX_PATH=${CMAKE_PREFIX_PATH}:/home/alberto/tfg/Reconocimiento-y-sintesis-visual-Tiago/workspace/install/tests:/home/alberto/tfg/Reconocimiento-y-sintesis-visual-Tiago/workspace/install/launch_pal:/opt/ros/humble /usr/bin/cmake --install /home/alberto/tfg/Reconocimiento-y-sintesis-visual-Tiago/workspace/build/pal_robotiq_controller_configuration
+[1.388s] -- Install configuration: ""
+[1.391s] -- Execute custom install script
+[1.391s] -- Symlinking: /home/alberto/tfg/Reconocimiento-y-sintesis-visual-Tiago/workspace/install/pal_robotiq_controller_configuration/share/pal_robotiq_controller_configuration/config/robotiq_gripper_controller.yaml
+[1.401s] -- Symlinking: /home/alberto/tfg/Reconocimiento-y-sintesis-visual-Tiago/workspace/install/pal_robotiq_controller_configuration/share/pal_robotiq_controller_configuration/launch/robotiq_gripper_controller.launch.py
+[1.414s] -- Symlinking: /home/alberto/tfg/Reconocimiento-y-sintesis-visual-Tiago/workspace/install/pal_robotiq_controller_configuration/share/ament_index/resource_index/package_run_dependencies/pal_robotiq_controller_configuration
+[1.436s] -- Symlinking: /home/alberto/tfg/Reconocimiento-y-sintesis-visual-Tiago/workspace/install/pal_robotiq_controller_configuration/share/ament_index/resource_index/parent_prefix_path/pal_robotiq_controller_configuration
+[1.446s] -- Symlinking: /home/alberto/tfg/Reconocimiento-y-sintesis-visual-Tiago/workspace/install/pal_robotiq_controller_configuration/share/pal_robotiq_controller_configuration/environment/ament_prefix_path.sh
+[1.464s] -- Symlinking: /home/alberto/tfg/Reconocimiento-y-sintesis-visual-Tiago/workspace/install/pal_robotiq_controller_configuration/share/pal_robotiq_controller_configuration/environment/ament_prefix_path.dsv
+[1.476s] -- Symlinking: /home/alberto/tfg/Reconocimiento-y-sintesis-visual-Tiago/workspace/install/pal_robotiq_controller_configuration/share/pal_robotiq_controller_configuration/environment/path.sh
+[1.491s] -- Symlinking: /home/alberto/tfg/Reconocimiento-y-sintesis-visual-Tiago/workspace/install/pal_robotiq_controller_configuration/share/pal_robotiq_controller_configuration/environment/path.dsv
+[1.503s] -- Symlinking: /home/alberto/tfg/Reconocimiento-y-sintesis-visual-Tiago/workspace/install/pal_robotiq_controller_configuration/share/pal_robotiq_controller_configuration/local_setup.bash
+[1.517s] -- Symlinking: /home/alberto/tfg/Reconocimiento-y-sintesis-visual-Tiago/workspace/install/pal_robotiq_controller_configuration/share/pal_robotiq_controller_configuration/local_setup.sh
+[1.529s] -- Symlinking: /home/alberto/tfg/Reconocimiento-y-sintesis-visual-Tiago/workspace/install/pal_robotiq_controller_configuration/share/pal_robotiq_controller_configuration/local_setup.zsh
+[1.542s] -- Symlinking: /home/alberto/tfg/Reconocimiento-y-sintesis-visual-Tiago/workspace/install/pal_robotiq_controller_configuration/share/pal_robotiq_controller_configuration/local_setup.dsv
+[1.554s] -- Symlinking: /home/alberto/tfg/Reconocimiento-y-sintesis-visual-Tiago/workspace/install/pal_robotiq_controller_configuration/share/pal_robotiq_controller_configuration/package.dsv
+[1.568s] -- Symlinking: /home/alberto/tfg/Reconocimiento-y-sintesis-visual-Tiago/workspace/install/pal_robotiq_controller_configuration/share/ament_index/resource_index/packages/pal_robotiq_controller_configuration
+[1.580s] -- Symlinking: /home/alberto/tfg/Reconocimiento-y-sintesis-visual-Tiago/workspace/install/pal_robotiq_controller_configuration/share/pal_robotiq_controller_configuration/cmake/pal_robotiq_controller_configurationConfig.cmake
+[1.593s] -- Symlinking: /home/alberto/tfg/Reconocimiento-y-sintesis-visual-Tiago/workspace/install/pal_robotiq_controller_configuration/share/pal_robotiq_controller_configuration/cmake/pal_robotiq_controller_configurationConfig-version.cmake
+[1.608s] -- Symlinking: /home/alberto/tfg/Reconocimiento-y-sintesis-visual-Tiago/workspace/install/pal_robotiq_controller_configuration/share/pal_robotiq_controller_configuration/package.xml
+[1.642s] Invoked command in '/home/alberto/tfg/Reconocimiento-y-sintesis-visual-Tiago/workspace/build/pal_robotiq_controller_configuration' returned '0': CMAKE_PREFIX_PATH=${CMAKE_PREFIX_PATH}:/home/alberto/tfg/Reconocimiento-y-sintesis-visual-Tiago/workspace/install/tests:/home/alberto/tfg/Reconocimiento-y-sintesis-visual-Tiago/workspace/install/launch_pal:/opt/ros/humble /usr/bin/cmake --install /home/alberto/tfg/Reconocimiento-y-sintesis-visual-Tiago/workspace/build/pal_robotiq_controller_configuration

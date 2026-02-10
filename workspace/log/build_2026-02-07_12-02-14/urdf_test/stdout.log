@@ -1,0 +1,37 @@
+Built target ament_cmake_python_symlink_urdf_test
+running egg_info
+writing urdf_test.egg-info/PKG-INFO
+writing dependency_links to urdf_test.egg-info/dependency_links.txt
+writing top-level names to urdf_test.egg-info/top_level.txt
+reading manifest file 'urdf_test.egg-info/SOURCES.txt'
+writing manifest file 'urdf_test.egg-info/SOURCES.txt'
+Built target ament_cmake_python_build_urdf_test_egg
+-- Install configuration: ""
+-- Execute custom install script
+-- Up-to-date symlink: /home/alberto/tfg/Reconocimiento-y-sintesis-visual-Tiago/workspace/install/urdf_test/lib/urdf_test/test_urdf.py
+-- Up-to-date symlink: /home/alberto/tfg/Reconocimiento-y-sintesis-visual-Tiago/workspace/install/urdf_test/share/urdf_test/environment/pythonpath.sh
+-- Up-to-date symlink: /home/alberto/tfg/Reconocimiento-y-sintesis-visual-Tiago/workspace/install/urdf_test/share/urdf_test/environment/pythonpath.dsv
+-- Up-to-date symlink: /home/alberto/tfg/Reconocimiento-y-sintesis-visual-Tiago/workspace/install/urdf_test/local/lib/python3.10/dist-packages/urdf_test-2.1.0-py3.10.egg-info/PKG-INFO
+-- Up-to-date symlink: /home/alberto/tfg/Reconocimiento-y-sintesis-visual-Tiago/workspace/install/urdf_test/local/lib/python3.10/dist-packages/urdf_test-2.1.0-py3.10.egg-info/SOURCES.txt
+-- Up-to-date symlink: /home/alberto/tfg/Reconocimiento-y-sintesis-visual-Tiago/workspace/install/urdf_test/local/lib/python3.10/dist-packages/urdf_test-2.1.0-py3.10.egg-info/dependency_links.txt
+-- Up-to-date symlink: /home/alberto/tfg/Reconocimiento-y-sintesis-visual-Tiago/workspace/install/urdf_test/local/lib/python3.10/dist-packages/urdf_test-2.1.0-py3.10.egg-info/top_level.txt
+-- Up-to-date symlink: /home/alberto/tfg/Reconocimiento-y-sintesis-visual-Tiago/workspace/install/urdf_test/local/lib/python3.10/dist-packages/urdf_test/__init__.py
+-- Up-to-date symlink: /home/alberto/tfg/Reconocimiento-y-sintesis-visual-Tiago/workspace/install/urdf_test/local/lib/python3.10/dist-packages/urdf_test/description_test.py
+-- Up-to-date symlink: /home/alberto/tfg/Reconocimiento-y-sintesis-visual-Tiago/workspace/install/urdf_test/local/lib/python3.10/dist-packages/urdf_test/xacro_test.py
+-- Up-to-date symlink: /home/alberto/tfg/Reconocimiento-y-sintesis-visual-Tiago/workspace/install/urdf_test/share/ament_index/resource_index/package_run_dependencies/urdf_test
+-- Up-to-date symlink: /home/alberto/tfg/Reconocimiento-y-sintesis-visual-Tiago/workspace/install/urdf_test/share/ament_index/resource_index/parent_prefix_path/urdf_test
+-- Up-to-date symlink: /home/alberto/tfg/Reconocimiento-y-sintesis-visual-Tiago/workspace/install/urdf_test/share/urdf_test/environment/ament_prefix_path.sh
+-- Up-to-date symlink: /home/alberto/tfg/Reconocimiento-y-sintesis-visual-Tiago/workspace/install/urdf_test/share/urdf_test/environment/ament_prefix_path.dsv
+-- Up-to-date symlink: /home/alberto/tfg/Reconocimiento-y-sintesis-visual-Tiago/workspace/install/urdf_test/share/urdf_test/environment/path.sh
+-- Up-to-date symlink: /home/alberto/tfg/Reconocimiento-y-sintesis-visual-Tiago/workspace/install/urdf_test/share/urdf_test/environment/path.dsv
+-- Up-to-date symlink: /home/alberto/tfg/Reconocimiento-y-sintesis-visual-Tiago/workspace/install/urdf_test/share/urdf_test/local_setup.bash
+-- Up-to-date symlink: /home/alberto/tfg/Reconocimiento-y-sintesis-visual-Tiago/workspace/install/urdf_test/share/urdf_test/local_setup.sh
+-- Up-to-date symlink: /home/alberto/tfg/Reconocimiento-y-sintesis-visual-Tiago/workspace/install/urdf_test/share/urdf_test/local_setup.zsh
+-- Up-to-date symlink: /home/alberto/tfg/Reconocimiento-y-sintesis-visual-Tiago/workspace/install/urdf_test/share/urdf_test/local_setup.dsv
+-- Symlinking: /home/alberto/tfg/Reconocimiento-y-sintesis-visual-Tiago/workspace/install/urdf_test/share/urdf_test/package.dsv
+-- Up-to-date symlink: /home/alberto/tfg/Reconocimiento-y-sintesis-visual-Tiago/workspace/install/urdf_test/share/ament_index/resource_index/packages/urdf_test
+-- Up-to-date symlink: /home/alberto/tfg/Reconocimiento-y-sintesis-visual-Tiago/workspace/install/urdf_test/share/urdf_test/cmake/ament_cmake_export_dependencies-extras.cmake
+-- Up-to-date symlink: /home/alberto/tfg/Reconocimiento-y-sintesis-visual-Tiago/workspace/install/urdf_test/share/urdf_test/cmake/urdf_testConfig.cmake
+-- Up-to-date symlink: /home/alberto/tfg/Reconocimiento-y-sintesis-visual-Tiago/workspace/install/urdf_test/share/urdf_test/cmake/urdf_testConfig-version.cmake
+-- Up-to-date symlink: /home/alberto/tfg/Reconocimiento-y-sintesis-visual-Tiago/workspace/install/urdf_test/share/urdf_test/package.xml
+Listing '/home/alberto/tfg/Reconocimiento-y-sintesis-visual-Tiago/workspace/install/urdf_test/local/lib/python3.10/dist-packages/urdf_test'...

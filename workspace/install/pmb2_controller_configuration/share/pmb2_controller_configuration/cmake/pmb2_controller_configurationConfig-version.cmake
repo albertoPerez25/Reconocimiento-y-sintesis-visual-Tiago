@@ -1,0 +1,1 @@
+/home/alberto/tfg/Reconocimiento-y-sintesis-visual-Tiago/workspace/build/pmb2_controller_configuration/ament_cmake_core/pmb2_controller_configurationConfig-version.cmake
