@@ -16,7 +16,7 @@ def generate_launch_description():
     hospital_fuel = os.path.join(workspace_path, 'src/aws-robomaker-hospital-world/fuel_models')
     
     # Archivo de params de SLAM
-    slam_params_file = os.path.join(workspace_path, 'hospital_slam_params.yaml')
+    slam_params_file = os.path.join(workspace_path, 'config/hospital_slam_params.yaml')
 
     # VARIABLES DE ENTORNO
     set_model_path = AppendEnvironmentVariable(
