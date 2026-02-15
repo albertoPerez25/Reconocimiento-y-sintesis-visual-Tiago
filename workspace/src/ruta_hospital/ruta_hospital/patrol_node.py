@@ -7,33 +7,57 @@ from geometry_msgs.msg import PoseStamped
 PATH_POINTS = [
     [4.83898, 8.27372],
     [8.21112, 6.68955],
+    [11.4583, 1.65471],
+    [4.47097, 0.75583], # evitar las sillas
+    [4.83519, -4.0706], # evitar las sillas
+    [11.0001, -3.4900],
+    [2.34139, -9.9597],
+    [7.14909, -18.077],
+    [2.01610, -19.663],
+    [1.35232, -27.070], # 10
+    [7.02417, -31.315],    
+    [4.21443, -36.248], 
+    [-4.1522, -41.493],
+    [-8.8351, -36.498],
+    [-8.8975, -29.067],
+    [-3.2156, -25.070],
+    [-8.3355, -16.266],
+    [-2.0161, -19.663],
+    [-2.7160, -9.7099],
+    [-10.646, -2.9706], #
+    [-4.8351, -4.0706], # evitar las sillas
+    [-4.1000, 1.45583], # evitar las sillas
+    [-10.021, 1.28012], 
+    [-7.6369, 5.47739],
+    [-4.3140, 7.82489]
+]
+
+""" [4.83898, 8.27372],
+    [8.21112, 6.68955],
     [10.4583, 1.65471],
-    [4.47097, 0.75583],
-    [4.83519, -4.0706],
-    [10.1461, -4.0900],
+    [4.47097, 0.75583], # evitar las sillas
+    [4.83519, -4.0706], # evitar las sillas
+    [11.0001, -3.4900],
     [2.34139, -9.9597],
     [7.14909, -18.077],
     [1.21747, -19.763],
     [1.34232, -26.070],
-    [7.02417, -31.315],
-    [4.21443, -36.248],
+    [7.02417, -31.315],    
+    [4.21443, -36.248], 
     [-4.1522, -41.493],
     [-8.8351, -36.498],
     [-8.8975, -29.067],
     [-3.2156, -25.070],
     [-8.3355, -16.266],
     [-2.7161, -19.263],
-    [-2.7160, -9.7099],
-    [-10.146, -3.3406],
-    [-10.021, 1.28012], # TODO: Agregar otro punto para evitar las sillas
-    [-6.8369, 4.27739],
-    [-4.7140, 7.02489]
-]
+    [-2.7160, -9.7099],"""
 
 def init():
     rclpy.init()
     navigator = BasicNavigator()
     navigator.waitUntilNav2Active()
+
+    print("Patrol Node")
     return navigator
 
 def create_pose(navigator, x, y):
@@ -53,11 +77,11 @@ def state_check(result,index,iteration):
         ret = True
     else:
         ret = False
-        print(f"\n Fallo {iteration} intentando llegar al punto {index}")
+        print(f"\n {iteration+1} fallo(s) intentando llegar al punto {index}")
         if result == TaskResult.CANCELED:
             print(" Navegacion cancelada")
         elif result == TaskResult.FAILED:
-            print(" Tarea fallida")
+            print(f" Intento {iteration+1} fallido")
         else:
             print(" Fallo desconocido:",result)
     return ret
@@ -112,13 +136,13 @@ def goto_waypoints(route_poses, navigator):
         
         success = navigate_to_waypoint(navigator, pose, current_index, total_points, max_retries=2)
 
-        if not success:
+        """ if not success:
             continue # Pasa al siguiente punto
 
         # Da marcha atrás al salir del punto, ayuda con el lidar
         navigator.backup(backup_dist=0.0, backup_speed=0.2) # TODO: Comprobar si sigue siendo necesario
         while not navigator.isTaskComplete():
-            time.sleep(1.0)
+            time.sleep(1.0) """
 
 def main():
     navigator = init()
