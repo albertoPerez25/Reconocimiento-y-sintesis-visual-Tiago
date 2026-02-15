@@ -33,7 +33,7 @@ amcl:
     transform_tolerance: 1.0
     update_min_a: 0.05 # (antes 0.2) Actualiza posición más veces al girar
     update_min_d: 0.25
-    z_hit: 0.9 # (Antes 0.5) Peso altísimo a las lecturas que coinciden con los muros
+    z_hit: 0.9 # (Antes 0.5) Peso a las lecturas que coinciden con los muros
     z_max: 0.05
     z_rand: 0.1 # (Antes 0.5) Para que confíe más en los muros sólidos
     z_short: 0.05
@@ -133,14 +133,14 @@ controller_server:
       min_vel_y: 0.0
       max_vel_x: 0.26
       max_vel_y: 0.0
-      max_vel_theta: 1.0    # (antes 1.0) Velocidad máxima de giro baja
+      max_vel_theta: 0.5    # (antes 1.0) Velocidad máxima de giro baja
       min_speed_xy: 0.0
       max_speed_xy: 0.26
       min_speed_theta: 0.0
-      acc_lim_x: 2.5
+      acc_lim_x: 0.5 # (antes -2.5)
       acc_lim_y: 0.0
       acc_lim_theta: 0.8    # (antes 3.2) Aceleración de giro suave
-      decel_lim_x: -2.5
+      decel_lim_x: -0.5 # (antes -2.5)
       decel_lim_y: 0.0
       decel_lim_theta: -0.8 # (antes -3.2) Deceleración de giro suave
       vx_samples: 20
@@ -157,13 +157,12 @@ controller_server:
       critics: ["RotateToGoal", "Oscillation", "BaseObstacle", "GoalAlign", "PathAlign", "PathDist", "GoalDist"]
       BaseObstacle.scale: 0.02       # (antes 0.02) Rechazar acercarse a la esquina
       PathAlign.scale: 10.0         # (antes 32.0) Menos estricto con mirar a la ruta
-      PathAlign.forward_point_distance: 0.0 #(antes 0.1) Para que no tenga miedo a rotar sobre sí
+      PathAlign.forward_point_distance: 0.1 #(antes 0.1) Para que no tenga miedo a rotar sobre sí
       GoalAlign.scale: 8.0 # (antes 24.0)
-      GoalAlign.forward_point_distance: 0.0 #(antes 0.1) Para que no tenga miedo a rotar sobre sí
+      GoalAlign.forward_point_distance: 0.1 #(antes 0.1) Para que no tenga miedo a rotar sobre sí
       PathDist.scale: 10.0          # (antes 32.0) Permite que se separe mas de la ruta
       GoalDist.scale: 24.0
-      GoalDist.scale: 24.0
-      RotateToGoal.scale: 32.0
+      RotateToGoal.scale: 10.0 # (antes 32.0) 
       RotateToGoal.slowing_factor: 5.0
       RotateToGoal.lookahead_time: -1.0
 local_costmap:
@@ -182,7 +181,7 @@ local_costmap:
       plugins: ["voxel_layer", "inflation_layer"]
       inflation_layer:
         plugin: "nav2_costmap_2d::InflationLayer"
-        cost_scaling_factor: 8.0 # (antes 3.0) Suaviza el borde del obstáculo
+        cost_scaling_factor: 3.0 # (antes 3.0 8) Suaviza el borde del obstáculo
         inflation_radius: 0.55   # (antes 0.55) Lo aleja de la pared
       voxel_layer:
         plugin: "nav2_costmap_2d::VoxelLayer"
