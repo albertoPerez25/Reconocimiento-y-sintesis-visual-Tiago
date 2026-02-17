@@ -3,6 +3,11 @@ import time
 import rclpy
 from nav2_simple_commander.robot_navigator import BasicNavigator, TaskResult
 from geometry_msgs.msg import PoseStamped
+# Para leer input de la terminal:
+import sys
+import select
+import tty
+import termios
 
 PATH_POINTS = [
     [4.83898, 8.27372],
@@ -32,16 +37,17 @@ PATH_POINTS = [
     [-4.3140, 7.82489]
 ]
 
-""" [4.83898, 8.27372],
+""" 
+    [4.83898, 8.27372],
     [8.21112, 6.68955],
-    [10.4583, 1.65471],
+    [11.4583, 1.65471],
     [4.47097, 0.75583], # evitar las sillas
     [4.83519, -4.0706], # evitar las sillas
     [11.0001, -3.4900],
     [2.34139, -9.9597],
     [7.14909, -18.077],
-    [1.21747, -19.763],
-    [1.34232, -26.070],
+    [2.01610, -19.663],
+    [1.35232, -27.070], # 10
     [7.02417, -31.315],    
     [4.21443, -36.248], 
     [-4.1522, -41.493],
@@ -49,8 +55,15 @@ PATH_POINTS = [
     [-8.8975, -29.067],
     [-3.2156, -25.070],
     [-8.3355, -16.266],
-    [-2.7161, -19.263],
-    [-2.7160, -9.7099],"""
+    [-2.0161, -19.663],
+    [-2.7160, -9.7099],
+    [-10.646, -2.9706], #
+    [-4.8351, -4.0706], # evitar las sillas
+    [-4.1000, 1.45583], # evitar las sillas
+    [-10.021, 1.28012], 
+    [-7.6369, 5.47739],
+    [-4.3140, 7.82489]
+"""
 
 def init():
     rclpy.init()
@@ -106,6 +119,21 @@ def execute_rescue(navigator, backup_dist=0.5, backup_speed=0.2):
     navigator.clearAllCostmaps()   # Para eliminar obstáculos
     time.sleep(1.5)                # Para que el sensor láser se ajuste
 
+def get_key_non_blocking():
+    '''Lee una tecla sin pulsar Enter asíncronamente'''
+    try:
+        file_descriptor_stdin = sys.stdin.fileno()
+        old_settings = termios.tcgetattr(file_descriptor_stdin) # en caso de un crasheo, restaurar
+        try:
+            tty.setcbreak(file_descriptor_stdin) # modo cbreak no necesita pulsar enter
+            if select.select([sys.stdin], [], [], 0.2)[0]: # input en cada instante, asíncrono
+                return sys.stdin.read(1)
+        finally:
+            termios.tcsetattr(file_descriptor_stdin, termios.TCSADRAIN, old_settings) # restaura terminal
+    except Exception:
+        pass # Falla silenciosamente si la terminal no soporta lectura cruda
+    return None
+
 def navigate_to_waypoint(navigator, pose, current_index, total_points, max_retries=2):
     '''Intenta llegar a un waypoint. Si falla, ejecuta el rescate y lo vuelve a intentar'''
     for it in range(max_retries):
@@ -113,8 +141,16 @@ def navigate_to_waypoint(navigator, pose, current_index, total_points, max_retri
 
         while not navigator.isTaskComplete():
             # El feedback de goToPose no tiene current_waypoint
-            print(f"Punto actual: {current_index}/{total_points} | Intento: {it + 1}/{max_retries}", end='\r')
-            time.sleep(1.0)
+            print(f"Punto actual: {current_index}/{total_points} | Intento: {it + 1}/{max_retries} | (s) Saltar", end='\r')
+            
+            key = get_key_non_blocking()
+            if key and key.lower() == 's':
+                print(f"\n [Salto] Punto {current_index} omitido por el usuario")
+                navigator.cancelTask()
+                time.sleep(0.2) # Que le de tiempo a procesarlo
+                return True # para que no salte error
+
+            #time.sleep(0.2)
 
         result = navigator.getResult()
         
@@ -127,7 +163,7 @@ def navigate_to_waypoint(navigator, pose, current_index, total_points, max_retri
     print("Pasando al siguiente punto")
     return False
 
-def goto_waypoints(route_poses, navigator):
+def do_patrol_iteration(route_poses, navigator):
     '''Reemplaza followWaypoints por un bucle iterativo para intercalar la marcha atrás y manejo de atascos'''
     total_points = len(route_poses)
     
@@ -156,7 +192,7 @@ def main():
         while True:
             print(f"\nVUELTA Nº {iteration}")
 
-            goto_waypoints(route_poses,navigator)
+            do_patrol_iteration(route_poses,navigator)
             iteration += 1
 
     except KeyboardInterrupt: # Para poder pararlo más fácil
