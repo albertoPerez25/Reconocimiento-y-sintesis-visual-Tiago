@@ -9,7 +9,7 @@ from nav_msgs.msg import Odometry
 from cv_bridge import CvBridge
 
 # Variables de configuracion global
-TARGET_DISTANCE_METERS = 1.0 # en metros
+TARGET_DISTANCE_METERS = "target_distance_meters" # en metros
 SAVE_DIR = "./hospital_photos/"
 CAMERA_TOPIC = "/head_front_camera/rgb/image_raw"
 ODOM_TOPIC = "/odom"
@@ -20,6 +20,9 @@ class PhotoCapturer(Node):
     def __init__(self):
         super().__init__('photo_capturer')
         
+        # la distancia como parametro para poder cambiarlo en ejecucion
+        self.declare_parameter(TARGET_DISTANCE_METERS, 1.0) # (nombre, valor por defecto)
+
         self.bridge = CvBridge()
         self.last_image = None
         self.last_pose = None
@@ -71,7 +74,9 @@ class PhotoCapturer(Node):
         self.accumulated_distance += step_distance
         self.last_pose = current_pose
 
-        if self.accumulated_distance >= TARGET_DISTANCE_METERS:
+        target_distance = self.get_parameter(TARGET_DISTANCE_METERS).value
+
+        if self.accumulated_distance >= target_distance:
             if self.last_image is not None:
                 self.save_photo()
             
