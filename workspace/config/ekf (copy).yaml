@@ -10,19 +10,19 @@ ekf_filter_node:
     world_frame: odom
 
     # RUEDAS Obtiene la velocidad de ir hacia adelante y atrás, no los laterales
-odom0: /mobile_base_controller/odom
+    odom0: /mobile_base_controller/odom
     odom0_config: [false, false, false,
                    false, false, false,
-                   true,  false, false,   # solo X_vel para velocidad frontal
+                   true,  true,  false,   # X_vel, Y_vel
                    false, false, false,
-                   false, false, true]    # Yaw Vel para giro de las ruedas, ayuda si la IMU falla
+                   false, false, false]
     odom0_queue_size: 10
 
     # IMU Obtener toda la rotación del giroscopio, ignorando a las ruedas
     imu0: /base_imu
     imu0_config: [false, false, false,
-                  false, false, false,    
+                  false, false, true,     # Yaw (Ángulo Z)
                   false, false, false,
-                  false, false, true,     # solo velocidad de giro del giroscopio
+                  false, false, true,     # Yaw Velocity (Velocidad de giro)
                   false, false, false]
     imu0_queue_size: 10
