@@ -1,0 +1,35 @@
+-- The C compiler identification is GNU 11.4.0
+-- The CXX compiler identification is GNU 11.4.0
+-- Detecting C compiler ABI info
+-- Detecting C compiler ABI info - done
+-- Check for working C compiler: /usr/bin/cc - skipped
+-- Detecting C compile features
+-- Detecting C compile features - done
+-- Detecting CXX compiler ABI info
+-- Detecting CXX compiler ABI info - done
+-- Check for working CXX compiler: /usr/bin/c++ - skipped
+-- Detecting CXX compile features
+-- Detecting CXX compile features - done
+-- Found ament_cmake_auto: 1.3.12 (/opt/ros/humble/share/ament_cmake_auto/cmake)
+-- Found Python3: /usr/bin/python3 (found version "3.10.12") found components: Interpreter 
+-- Override CMake install command with custom implementation using symlinks instead of copying resources
+-- Configuring done
+-- Generating done
+-- Build files have been written to: /home/alberto/tfg/Reconocimiento-y-sintesis-visual-Tiago/workspace/build/pal_hey5
+-- Install configuration: ""
+-- Execute custom install script
+-- Symlinking: /home/alberto/tfg/Reconocimiento-y-sintesis-visual-Tiago/workspace/install/pal_hey5/share/ament_index/resource_index/package_run_dependencies/pal_hey5
+-- Symlinking: /home/alberto/tfg/Reconocimiento-y-sintesis-visual-Tiago/workspace/install/pal_hey5/share/ament_index/resource_index/parent_prefix_path/pal_hey5
+-- Symlinking: /home/alberto/tfg/Reconocimiento-y-sintesis-visual-Tiago/workspace/install/pal_hey5/share/pal_hey5/environment/ament_prefix_path.sh
+-- Symlinking: /home/alberto/tfg/Reconocimiento-y-sintesis-visual-Tiago/workspace/install/pal_hey5/share/pal_hey5/environment/ament_prefix_path.dsv
+-- Symlinking: /home/alberto/tfg/Reconocimiento-y-sintesis-visual-Tiago/workspace/install/pal_hey5/share/pal_hey5/environment/path.sh
+-- Symlinking: /home/alberto/tfg/Reconocimiento-y-sintesis-visual-Tiago/workspace/install/pal_hey5/share/pal_hey5/environment/path.dsv
+-- Symlinking: /home/alberto/tfg/Reconocimiento-y-sintesis-visual-Tiago/workspace/install/pal_hey5/share/pal_hey5/local_setup.bash
+-- Symlinking: /home/alberto/tfg/Reconocimiento-y-sintesis-visual-Tiago/workspace/install/pal_hey5/share/pal_hey5/local_setup.sh
+-- Symlinking: /home/alberto/tfg/Reconocimiento-y-sintesis-visual-Tiago/workspace/install/pal_hey5/share/pal_hey5/local_setup.zsh
+-- Symlinking: /home/alberto/tfg/Reconocimiento-y-sintesis-visual-Tiago/workspace/install/pal_hey5/share/pal_hey5/local_setup.dsv
+-- Symlinking: /home/alberto/tfg/Reconocimiento-y-sintesis-visual-Tiago/workspace/install/pal_hey5/share/pal_hey5/package.dsv
+-- Symlinking: /home/alberto/tfg/Reconocimiento-y-sintesis-visual-Tiago/workspace/install/pal_hey5/share/ament_index/resource_index/packages/pal_hey5
+-- Symlinking: /home/alberto/tfg/Reconocimiento-y-sintesis-visual-Tiago/workspace/install/pal_hey5/share/pal_hey5/cmake/pal_hey5Config.cmake
+-- Symlinking: /home/alberto/tfg/Reconocimiento-y-sintesis-visual-Tiago/workspace/install/pal_hey5/share/pal_hey5/cmake/pal_hey5Config-version.cmake
+-- Symlinking: /home/alberto/tfg/Reconocimiento-y-sintesis-visual-Tiago/workspace/install/pal_hey5/share/pal_hey5/package.xml
