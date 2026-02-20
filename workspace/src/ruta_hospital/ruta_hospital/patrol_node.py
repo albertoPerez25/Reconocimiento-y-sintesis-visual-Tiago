@@ -49,7 +49,7 @@ class PatrolNode(Node):
         '''Pasa la lista de waypoints a poses'''
         route_poses = []
         for point in PATH_POINTS:
-            pose = self.create_pose(point[0], point[1]) # ¡CORREGIDO AQUÍ!
+            pose = self.create_pose(point[0], point[1])
             route_poses.append(pose)
         return route_poses
 
@@ -128,7 +128,7 @@ class PatrolNode(Node):
                 return True
                 
             if it < max_retries - 1:
-                self.execute_rescue() # ¡CORREGIDO AQUÍ!
+                self.execute_rescue() 
 
         self.get_logger().info("Pasando al siguiente punto")
         return False
@@ -140,10 +140,10 @@ class PatrolNode(Node):
         for i, pose in enumerate(self.route_poses):
             current_index = i + 1
             
-            self.navigate_to_waypoint(pose, current_index, total_points, max_retries=2) # ¡CORREGIDO AQUÍ!
+            self.navigate_to_waypoint(pose, current_index, total_points, max_retries=2) 
 
     def run_patrol(self):
-        '''Lógica principal de patrulla iterativa'''
+        '''Lógica de patrulla iterativa'''
         self.get_logger().info(f"Ruta cargada con {len(self.route_poses)} puntos")
         iteration = 1
         while rclpy.ok():
