@@ -68,24 +68,23 @@ def generate_launch_description():
         output='screen'
     )
 
-    # Nodo Patrulla 
-    patrulla_cmd = TimerAction(
-        period=25.0,
+    # Nodo Teleop
+    teleop_cmd = TimerAction(
+        period=20.0,
         actions=[
             Node(
-                package='ruta_hospital',
-                executable='patrulla',
-                name='nodo_patrulla',
-                parameters=[{'use_sim_time': True}],
+                package='teleop_twist_keyboard',
+                executable='teleop_twist_keyboard',
+                name='teleop',
                 output='screen',
-                prefix='gnome-terminal -- ' # para que salga en otra terminal
+                prefix='gnome-terminal -- ' 
             )
         ]
     )
-    
-    # Nodo Capturador de Fotos en terminal independiente
+
+    # Nodo de Fotos
     fotos_cmd = TimerAction(
-        period=26.0,
+        period=20.0,
         actions=[
             Node(
                 package='ruta_hospital',
@@ -105,7 +104,7 @@ def generate_launch_description():
     ld.add_action(ekf_cmd)
     ld.add_action(nav2_cmd)
     ld.add_action(rviz_cmd)
-    ld.add_action(patrulla_cmd)
+    ld.add_action(teleop_cmd)
     ld.add_action(fotos_cmd)
 
     return ld

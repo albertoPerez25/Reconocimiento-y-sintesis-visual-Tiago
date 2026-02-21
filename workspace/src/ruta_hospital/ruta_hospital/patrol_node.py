@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 import time
 import rclpy
-from rclpy.node import Node
 from nav2_simple_commander.robot_navigator import BasicNavigator, TaskResult
 from geometry_msgs.msg import PoseStamped
 import sys
@@ -37,7 +36,7 @@ PATH_POINTS = [
     [-4.3140, 7.82489]
 ]
 
-class PatrolNode(Node):
+class PatrolNode(rclpy.node.Node):
     def __init__(self):
         super().__init__('patrol_node')
         self.navigator = BasicNavigator()
