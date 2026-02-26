@@ -25,7 +25,9 @@ setup(
     entry_points={
         'console_scripts': [
             'patrulla = ruta_hospital.patrol_node:main',
-            'fotos = ruta_hospital.photos_node:main'
+            'fotos = ruta_hospital.photos_node:main',
+            'yolo_perception_node = ruta_hospital.yolo_perception_node:main',
+            'llm_reporter_node = ruta_hospital.llm_reporter_node:main',
         ],
     },
 )

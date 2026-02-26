@@ -7,22 +7,11 @@ import sys
 import select
 import tty
 import termios
+import json
+from std_srvs.srv import Trigger
 
 PATH_POINTS = [
-    [-3.2156, -25.610], # bug issue #24
-    [-8.6355, -16.666],
-    [-2.0161, -20.663],
-    [-3.5160, -7.2099], # evitar colision esquina
-    [-2.7160, -9.7099],
-    [-10.646, -2.9706], #
-    [-4.8351, -4.0706], # evitar las sillas
-    [-4.1000, 1.45583], # evitar las sillas
-    [-10.321, 1.68012], 
-    [-7.6369, 5.47739],
-    [-4.3140, 7.82489]
-]
-
-'''    [4.83898, 8.27372],
+    [4.83898, 8.27372],
     [8.21112, 6.68955],
     [11.4583, 1.65471],
     [4.47097, 0.75583], # evitar las sillas
@@ -37,29 +26,73 @@ PATH_POINTS = [
     [-4.1522, -41.493],
     [-8.8351, -36.498],
     [-8.8975, -29.067],
-    [-3.2156, -25.070], # bug issue #24
-    [-8.3355, -16.266],
-    [-2.0161, -19.663],
+    [-3.2156, -25.610], # bug issue #24
+    [-8.6355, -16.666],
+    [-2.0161, -20.663],
+    [-3.5160, -7.2099], # evitar colision esquina
     [-2.7160, -9.7099],
     [-10.646, -2.9706], #
     [-4.8351, -4.0706], # evitar las sillas
     [-4.1000, 1.45583], # evitar las sillas
-    [-10.021, 1.28012], 
+    [-10.321, 1.68012], 
     [-7.6369, 5.47739],
-    [-4.3140, 7.82489]'''
+    [-4.3140, 7.82489]
+]
 
 class PatrolNode(rclpy.node.Node):
     def __init__(self):
         super().__init__('patrol_node')
+
+        # Cargar JSON con los puntos de ruta
+        self.declare_parameter('route_file_path', 'default_route.json')
+        self.route_file_path = self.get_parameter('route_file_path').get_parameter_value().string_value
+        self.path_points = self.load_route()
+
         self.navigator = BasicNavigator()
         self.navigator.waitUntilNav2Active()
         self.get_logger().info("Patrol Node Initialized")
         self.route_poses = self.list_to_pose()
+        self.report_client = self.create_client(Trigger, '/generate_patrol_report') # Para iniciar el reporte
+
+    def trigger_report(self):
+        '''Llama al servicio de generación de informes al final de una vuelta'''
+        self.get_logger().info("Iniciado el informe")
+        
+        # 3 segundos de espera para ver si el nodo reportero está encendido
+        if not self.report_client.wait_for_service(timeout_sec=3.0):
+            self.get_logger().warn("El servicio '/generate_patrol_report' no está activo, no se hará el informe")
+            return
+
+        req = Trigger.Request()
+        future_response = self.report_client.call_async(req)
+                
+        rclpy.spin_until_future_complete(self, future_response) # espera hasta que recibe la respuesta
+        
+        try:
+            response = future_response.result()
+            if response.success:
+                self.get_logger().info("Informe generado")
+            else:
+                self.get_logger().warn(f"El nodo LLM reportó un problema: {response.message}")
+        except Exception as e:
+            self.get_logger().error(f"Fallo al invocar el servicio: {e}")
+
+    def load_route(self):
+        '''Carga la lista de waypoints desde el archivo JSON'''
+        try:
+            with open(self.route_file_path, 'r') as f:
+                data = json.load(f)
+                route = data.get("PATH_POINTS", [])
+                self.get_logger().info(f"Ruta cargada exitosamente desde {self.route_file_path}")
+                return route
+        except Exception as e:
+            self.get_logger().error(f"Error cargando el archivo de ruta: {e}")
+            return PATH_POINTS
 
     def list_to_pose(self):
         '''Pasa la lista de waypoints a poses'''
         route_poses = []
-        for point in PATH_POINTS:
+        for point in self.path_points:
             pose = self.create_pose(point[0], point[1])
             route_poses.append(pose)
         return route_poses
@@ -163,6 +196,7 @@ class PatrolNode(rclpy.node.Node):
         while rclpy.ok():
             self.get_logger().info(f"\nVUELTA Nº {iteration}")
             self.do_patrol_iteration()
+            #self.trigger_report()
             iteration += 1
 
 def main(args=None):
