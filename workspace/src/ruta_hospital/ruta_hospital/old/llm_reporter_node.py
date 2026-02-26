@@ -50,7 +50,7 @@ class LLMReporterNode(Node):
             callback_group=self.cb_group
         )
         
-        self.get_logger().info("Nodo de informe listo. Se iniciará al llamar al servicio '/generate_patrol_report'")
+        self.get_logger().info("Nodo de informe LLM listo. Se iniciará al llamar al servicio '/generate_patrol_report'")
 
     def load_semantic_map(self):
         '''Carga las zonas del hospital desde un archivo JSON externo'''

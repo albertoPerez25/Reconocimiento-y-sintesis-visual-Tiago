@@ -1,0 +1,34 @@
+import os
+from abc import ABC, abstractmethod
+from rclpy.node import Node
+from hospital_interfaces.srv import AnalyzeActivity
+
+class BasePerceptionNode(Node, ABC):
+    '''Clase abstracta para los nodos de percepción visual'''
+    def __init__(self, node_name):
+        super().__init__(node_name)
+        
+        # Servidor del servicio que recibe imágenes y devuelve un reporte
+        # de posiciones
+        self.srv = self.create_service(
+            AnalyzeActivity, 
+            'analyze_image', 
+            self.analyze_callback
+        )
+        self.get_logger().info(f"Servidor de percepción [{node_name}] listo y esperando imágenes.")
+
+    def analyze_callback(self, request, response):
+        '''Se ejecuta cada vez que recibe una imagen por el servicio'''
+        if not os.path.isfile(request.image_path):
+            response.report = "Error: No se encontró la imagen en la ruta especificada."
+            return response
+            
+        self.get_logger().info(f"Analizando imagen: {os.path.basename(request.image_path)}...")
+        
+        response.report = self.process_image(request.image_path)
+        return response
+
+    @abstractmethod
+    def process_image(self, image_path: str) -> str:
+        '''Método que implementa cada nodo hijo. Devuelve el reporte en forma de string '''
+        pass

@@ -188,6 +188,7 @@ class PatrolNode(rclpy.node.Node):
             current_index = i + 1
             
             self.navigate_to_waypoint(pose, current_index, total_points, max_retries=2) 
+            #self.trigger_report()
 
     def run_patrol(self):
         '''Lógica de patrulla iterativa'''
