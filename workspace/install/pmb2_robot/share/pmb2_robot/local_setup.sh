@@ -1,1 +1,0 @@
-/home/alberto/tfg/Reconocimiento-y-sintesis-visual-Tiago/workspace/build/pmb2_robot/ament_cmake_environment_hooks/local_setup.sh

@@ -83,20 +83,23 @@ class LLMReporterNode(BaseReporterNode):
                 context_text += f"[{ev['time']}s] {ev['report'].replace('Estado: ', '')}\n"
         return context_text
 
-def call_ollama(self, context_text):
+    def call_ollama(self, context_text):
         '''Construye el prompt específico para este nodo y llama a la API'''
         prompt = f"""
-        Eres la IA de seguridad de un robot patrulla en un hospital. 
-        A continuación tienes el registro de actividad organizado por las diferentes 
-        habitaciones y zonas del hospital.
-        
-        Tu tarea es redactar un informe profesional para el responsable de planta. 
-        Destaca las anomalías y riesgos, y resume la actividad. Infiere qué actividad 
-        realizan. Usa un tono formal, claro y conciso. No inventes datos.
+        You are the security AI for a hospital patrol robot. 
+        Below is the activity log organized by the various rooms and areas of the hospital.
+
+        Your task is to write a professional summary for the Floor Manager. 
+        Highlight any anomalies and risks, and summarize the general activity. 
+        Use a formal, clear, and concise tone.
+
+        Focus specifically on anomalies and life-safety risks within the hospital 
+        (e.g., fires, live wires, overturned chairs, objects obstructing hallways/paths). 
+        Do not hallucinate or invent data; report only what is explicitly stated in the log.
 
         {context_text}
         
-        INFORME DE SEGURIDAD:
+        SECURITY SUMMARY:
         """
         
         payload = {"model": "llama3", "prompt": prompt, "stream": False}

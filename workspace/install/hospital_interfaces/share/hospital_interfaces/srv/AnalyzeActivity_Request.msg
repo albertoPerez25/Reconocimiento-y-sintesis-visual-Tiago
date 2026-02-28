@@ -1,7 +1,1 @@
-# servicio entre reporter (el texto descriptivo) y perception (las poses)
-
-
-# Request: ruta absoluta de la imagen a analizar
-
-string image_path
-
+/home/alberto/tfg/Reconocimiento-y-sintesis-visual-Tiago/workspace/build/hospital_interfaces/rosidl_cmake/srv/AnalyzeActivity_Request.msg

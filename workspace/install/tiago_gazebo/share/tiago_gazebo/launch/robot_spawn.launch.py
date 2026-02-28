@@ -1,1 +1,0 @@
-/home/alberto/tfg/Reconocimiento-y-sintesis-visual-Tiago/workspace/src/tiago_simulation/tiago_gazebo/launch/robot_spawn.launch.py

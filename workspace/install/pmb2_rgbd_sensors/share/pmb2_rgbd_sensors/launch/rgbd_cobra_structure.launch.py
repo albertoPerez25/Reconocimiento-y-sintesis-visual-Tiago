@@ -1,1 +1,0 @@
-/home/alberto/tfg/Reconocimiento-y-sintesis-visual-Tiago/workspace/src/pmb2_navigation/pmb2_rgbd_sensors/launch/rgbd_cobra_structure.launch.py
