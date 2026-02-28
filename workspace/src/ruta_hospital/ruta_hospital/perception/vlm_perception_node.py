@@ -6,7 +6,8 @@ from ruta_hospital.perception.base_perception import BasePerceptionNode
 class VLMPerceptionNode(BasePerceptionNode):
     def __init__(self):
         super().__init__('vlm_perception_node')
-        self.declare_parameter('vlm_model', 'llava')
+        #self.declare_parameter('vlm_model', 'llava') # No tengo tanta VRAM
+        self.declare_parameter('vlm_model', 'moondream')
         self.declare_parameter('ollama_url', 'http://localhost:11434/api/generate')
         
         self.vlm_model = self.get_parameter('vlm_model').get_parameter_value().string_value
