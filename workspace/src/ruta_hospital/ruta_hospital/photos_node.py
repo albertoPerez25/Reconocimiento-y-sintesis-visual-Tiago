@@ -4,22 +4,22 @@ import math
 import cv2
 import csv
 import rclpy
-from rclpy.node import Node
+import numpy as np
 from sensor_msgs.msg import Image
 from nav_msgs.msg import Odometry
 from cv_bridge import CvBridge
 
 from tf2_ros import Buffer, TransformListener
-#from tf2_ros import LookupException, ConnectivityException, ExtrapolationException
 
 # Variables de configuracion global
 TARGET_DISTANCE_METERS = "target_distance_meters" # en metros
+SIMILARITY_THRESHOLD = "similarity_threshold"
 SAVE_DIR = "./hospital_photos/"
 CAMERA_TOPIC = "/head_front_camera/rgb/image_raw"
 ODOM_TOPIC = "/odom"
 CSV_FILENAME = "metadata.csv"
 
-class PhotoCapturer(Node):
+class PhotoCapturer(rclpy.node.Node):
     '''Nodo encargado de guardar fotos en la ruta del robot'''
     
     def __init__(self):
@@ -27,18 +27,20 @@ class PhotoCapturer(Node):
         
         # la distancia como parametro para poder cambiarlo en ejecucion
         self.declare_parameter(TARGET_DISTANCE_METERS, 1.0) # (nombre, valor por defecto)
+        self.declare_parameter(SIMILARITY_THRESHOLD, 25.0) # minimo de diferencia con la ultima imagen
 
         self.bridge = CvBridge()
         self.last_image = None
         self.last_pose = None
+        self.last_saved_cv_image = None
         self.accumulated_distance = 0.0
-        self.photo_count = 1
 
         # para la posición más precisa
         self.tf_buffer = Buffer()
         self.tf_listener = TransformListener(self.tf_buffer, self)
 
         self.setup_directory()
+        self.photo_count = self.get_starting_photo_count()
 
         self.image_sub = self.create_subscription(
             Image, 
@@ -71,6 +73,30 @@ class PhotoCapturer(Node):
                 writer.writerow(['filename', 'timestamp_sec', 'timestamp_nanosec',\
                                   'x', 'y', 'z', 'qx', 'qy', 'qz', 'qw'])
 
+    def get_starting_photo_count(self):
+        '''Busca la ultima foto registrada en el CSV para continuar la numeracion'''
+        csv_path = os.path.join(SAVE_DIR, CSV_FILENAME)
+        
+        if not os.path.isfile(csv_path):
+            return 1
+            
+        try:
+            with open(csv_path, mode='r') as csv_file:
+                csv_reader = csv.reader(csv_file)
+                csv_rows = list(csv_reader)
+                
+                if len(csv_rows) <= 1:
+                    return 1
+                    
+                last_filename = csv_rows[-1][0] 
+                num = int(last_filename.split('.')[0])
+                
+                return num + 1
+                
+        except Exception as e:
+            self.get_logger().warn(f"No se pudo leer el CSV, iniciando en 1: {e}")
+            return 1
+
     def camera_callback(self, msg):
         '''Asigna a last_image la imagen mas reciente del topic'''
         self.last_image = msg
@@ -80,6 +106,20 @@ class PhotoCapturer(Node):
         dx = current_pose.position.x - self.last_pose.position.x
         dy = current_pose.position.y - self.last_pose.position.y
         return math.sqrt(dx**2 + dy**2)
+    
+    def is_image_different(self, current_cv_image):
+        '''Calcula el Error Cuadratico Medio (MSE) para determinar si la imagen es distinta'''
+        if self.last_saved_cv_image is None:
+            return True
+
+        gray_current = cv2.cvtColor(current_cv_image, cv2.COLOR_BGR2GRAY)
+        gray_last = cv2.cvtColor(self.last_saved_cv_image, cv2.COLOR_BGR2GRAY)
+
+        err = np.sum((gray_current.astype("float") - gray_last.astype("float")) ** 2)
+        err /= float(gray_current.shape[0] * gray_current.shape[1])
+
+        threshold = self.get_parameter(SIMILARITY_THRESHOLD).value
+        return err > threshold
 
     def odom_callback(self, msg):
         '''Suma la distancia recorrida y evalua si hay que procesar otra captura'''
@@ -93,23 +133,56 @@ class PhotoCapturer(Node):
         self.accumulated_distance += step_distance
         self.last_pose = current_pose
 
+        self.try_save_data()
+        
+        """if self.accumulated_distance >= target_distance:
+
+            if self.last_image is not None:
+                self.accumulated_distance = 0.0
+                cv_image = self.bridge.imgmsg_to_cv2(self.last_image, "bgr8")
+                
+                if self.is_image_different(cv_image):
+                    image_name, filename = self.save_photo(cv_image)
+
+                    if image_name is not None and os.path.isfile(filename):
+                        self.save_metadata(image_name)
+                        self.last_saved_cv_image = cv_image 
+                else:
+                    self.get_logger().info("Foto omitida al no superar el límite de diferencia")
+             """
+        
+    def try_save_data(self):
+        '''Evalua si se cumplen los requisitos para guardar foto y metadatos.'''
         target_distance = self.get_parameter(TARGET_DISTANCE_METERS).value
 
-        if self.accumulated_distance >= target_distance:
-            if self.last_image is not None:
-                image_name,filename = self.save_photo()
+        if self.accumulated_distance < target_distance:
+            return
+        
+        self.accumulated_distance = 0.0
+        
+        if self.last_image is None:
+            return
 
-                if image_name is not None and os.path.isfile(filename):
-                    self.save_metadata(image_name)
-            
-            self.accumulated_distance = 0.0
+        cv_image = self.bridge.imgmsg_to_cv2(self.last_image, "bgr8")
 
-    def save_photo(self):
+        if not self.is_image_different(cv_image):
+            self.get_logger().info("Foto omitida al no superar el límite de diferencia")
+            return
+        
+        image_name, filename = self.save_photo(cv_image)
+        image_exists = os.path.isfile(filename)
+
+        if image_name is None or not image_exists:
+            return
+        
+        self.save_metadata(image_name)
+        self.last_saved_cv_image = cv_image
+
+    def save_photo(self, cv_image):
         '''Traduce el mensaje de ROS2 a OpenCV y guarda el archivo'''
         try:
-            cv_image = self.bridge.imgmsg_to_cv2(self.last_image, "bgr8")
             image_name = f"{self.photo_count:06d}.jpg"
-            filename = f"{SAVE_DIR}{image_name}.jpg"
+            filename = os.path.join(SAVE_DIR, image_name)
             
             cv2.imwrite(filename, cv_image)
             self.get_logger().info(f"Foto guardada en: {filename}")
@@ -118,7 +191,7 @@ class PhotoCapturer(Node):
             
         except Exception as e:
             self.get_logger().error(f"Error al intentar guardar la foto: {e}")
-            image_name,filename = None
+            image_name,filename = None, None
 
         finally:    
             return image_name,filename
@@ -147,7 +220,7 @@ class PhotoCapturer(Node):
             self.get_logger().info(f"Guardados metadatos de: {image_name}")
 
         except Exception as e:
-            self.get_logger().error(f"Error al intentar guardar la foto: {e}")
+            self.get_logger().error(f"Error al intentar guardar metadatos: {e}")
 
 def main(args=None):
     rclpy.init(args=args)

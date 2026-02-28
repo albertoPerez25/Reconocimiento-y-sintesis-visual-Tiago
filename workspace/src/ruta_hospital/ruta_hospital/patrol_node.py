@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 import time
 import rclpy
-from rclpy.node import Node
 from nav2_simple_commander.robot_navigator import BasicNavigator, TaskResult
 from geometry_msgs.msg import PoseStamped
 import sys
@@ -10,7 +9,20 @@ import tty
 import termios
 
 PATH_POINTS = [
-    [4.83898, 8.27372],
+    [-3.2156, -25.610], # bug issue #24
+    [-8.6355, -16.666],
+    [-2.0161, -20.663],
+    [-3.5160, -7.2099], # evitar colision esquina
+    [-2.7160, -9.7099],
+    [-10.646, -2.9706], #
+    [-4.8351, -4.0706], # evitar las sillas
+    [-4.1000, 1.45583], # evitar las sillas
+    [-10.321, 1.68012], 
+    [-7.6369, 5.47739],
+    [-4.3140, 7.82489]
+]
+
+'''    [4.83898, 8.27372],
     [8.21112, 6.68955],
     [11.4583, 1.65471],
     [4.47097, 0.75583], # evitar las sillas
@@ -25,7 +37,7 @@ PATH_POINTS = [
     [-4.1522, -41.493],
     [-8.8351, -36.498],
     [-8.8975, -29.067],
-    [-3.2156, -25.070],
+    [-3.2156, -25.070], # bug issue #24
     [-8.3355, -16.266],
     [-2.0161, -19.663],
     [-2.7160, -9.7099],
@@ -34,10 +46,9 @@ PATH_POINTS = [
     [-4.1000, 1.45583], # evitar las sillas
     [-10.021, 1.28012], 
     [-7.6369, 5.47739],
-    [-4.3140, 7.82489]
-]
+    [-4.3140, 7.82489]'''
 
-class PatrolNode(Node):
+class PatrolNode(rclpy.node.Node):
     def __init__(self):
         super().__init__('patrol_node')
         self.navigator = BasicNavigator()
@@ -125,6 +136,9 @@ class PatrolNode(Node):
             result = self.navigator.getResult()
             
             if self.state_check(result,current_index,it):
+                """self.navigator.backup(backup_dist=0.1, backup_speed=0.2)
+                while not self.navigator.isTaskComplete():
+                    time.sleep(1.0) """
                 return True
                 
             if it < max_retries - 1:
