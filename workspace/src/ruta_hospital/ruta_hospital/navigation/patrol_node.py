@@ -235,6 +235,7 @@ class PatrolNode(rclpy.node.Node):
         '''Bucle infinito de iteraciones de patrullas al hospital'''
         self.get_logger().info(f"Ruta cargada con {len(self.route_poses)} puntos")
         iteration = 1
+        self.request_data_cleanup()
         while rclpy.ok():
             self.get_logger().info(f"\nVUELTA Nº {iteration}")
             self.do_patrol_iteration()
