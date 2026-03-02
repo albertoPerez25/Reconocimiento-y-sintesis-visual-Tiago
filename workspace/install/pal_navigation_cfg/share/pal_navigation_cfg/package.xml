@@ -1,0 +1,20 @@
+<?xml version="1.0"?>
+<package format="3">
+  <name>pal_navigation_cfg</name>
+  <version>3.0.6</version>
+  <description>PAL Navigation Configuration metapackage</description>
+  <maintainer email="antonio.brandi@pal-robotics.com">Antonio Brandi</maintainer>
+  <license>Apache License 2.0</license>
+  <author email="antonio.brandi@pal-robotics.com">Antonio Brandi</author>
+
+  <url type="website">https://github.com/pal-robotics/pal_navigation_cfg_public</url>
+
+  <buildtool_depend>ament_cmake_auto</buildtool_depend>
+
+  <exec_depend>pal_navigation_cfg_bringup</exec_depend>
+  <exec_depend>pal_navigation_cfg_params</exec_depend>
+
+  <export>
+    <build_type>ament_cmake</build_type>
+  </export>
+</package>

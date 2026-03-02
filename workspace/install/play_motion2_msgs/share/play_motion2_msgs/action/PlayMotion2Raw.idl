@@ -1,0 +1,24 @@
+// generated from rosidl_adapter/resource/action.idl.em
+// with input from play_motion2_msgs/action/PlayMotion2Raw.action
+// generated code does not contain a copyright notice
+
+#include "builtin_interfaces/msg/Time.idl"
+#include "play_motion2_msgs/msg/Motion.idl"
+
+module play_motion2_msgs {
+  module action {
+    struct PlayMotion2Raw_Goal {
+      play_motion2_msgs::msg::Motion motion;
+
+      boolean skip_planning;
+    };
+    struct PlayMotion2Raw_Result {
+      boolean success;
+
+      string error;
+    };
+    struct PlayMotion2Raw_Feedback {
+      builtin_interfaces::msg::Time current_time;
+    };
+  };
+};

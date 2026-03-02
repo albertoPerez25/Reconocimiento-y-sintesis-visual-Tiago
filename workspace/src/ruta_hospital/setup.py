@@ -29,6 +29,7 @@ setup(
 
             'yolo_perception_node = ruta_hospital.perception.yolo_perception_node:main',
             'vlm_perception_node = ruta_hospital.perception.vlm_perception_node:main',
+            'hybrid_perception_node = ruta_hospital.perception.hybrid_perception_node:main',
 
             'llm_reporter_node = ruta_hospital.reporting.llm_reporter_node:main',
             'vlm_direct_reporter_node = ruta_hospital.reporting.vlm_direct_reporter_node:main',

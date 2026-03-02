@@ -16,13 +16,17 @@ class VLMPerceptionNode(BasePerceptionNode):
     def process_image(self, image_path: str) -> str:
         '''Interactua con el modelo y devuelve el reporte en forma de string'''
         prompt = """
-        Eres una IA de seguridad analizando la cámara de un robot en un hospital.
-        ¿Hay alguna persona en esta imagen? 
-        - Si no hay nadie, responde EXACTAMENTE con la palabra: 'Despejado'.
-        - Si hay personas, describe brevemente cuántas hay y su postura exacta. Sé conciso.
-        Adicionalmente, si encuentras algún suceso extraño o peligroso responde explicando dicho peligro.
-        Céntrate en anomalías y riesgos para la vida en el hospital (incendios, cables con corriente, sillas tiradas, 
-        objetos obstruyendo el pasillo/camino...). No te inventes datos, di unicamente de lo que este seguro.
+        You are a security AI analyzing a robot's camera feed in a hospital.
+        Is there anyone in this image?
+
+        If there is no one, respond EXACTLY with the word: 'Despejado'.
+
+        If there are people, briefly describe how many there are and their exact posture. Be concise.
+        Additionally, if you find any strange or dangerous occurrence, respond by explaining said danger.
+        You must analyze people activities and warn if someone is in need of help (like people who have fallen into the ground
+        , running, yelling, fights...). Focus on anomalies, people who need help and life-threatening risks in the hospital 
+        (fires, live wires, overturned chairs, objects obstructing the hallway/path...). 
+        Do not make up data; report only what you are certain of BRIEFLY. Answer in SPANISH.
         """
         base64_img = encode_image_to_base64(image_path)
         payload = {"model": self.vlm_model, "prompt": prompt, "images": [base64_img], "stream": False}

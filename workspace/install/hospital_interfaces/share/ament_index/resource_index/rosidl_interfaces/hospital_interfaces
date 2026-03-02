@@ -1,1 +1,4 @@
-/home/alberto/tfg/Reconocimiento-y-sintesis-visual-Tiago/workspace/build/hospital_interfaces/ament_cmake_index/share/ament_index/resource_index/rosidl_interfaces/hospital_interfaces
+srv/AnalyzeActivity.idl
+srv/AnalyzeActivity.srv
+srv/AnalyzeActivity_Request.msg
+srv/AnalyzeActivity_Response.msg

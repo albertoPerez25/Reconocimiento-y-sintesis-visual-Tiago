@@ -43,7 +43,7 @@ class YoloPerceptionNode(BasePerceptionNode):
     def calculate_posture(self, width, height, pts, confs):
         '''Calcula las posturas en base a los puntos devueltos por YOLO'''
         if width > (height * 1.2): 
-            return "Posible caída detectada (cuerpo en horizontal en el suelo)"
+            return "ATENCIÓN Caída detectada (cuerpo en el suelo), ENVIAR AYUDA URGENTEMENTE."
         
         nose_y, nose_c = pts[0][1], confs[0]
         hip_y = (pts[11][1] + pts[12][1]) / 2.0
@@ -57,19 +57,19 @@ class YoloPerceptionNode(BasePerceptionNode):
 
         if hip_c > MIN_CONFIDENCE and knee_c > MIN_CONFIDENCE:
             if abs(hip_y - knee_y) < (height * 0.2) or (width > height * 0.6 and width < height * 1.2):
-                return "Persona sentada"
+                return "(ignorar) Todo correcto. Persona sentada"
             
         if nose_c > MIN_CONFIDENCE and ankle_c > MIN_CONFIDENCE:
             if abs(ankle_y - nose_y) < (width * 0.6): 
-                return "Posible caída detectada (cabeza y pies a altura similar)"
+                return "ATENCIÓN Caída detectada (cabeza y pies a altura similar), ENVIAR AYUDA URGENTEMENTE."
             
             elif height > (width * 1.5): 
-                return "Persona de pie o caminando"
+                return "(ignorar) Todo correcto. Persona de pie o caminando"
         
         if height > (width * 1.3): 
-            return "Persona de pie (piernas parcialmente ocultas o predicción con poca confianza)"
+            return "(ignorar) Todo correcto. Persona de pie (piernas parcialmente ocultas o predicción con poca confianza)"
         
-        return "Persona sentada o torso visible (piernas parcialmente ocultas o predicción con poca confianza)"
+        return "(ignorar) Todo correcto. Persona sentada o torso visible (piernas parcialmente ocultas o predicción con poca confianza)"
 
 def main(args=None):
     rclpy.init(args=args)

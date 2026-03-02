@@ -1,5 +1,8 @@
+import os
+import csv
 import json
 import math
+import glob
 from abc import ABC, abstractmethod
 from rclpy.node import Node
 from std_srvs.srv import Trigger
@@ -26,6 +29,7 @@ class BaseReporterNode(Node, ABC):
         self.semantic_map_path = self.get_parameter('semantic_map_path').get_parameter_value().string_value
 
         self.load_semantic_map()
+        self.abort_processing = False 
 
         self.cb_group = ReentrantCallbackGroup()
         
@@ -33,6 +37,13 @@ class BaseReporterNode(Node, ABC):
             Trigger, 
             'generate_patrol_report', 
             self.generate_report_callback, 
+            callback_group=self.cb_group
+        )
+
+        self.clean_srv = self.create_service(
+            Trigger,
+            'clean_patrol_data',
+            self.clean_data_callback,
             callback_group=self.cb_group
         )
         
@@ -78,6 +89,58 @@ class BaseReporterNode(Node, ABC):
             if min(rx1, rx2) <= x <= max(rx1, rx2) and min(ry1, ry2) <= y <= max(ry1, ry2):
                 return f"Recepción (cerca de {nearest_room})"
         return f"Pasillo (cerca de {nearest_room})"
+    
+    def get_images_grouped_by_zone(self):
+        ''' Lee el CSV y devuelve un diccionario con las imágenes agrupadas por zona '''
+        zone_groups = {}
+        if not os.path.isfile(self.csv_path):
+            self.get_logger().warn(f"No se encontró el CSV en {self.csv_path}")
+            return zone_groups
+
+        with open(self.csv_path, mode='r') as file:
+            reader = csv.DictReader(file)
+            for row in reader:
+                img_path = os.path.join(self.photos_dir, row['filename'])
+                if not os.path.isfile(img_path):
+                    continue
+
+                x, y = float(row['x']), float(row['y'])
+                zona = self.get_zone_name(x, y)
+                
+                if zona not in zone_groups:
+                    zone_groups[zona] = []
+                    
+                zone_groups[zona].append({
+                    'path': img_path,
+                    'time': int(row['timestamp_sec'])
+                })
+                
+        return zone_groups
+    
+    def clean_data_callback(self, request, response):
+        '''Callback para abortar el proceso actual y limpiar la carpeta'''
+        self.get_logger().info("Petición de limpieza, se parará el informe")
+        self.abort_processing = True # Avisa a los bucles asíncronos de que paren
+        self.clean_processed_files()
+        
+        response.success = True
+        response.message = "Datos limpiados correctamente."
+        return response
+
+    def clean_processed_files(self):
+        '''Borra las fotos y el CSV'''
+        try:
+            if os.path.isfile(self.csv_path):
+                os.remove(self.csv_path)
+            
+            files = glob.glob(os.path.join(self.photos_dir, '*'))
+            for file in files:
+                if os.path.isfile(file) and (file.endswith('.jpg') or file.endswith('.png')):
+                    os.remove(file)
+                    
+            self.get_logger().info("Carpeta de fotos reseteada")
+        except Exception as e:
+            self.get_logger().error(f"Error durante la limpieza: {e}")
 
     @abstractmethod
     async def generate_report_callback(self, request, response):

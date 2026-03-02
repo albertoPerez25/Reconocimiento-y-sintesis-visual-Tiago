@@ -1,0 +1,24 @@
+<?xml version="1.0"?>
+<package format="2">
+  <name>pal_navigation_cfg_bringup</name>
+  <version>3.0.6</version>
+  <description>Central storage of PAL Navigation launch files</description>
+  <maintainer email="antonio.brandi@pal-robotics.com">Antonio Brandi</maintainer>
+  <license>Apache License 2.0</license>
+  <author email="antonio.brandi@pal-robotics.com">Antonio Brandi</author>
+
+  <buildtool_depend>ament_cmake_auto</buildtool_depend>
+
+  <exec_depend>nav2_bringup</exec_depend>
+  <exec_depend>ros2launch</exec_depend>
+  <exec_depend>launch_pal</exec_depend>
+  <exec_depend>pal_navigation_cfg_params</exec_depend>
+
+  <test_depend>ament_lint_auto</test_depend>
+  <test_depend>ament_lint_common</test_depend>
+
+  <export>
+    <build_type>ament_cmake</build_type>
+  </export>
+
+</package>

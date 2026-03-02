@@ -1,0 +1,17 @@
+// generated from rosidl_adapter/resource/srv.idl.em
+// with input from play_motion2_msgs/srv/SaveMotion.srv
+// generated code does not contain a copyright notice
+
+
+module play_motion2_msgs {
+  module srv {
+    struct SaveMotion_Request {
+      string motion_key;
+
+      string filepath;
+    };
+    struct SaveMotion_Response {
+      boolean success;
+    };
+  };
+};
