@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 import cv2
 import rclpy
+import os
 from ultralytics import YOLO
 
 # Servicio personalizado para comunicación entre LLM y Yolo
@@ -11,8 +12,8 @@ YOLO_MODEL = "yolo26n-pose.pt"
 MIN_CONFIDENCE = 0.5
 
 class YoloPerceptionNode(BasePerceptionNode):
-    def __init__(self):
-        super().__init__('yolo_perception_node')
+    def __init__(self,start_service=True):
+        super().__init__('yolo_perception_node',start_service=start_service)
         self.model = YOLO(YOLO_MODEL)
         self.get_logger().info(f"Modelo {YOLO_MODEL} cargado")
 
@@ -70,6 +71,10 @@ class YoloPerceptionNode(BasePerceptionNode):
             return "(ignorar) Todo correcto. Persona de pie (piernas parcialmente ocultas o predicción con poca confianza)"
         
         return "(ignorar) Todo correcto. Persona sentada o torso visible (piernas parcialmente ocultas o predicción con poca confianza)"
+    
+    def check_path(self, path):
+        '''Metodo para comprobar que el path es de una imagen que exista'''
+        return os.path.isfile(path)
 
 def main(args=None):
     rclpy.init(args=args)

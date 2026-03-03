@@ -8,7 +8,14 @@ from ruta_hospital.commons.api_utils import call_ollama_api
 class LLMReporterNode(BaseReporterNode):
     def __init__(self):
         super().__init__('llm_reporter_node')
+        self.declare_parameter('perception_mode', 'image') # 'sequence' para VLM temporal, 'image' para YOLO foto a foto
+        self.perception_mode = self.get_parameter('perception_mode').get_parameter_value().string_value
         self.vision_cli = self.create_client(AnalyzeActivity, 'analyze_image', callback_group=self.cb_group)
+        
+        if self.perception_mode == "sequence":
+            self.get_logger().info("MODO SECUENCIA DE IMAGENES")
+        else:
+            self.get_logger().info("MODO IMAGENES INDIVIDUALES")
 
     async def generate_report_callback(self, request, response):
         '''Se ejecuta de manera asíncrona al llamar al servicio /generate_patrol_report'''
@@ -50,16 +57,28 @@ class LLMReporterNode(BaseReporterNode):
         zona_context = f"REGISTRO BRUTO DE {zona}:\n"
         has_activity = False
         
-        for img in images:
-            if self.abort_processing:
-                break
-            req = AnalyzeActivity.Request()
-            req.image_path = img['path']
-            result = await self.vision_cli.call_async(req) 
-            
-            if "Despejado" not in result.report:
-                has_activity = True
-                zona_context += f"[{img['time']}s] {result.report.strip()}\n"
+        if self.perception_mode == 'sequence':
+            if not self.abort_processing and len(images) > 0:
+                rutas_str = ",".join([img['path'] for img in images])
+                
+                req = AnalyzeActivity.Request()
+                req.image_path = rutas_str
+                result = await self.vision_cli.call_async(req)
+                
+                if "Despejado" not in result.report:
+                    has_activity = True
+                    zona_context += f"[SECUENCIA DE CÁMARA] {result.report.strip()}\n"
+        else:
+            for img in images:
+                if self.abort_processing:
+                    break
+                req = AnalyzeActivity.Request()
+                req.image_path = img['path']
+                result = await self.vision_cli.call_async(req) 
+                
+                if "Despejado" not in result.report:
+                    has_activity = True
+                    zona_context += f"[{img['time']}s] {result.report.strip()}\n"
 
         if not has_activity:
             return f"    {zona.upper()}     \nSin incidencias. Zona despejada.\n\n"

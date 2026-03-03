@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 import rclpy
+import os
 from ruta_hospital.perception.base_perception import BasePerceptionNode
 from .yolo_perception_node import YoloPerceptionNode
 from .vlm_perception_node import VLMPerceptionNode
@@ -8,8 +9,9 @@ class HybridPerceptionNode(BasePerceptionNode):
     def __init__(self):
         super().__init__('hybrid_perception_node')
         
-        self.yolo_logic = YoloPerceptionNode()
-        self.vlm_logic = VLMPerceptionNode()
+        # Apaga servicios fantasma al instanciarlos (deadlock)
+        self.yolo_logic = YoloPerceptionNode(start_service=False)
+        self.vlm_logic = VLMPerceptionNode(start_service=False)
         
         self.get_logger().info("Nodo percepcion con YOLO y VLM iniciado")
 
@@ -33,6 +35,10 @@ class HybridPerceptionNode(BasePerceptionNode):
 
         self.get_logger().info(combined_report)
         return combined_report
+    
+    def check_path(self, path):
+        '''Metodo para comprobar que el path es de una imagen que exista'''
+        return os.path.isfile(path)
 
 def main(args=None):
     rclpy.init(args=args)

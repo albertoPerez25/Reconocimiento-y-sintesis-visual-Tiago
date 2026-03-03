@@ -1,11 +1,12 @@
 #!/usr/bin/env python3
 import rclpy
+import os
 from ruta_hospital.commons.api_utils import encode_image_to_base64, call_ollama_api
 from ruta_hospital.perception.base_perception import BasePerceptionNode
 
 class VLMPerceptionNode(BasePerceptionNode):
-    def __init__(self):
-        super().__init__('vlm_perception_node')
+    def __init__(self,start_service=True):
+        super().__init__('vlm_perception_node',start_service=start_service)
         #self.declare_parameter('vlm_model', 'llava') # No tengo tanta VRAM
         self.declare_parameter('vlm_model', 'moondream')
         self.declare_parameter('ollama_url', 'http://localhost:11434/api/generate')
@@ -42,6 +43,11 @@ class VLMPerceptionNode(BasePerceptionNode):
         except Exception as e:
             self.get_logger().error(f"Error conectando con el VLM: {e}")
             return f"Error de inferencia VLM: {e}"
+    
+    def check_path(self, path):
+        '''Metodo para comprobar que el path es de una imagen que exista'''
+        return os.path.isfile(path)
+        #response.report = "Error: No se encontró la imagen en la ruta especificada."
 
 def main(args=None):
     rclpy.init(args=args)
