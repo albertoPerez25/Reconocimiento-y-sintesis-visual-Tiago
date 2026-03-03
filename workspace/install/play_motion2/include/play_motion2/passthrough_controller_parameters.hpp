@@ -1,1 +1,0 @@
-/home/alberto/tfg/Reconocimiento-y-sintesis-visual-Tiago/workspace/build/play_motion2/include/play_motion2/passthrough_controller_parameters.hpp

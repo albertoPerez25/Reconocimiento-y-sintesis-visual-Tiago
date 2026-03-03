@@ -1,1 +1,0 @@
-/home/alberto/tfg/Reconocimiento-y-sintesis-visual-Tiago/workspace/build/tiago_laser_sensors/ament_cmake_core/tiago_laser_sensorsConfig-version.cmake

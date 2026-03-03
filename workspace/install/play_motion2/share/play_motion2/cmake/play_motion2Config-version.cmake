@@ -1,1 +1,0 @@
-/home/alberto/tfg/Reconocimiento-y-sintesis-visual-Tiago/workspace/build/play_motion2/ament_cmake_core/play_motion2Config-version.cmake

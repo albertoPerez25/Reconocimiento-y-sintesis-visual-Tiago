@@ -1,1 +1,0 @@
-/home/alberto/tfg/Reconocimiento-y-sintesis-visual-Tiago/workspace/build/tiago_robot/ament_cmake_core/tiago_robotConfig-version.cmake

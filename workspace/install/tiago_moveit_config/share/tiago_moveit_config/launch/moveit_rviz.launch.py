@@ -1,1 +1,0 @@
-/home/alberto/tfg/Reconocimiento-y-sintesis-visual-Tiago/workspace/src/tiago_moveit_config/launch/moveit_rviz.launch.py
