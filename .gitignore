@@ -53,3 +53,7 @@ CATKIN_IGNORE
 
 workspace/log/*
 workspace/hospital_photos/*
+workspace/hospital_photos__/*
+workspace/hospital_photos_/*
+workspace/hospital_photos*
+

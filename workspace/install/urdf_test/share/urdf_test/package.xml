@@ -1,0 +1,29 @@
+<?xml version="1.0"?>
+<package format="3">
+  <name>urdf_test</name>
+  <version>2.1.0</version>
+  <description>The urdf_test package</description>
+
+  <maintainer email="jordan.palacios@pal-robotics.com">Jordan Palacios</maintainer>
+  <maintainer email="noel.jimenez@pal-robotics.com">Noel Jimenez</maintainer>
+
+  <license>Apache License 2.0</license>
+
+  <url type="website">https://github.com/pal-robotics/urdf_test</url>
+
+  <buildtool_depend>ament_cmake_auto</buildtool_depend>
+
+  <depend>rclpy</depend>
+
+  <exec_depend>liburdfdom-tools</exec_depend>
+
+  <test_depend>ament_cmake_pytest</test_depend>
+  <test_depend>ament_lint_auto</test_depend>
+  <test_depend>ament_lint_common</test_depend>
+  <test_depend>launch</test_depend>
+  <test_depend>xacro</test_depend>
+
+  <export>
+    <build_type>ament_cmake</build_type>
+  </export>
+</package>

@@ -7,7 +7,7 @@ import rclpy
 import numpy as np
 from sensor_msgs.msg import Image
 from nav_msgs.msg import Odometry
-from cv_bridge import CvBridge
+#from cv_bridge import CvBridge
 
 from tf2_ros import Buffer, TransformListener
 
@@ -29,7 +29,7 @@ class PhotoCapturer(rclpy.node.Node):
         self.declare_parameter(TARGET_DISTANCE_METERS, 1.0) # (nombre, valor por defecto)
         self.declare_parameter(SIMILARITY_THRESHOLD, 25.0) # minimo de diferencia con la ultima imagen
 
-        self.bridge = CvBridge()
+        #self.bridge = CvBridge()
         self.last_image = None
         self.last_pose = None
         self.last_saved_cv_image = None
@@ -163,11 +163,14 @@ class PhotoCapturer(rclpy.node.Node):
         if self.last_image is None:
             return
 
-        cv_image = self.bridge.imgmsg_to_cv2(self.last_image, "bgr8")
+        #cv_image = self.bridge.imgmsg_to_cv2(self.last_image, "bgr8") Incompatible con Numpy 2, que es necesario para los modelos
+        cv_image = self.cv_bridge_replacement()
 
         if not self.is_image_different(cv_image):
             self.get_logger().info("Foto omitida al no superar el límite de diferencia")
             return
+        
+        self.check_photo_count()
         
         image_name, filename = self.save_photo(cv_image)
         image_exists = os.path.isfile(filename)
@@ -177,6 +180,17 @@ class PhotoCapturer(rclpy.node.Node):
         
         self.save_metadata(image_name)
         self.last_saved_cv_image = cv_image
+
+    def check_photo_count(self):
+        '''Resetea el CSV y el contador si se ha resetado la carpeta de fotos'''
+        csv_path = os.path.join(SAVE_DIR, CSV_FILENAME)
+        csv_exists = os.path.isfile(csv_path)
+        if not csv_exists:
+            with open(csv_path, mode='a', newline='') as file:
+                writer = csv.writer(file)
+                writer.writerow(['filename', 'timestamp_sec', 'timestamp_nanosec',\
+                                    'x', 'y', 'z', 'qx', 'qy', 'qz', 'qw'])
+            self.photo_count = 1
 
     def save_photo(self, cv_image):
         '''Traduce el mensaje de ROS2 a OpenCV y guarda el archivo'''
@@ -221,6 +235,12 @@ class PhotoCapturer(rclpy.node.Node):
 
         except Exception as e:
             self.get_logger().error(f"Error al intentar guardar metadatos: {e}")
+
+    def cv_bridge_replacement(self,):
+        img_array = np.frombuffer(self.last_image.data, dtype=np.uint8)
+        cv_image = img_array.reshape((self.last_image.height, self.last_image.width, 3))
+        #cv_image = cv2.cvtColor(cv_image, cv2.COLOR_RGB2BGR)
+        return cv_image
 
 def main(args=None):
     rclpy.init(args=args)

@@ -31,12 +31,12 @@ PATH_POINTS = [
     [-2.0161, -20.663],
     [-3.5160, -7.2099], # evitar colision esquina
     [-2.7160, -9.7099],
-    [-10.646, -2.9706], #
+    [-10.646, -2.9706], 
     [-4.8351, -4.0706], # evitar las sillas
     [-4.1000, 1.45583], # evitar las sillas
     [-10.321, 1.68012], 
     [-7.6369, 5.47739],
-    [-4.3140, 7.82489]
+    [-4.3140, 7.82489],
 ]
 
 class PatrolNode(rclpy.node.Node):
@@ -53,6 +53,7 @@ class PatrolNode(rclpy.node.Node):
         self.get_logger().info("Patrol Node Initialized")
         self.route_poses = self.list_to_pose()
         self.report_client = self.create_client(Trigger, '/generate_patrol_report') # Para iniciar el reporte
+        self.clean_client = self.create_client(Trigger, '/clean_patrol_data')
 
     def trigger_report(self):
         '''Llama al servicio de generación de informes al final de una vuelta'''
@@ -61,21 +62,61 @@ class PatrolNode(rclpy.node.Node):
         # 3 segundos de espera para ver si el nodo reportero está encendido
         if not self.report_client.wait_for_service(timeout_sec=3.0):
             self.get_logger().warn("El servicio '/generate_patrol_report' no está activo, no se hará el informe")
+            self.request_data_cleanup()
             return
 
         req = Trigger.Request()
         future_response = self.report_client.call_async(req)
                 
-        rclpy.spin_until_future_complete(self, future_response) # espera hasta que recibe la respuesta
+        #rclpy.spin_until_future_complete(self, future_response) # espera hasta que recibe la respuesta
+        completed = self.wait_response(future_response)
+
+        if completed:
+            try:
+                response = future_response.result()
+                if response.success:
+                    self.get_logger().info(response.message)
+                else:
+                    self.get_logger().warn(f"El nodo LLM reportó un problema: {response.message}")
+            except Exception as e:
+                self.get_logger().error(f"Fallo al invocar el servicio: {e}")
+        else:
+            self.get_logger().warn("El informe no pudo generarse y/o fué interrumpido")
         
-        try:
-            response = future_response.result()
-            if response.success:
-                self.get_logger().info("Informe generado")
-            else:
-                self.get_logger().warn(f"El nodo LLM reportó un problema: {response.message}")
-        except Exception as e:
-            self.get_logger().error(f"Fallo al invocar el servicio: {e}")
+        self.request_data_cleanup()
+
+    def wait_response(self, future_response, timeout_max=5000.0, spin_timeout_sec=0.2):
+        '''
+        Espera a recibir el informe, permitiendo saltar con ENTER o timeout
+        Devuelve True si eterminó, o False si se interrumpió la espera.
+        '''
+        self.get_logger().info("(s para saltar)")
+        waiting_time = 0.0
+
+        while rclpy.ok() and not future_response.done():
+            # Spin de medio segundo para no congelar el robot
+            rclpy.spin_until_future_complete(self, future_response, timeout_sec=spin_timeout_sec)
+            waiting_time += spin_timeout_sec
+
+            # lectura no bloqueante
+            key = self.get_key_non_blocking()
+            if key and key.lower() == 's':
+                sys.stdin.readline() # Limpiar buffer
+                return False
+
+            if waiting_time >= timeout_max:
+                self.get_logger().error("Timeout superado. Se omitirá el informe")
+                return False
+        return future_response.done()
+
+    def request_data_cleanup(self):
+        '''Pide que detenga el informe y borre las fotos'''
+        #self.get_logger().info("Solicitando limpieza de datos")
+        if self.clean_client.wait_for_service(timeout_sec=2.0):
+            req = Trigger.Request()
+            self.clean_client.call_async(req) # Llamada asíncrona para no bloquear a la patrulla
+        else:
+            self.get_logger().warn("No se pudo alcanzar al servicio de limpieza")
 
     def load_route(self):
         '''Carga la lista de waypoints desde el archivo JSON'''
@@ -191,14 +232,16 @@ class PatrolNode(rclpy.node.Node):
             #self.trigger_report()
 
     def run_patrol(self):
-        '''Lógica de patrulla iterativa'''
+        '''Bucle infinito de iteraciones de patrullas al hospital'''
         self.get_logger().info(f"Ruta cargada con {len(self.route_poses)} puntos")
         iteration = 1
+        self.request_data_cleanup()
         while rclpy.ok():
             self.get_logger().info(f"\nVUELTA Nº {iteration}")
             self.do_patrol_iteration()
-            #self.trigger_report()
+            self.trigger_report()
             iteration += 1
+            break
 
 def main(args=None):
     rclpy.init(args=args)
