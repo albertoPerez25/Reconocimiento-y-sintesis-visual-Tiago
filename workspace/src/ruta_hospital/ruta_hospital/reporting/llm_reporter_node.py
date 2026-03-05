@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+import time
 import rclpy
 from rclpy.executors import MultiThreadedExecutor
 from hospital_interfaces.srv import AnalyzeActivity
@@ -21,6 +22,8 @@ class LLMReporterNode(BaseReporterNode):
         '''Se ejecuta de manera asíncrona al llamar al servicio /generate_patrol_report'''
         self.abort_processing = False
         self.get_logger().info("Iniciada generación del informe")
+
+        t_inicio_total = time.time()
         
         if not self.vision_cli.wait_for_service(timeout_sec=5.0):
             response.success = False
@@ -32,9 +35,12 @@ class LLMReporterNode(BaseReporterNode):
             response.success = False
             response.message = "No hay datos."
             return response
-
+        
+        self.current_metrics["total_imagenes_procesadas"] = sum(len(imgs) for imgs in zone_groups.values())
         # Mapear cada zona independiantemente para evitar saturar la ventana de contexto (Map-Reduce Prompting)
         global_context = ""
+        t_init_perception = time.time()
+
         for zone, images in zone_groups.items():
             if self.abort_processing:
                 self.get_logger().warn("Procesamiento abortado a petición del nodo de patrulla")
@@ -45,11 +51,22 @@ class LLMReporterNode(BaseReporterNode):
             zone_summary = await self.process_zone(zone, images)
             global_context += zone_summary
 
+        self.current_metrics["tiempo_percepcion_segundos"] = round(time.time() - t_init_perception, 2)
+        self.current_metrics["caracteres_contexto_visual"] = len(global_context)
+
         if self.abort_processing:
             response.success = False
             return response
         
-        return self.generate_global_summary(global_context, response)
+        t_init_llm = time.time()
+
+        global_sum = self.generate_global_summary(global_context, response)
+        
+        self.current_metrics["tiempo_llm_segundos"] = round(time.time() - t_init_llm, 2)
+        self.current_metrics["tiempo_total_segundos"] = round(time.time() - t_inicio_total, 2)
+        self.save_metrics()
+
+        return global_sum
     
     async def process_zone(self, zona, images):
         '''Analiza las imágenes de una zona y devuelve su mini-reporte'''
@@ -81,7 +98,10 @@ class LLMReporterNode(BaseReporterNode):
                     zona_context += f"[{img['time']}s] {result.report.strip()}\n"
 
         if not has_activity:
+            self.current_metrics["zonas_despejadas"] += 1
             return f"    {zona.upper()}     \nSin incidencias. Zona despejada.\n\n"
+        
+        self.current_metrics["zonas_con_output"] += 1
             
         prompt = f"""
         You are the security AI for a hospital patrol robot. You are receiving the summary
@@ -151,6 +171,7 @@ class LLMReporterNode(BaseReporterNode):
                 {"model": "llama3", "prompt": final_prompt, "stream": False}
             )
             self.get_logger().info(f"\n\n\tINFORME FINAL\n{final_report}\n")
+            self.current_metrics["caracteres_informe_final"] = len(final_report)
             
             response.success = True
             response.message = f"Informe generado:\n{final_report}"

@@ -8,10 +8,16 @@ from rclpy.node import Node
 from std_srvs.srv import Trigger
 from rclpy.callback_groups import ReentrantCallbackGroup
 
+# metricas
+import time
+import datetime
+import json
+
 # Rutas por defecto
 CSV_PATH = "/home/alberto/tfg/Reconocimiento-y-sintesis-visual-Tiago/workspace/hospital_photos/metadata.csv"
 PHOTOS_DIR = "/home/alberto/tfg/Reconocimiento-y-sintesis-visual-Tiago/workspace/hospital_photos/"
 SEMANTIC_PATH_MAP = "/home/alberto/tfg/Reconocimiento-y-sintesis-visual-Tiago/workspace/config/semantic_map.json"
+METRICS_DIR = "/home/alberto/tfg/Reconocimiento-y-sintesis-visual-Tiago/autogenerate_metrics/"
 
 class BaseReporterNode(Node, ABC):
     '''Clase abstracta para los nodos generadores de informes'''
@@ -23,10 +29,12 @@ class BaseReporterNode(Node, ABC):
         self.declare_parameter('csv_path', CSV_PATH)
         self.declare_parameter('photos_dir', PHOTOS_DIR)
         self.declare_parameter('semantic_map_path', SEMANTIC_PATH_MAP)
+        self.declare_parameter('metrics_dir', METRICS_DIR)
 
         self.csv_path = self.get_parameter('csv_path').get_parameter_value().string_value
         self.photos_dir = self.get_parameter('photos_dir').get_parameter_value().string_value
         self.semantic_map_path = self.get_parameter('semantic_map_path').get_parameter_value().string_value
+        self.metrics_dir = self.get_parameter('metrics_dir').get_parameter_value().string_value
 
         self.load_semantic_map()
         self.abort_processing = False 
@@ -46,8 +54,25 @@ class BaseReporterNode(Node, ABC):
             self.clean_data_callback,
             callback_group=self.cb_group
         )
+
+        self.current_metrics = self.init_metrics_dict()
         
         self.get_logger().info(f"Nodo de informe [{node_name}] listo. Se iniciará al llamar al servicio '/generate_patrol_report'")
+
+    def init_metrics_dict(self):
+        '''Inicializa o resetea el diccionario de métricas'''
+        return {
+            "fecha": str(datetime.datetime.now()),
+            "modelo_reportero": self.get_name(),
+            "total_imagenes_procesadas": 0,
+            "zonas_despejadas": 0,
+            "zonas_con_output": 0,
+            "tiempo_percepcion_segundos": 0.0,
+            "tiempo_llm_segundos": 0.0,
+            "tiempo_total_segundos": 0.0,
+            "caracteres_contexto_visual": 0,
+            "caracteres_informe_final": 0
+        }
 
     def load_semantic_map(self):
         '''Carga las zonas del hospital desde un archivo JSON externo'''
@@ -141,6 +166,27 @@ class BaseReporterNode(Node, ABC):
             self.get_logger().info("Carpeta de fotos reseteada")
         except Exception as e:
             self.get_logger().error(f"Error durante la limpieza: {e}")
+
+    def save_metrics(self):
+        '''Guarda las métricas en un archivo JSON para comparativas'''
+        metrics_file = os.path.join(self.metrics_dir, 'comparativa_modelos.json')
+        all_metrics = []
+
+        if os.path.isfile(metrics_file): # para añadir las metricas existentes
+            with open(metrics_file, 'r') as f:
+                try:
+                    all_metrics = json.load(f)
+                except json.JSONDecodeError:
+                    pass
+        
+        all_metrics.append(self.current_metrics)
+        with open(metrics_file, 'w') as f:
+            json.dump(all_metrics, f, indent=4)
+            
+        self.get_logger().info(f" Métricas de la vuelta guardadas en {metrics_file}")
+        
+        # Resetear para la siguiente vuelta
+        self.current_metrics = self.init_metrics_dict()
 
     @abstractmethod
     async def generate_report_callback(self, request, response):
