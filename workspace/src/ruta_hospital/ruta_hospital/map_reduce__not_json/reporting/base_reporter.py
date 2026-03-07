@@ -115,20 +115,6 @@ class BaseReporterNode(Node, ABC):
                 return f"Recepción (cerca de {nearest_room})"
         return f"Pasillo (cerca de {nearest_room})"
     
-    def get_zone_limits(self, zone_name):
-        '''Busca los límites [x1, y1, x2, y2] de una zona por su nombre'''
-        # habitaciones
-        if zone_name in self.hospital_zones:
-            c = self.hospital_zones[zone_name]
-            return [c["esquina1"][0], c["esquina1"][1], c["esquina2"][0], c["esquina2"][1]]
-        
-        if "Recepción" in zone_name and self.reception_zone:
-            c = self.reception_zone
-            return [c["esquina1"][0], c["esquina1"][1], c["esquina2"][0], c["esquina2"][1]]
-        
-        # pasillos o zonas que no tengan una zona definida
-        return [0.0, 0.0, 0.0, 0.0]
-    
     def get_images_grouped_by_zone(self):
         ''' Lee el CSV y devuelve un diccionario con las imágenes agrupadas por zona '''
         zone_groups = {}
