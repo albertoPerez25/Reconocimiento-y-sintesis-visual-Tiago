@@ -1286,13 +1286,6 @@
         <pose>8.5 -26.0 0.1 1.57 -1.5 -1.57</pose> 
       </include>
     </model>
-    <model name="Fallen_Trolley_HabCompartida3">
-      <include>
-        <uri>model://SurgicalTrolley</uri>
-        <static>true</static>
-        <pose>3.16 -37.55 0.2 -1.57 0 -1.5</pose> 
-      </include>
-    </model>
     <actor name="Walking_actor_reception">
       <skin>
         <filename>walk.dae</filename>
