@@ -1,1 +1,11 @@
-/home/alberto/tfg/Reconocimiento-y-sintesis-visual-Tiago/workspace/src/play_motion2/play_motion2_msgs/action/PlayMotion2.action
+string motion_name
+bool skip_planning
+
+---
+
+bool success
+string error
+
+---
+
+builtin_interfaces/Time current_time

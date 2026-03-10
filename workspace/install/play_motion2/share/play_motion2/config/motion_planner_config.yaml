@@ -1,1 +1,6 @@
-/home/alberto/tfg/Reconocimiento-y-sintesis-visual-Tiago/workspace/src/play_motion2/play_motion2/config/motion_planner_config.yaml
+play_motion2_executor:
+  ros__parameters:
+    motion_planner:
+      approach_velocity: 0.5
+      approach_min_duration: 0.5
+

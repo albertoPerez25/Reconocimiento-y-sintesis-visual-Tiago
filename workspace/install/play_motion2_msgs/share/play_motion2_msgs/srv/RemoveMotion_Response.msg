@@ -1,1 +1,2 @@
-/home/alberto/tfg/Reconocimiento-y-sintesis-visual-Tiago/workspace/build/play_motion2_msgs/rosidl_cmake/srv/RemoveMotion_Response.msg
+
+bool success

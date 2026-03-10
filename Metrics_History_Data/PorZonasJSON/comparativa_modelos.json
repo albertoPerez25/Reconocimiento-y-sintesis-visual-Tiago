@@ -1,0 +1,50 @@
+[
+    {
+        "fecha": "2026-03-08 10:53:30.429833",
+        "modelo_reportero": "sequence_moonlight",
+        "total_imagenes_procesadas": 280,
+        "zonas_despejadas": 43,
+        "zonas_con_output": 0,
+        "tiempo_percepcion_segundos": 52.68,
+        "tiempo_llm_segundos": 17.82,
+        "tiempo_total_segundos": 70.51,
+        "caracteres_contexto_visual": 2867,
+        "caracteres_informe_final": 960
+    },
+    {
+        "fecha": "2026-03-08 11:15:40.362231",
+        "modelo_reportero": "hybrid (yolo+moonlight)",
+        "total_imagenes_procesadas": 280,
+        "zonas_despejadas": 42,
+        "zonas_con_output": 1,
+        "tiempo_percepcion_segundos": 136.11,
+        "tiempo_llm_segundos": 22.51,
+        "tiempo_total_segundos": 158.63,
+        "caracteres_contexto_visual": 3167,
+        "caracteres_informe_final": 1104
+    },
+    {
+        "fecha": "2026-03-08 11:18:25.202012",
+        "modelo_reportero": "vlm_moonlight",
+        "total_imagenes_procesadas": 280,
+        "zonas_despejadas": 0,
+        "zonas_con_output": 43,
+        "tiempo_percepcion_segundos": 130.87,
+        "tiempo_llm_segundos": 22.31,
+        "tiempo_total_segundos": 153.18,
+        "caracteres_contexto_visual": 30330,
+        "caracteres_informe_final": 1128
+    },
+    {
+        "fecha": "2026-03-08 11:34:20.974152",
+        "modelo_reportero": "yolo",
+        "total_imagenes_procesadas": 280,
+        "zonas_despejadas": 42,
+        "zonas_con_output": 1,
+        "tiempo_percepcion_segundos": 4.32,
+        "tiempo_llm_segundos": 14.23,
+        "tiempo_total_segundos": 18.55,
+        "caracteres_contexto_visual": 3091,
+        "caracteres_informe_final": 937
+    }
+]

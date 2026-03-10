@@ -1,1 +1,18 @@
-/home/alberto/tfg/Reconocimiento-y-sintesis-visual-Tiago/workspace/src/pal_gazebo_worlds/models/brick_box_3x1x3/materials/scripts/brick_box.material
+material BrickBox/Diffuse
+{
+  receive_shadows off
+  technique
+  {
+    pass
+    {
+      texture_unit
+      {
+        texture simple_box.png
+        filtering anistropic
+        max_anisotropy 16
+      }
+      
+    }
+  }
+}
+

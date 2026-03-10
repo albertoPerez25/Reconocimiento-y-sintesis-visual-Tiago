@@ -1,1 +1,4 @@
-/home/alberto/tfg/Reconocimiento-y-sintesis-visual-Tiago/workspace/src/pal_gripper/pal_gripper_controller_configuration/config/joint_state_broadcaster.yaml
+joint_state_broadcaster:
+  ros__parameters:
+    type: joint_state_broadcaster/JointStateBroadcaster
+    update_rate: 50

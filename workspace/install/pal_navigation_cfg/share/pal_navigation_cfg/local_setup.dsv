@@ -1,1 +1,2 @@
-/home/alberto/tfg/Reconocimiento-y-sintesis-visual-Tiago/workspace/build/pal_navigation_cfg/ament_cmake_environment_hooks/local_setup.dsv
+source;share/pal_navigation_cfg/environment/ament_prefix_path.sh
+source;share/pal_navigation_cfg/environment/path.sh

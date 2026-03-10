@@ -1,1 +1,4 @@
-/home/alberto/tfg/Reconocimiento-y-sintesis-visual-Tiago/workspace/build/play_motion2_msgs/rosidl_cmake/srv/AddMotion_Request.msg
+# Add a motion
+
+play_motion2_msgs/Motion motion
+bool overwrite

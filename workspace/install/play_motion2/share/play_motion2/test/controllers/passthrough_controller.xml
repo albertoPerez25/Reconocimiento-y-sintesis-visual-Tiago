@@ -1,1 +1,9 @@
-/home/alberto/tfg/Reconocimiento-y-sintesis-visual-Tiago/workspace/src/play_motion2/play_motion2/test/controllers/passthrough_controller.xml
+<library path="passthrough_controller">
+  <class name="passthrough_controller/PassthroughController"
+         type="passthrough_controller::PassthroughController"
+         base_class_type="controller_interface::ChainableControllerInterface">
+    <description>
+      A simple demo of chainable controllers. It passes commands through without change.
+    </description>
+  </class>
+</library>

@@ -1,1 +1,28 @@
-/home/alberto/tfg/Reconocimiento-y-sintesis-visual-Tiago/workspace/src/pal_gazebo_worlds/models/green_ball/model.sdf
+<?xml version="1.0" ?>
+<sdf version='1.4'>
+  <model name='table'>
+      <link name='link'>
+        <gravity>false</gravity>
+        <collision name='surface'>
+          <geometry>
+            <sphere>
+              <radius>0.035</radius>
+            </sphere>
+          </geometry>
+        </collision>
+        <visual name='visual'>
+          <geometry>
+            <sphere>
+              <radius>0.035</radius>
+            </sphere>
+          </geometry>
+          <material>
+            <script>
+              <uri>model://green_ball/materials/scripts/ball.material</uri>
+              <name>Ball/Green</name>
+            </script>
+          </material>
+        </visual>
+    </model>
+</sdf>
+

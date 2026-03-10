@@ -1,1 +1,2 @@
-/home/alberto/tfg/Reconocimiento-y-sintesis-visual-Tiago/workspace/build/aws_robomaker_hospital_world/ament_cmake_environment_hooks/local_setup.dsv
+source;share/aws_robomaker_hospital_world/environment/ament_prefix_path.sh
+source;share/aws_robomaker_hospital_world/environment/path.sh

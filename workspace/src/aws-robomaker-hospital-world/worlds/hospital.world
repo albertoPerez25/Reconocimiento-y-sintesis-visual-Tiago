@@ -1237,13 +1237,6 @@
         <pose>-9.75875 -11.67552 0 0 -0 0</pose>
       </include>
     </model>
-    <model name="BPCart_1">
-      <include>
-        <uri>model://BPCart</uri>
-        <static>true</static>
-        <pose>-10.1788 2.173 0.003446 1e-06 -0 0.003096</pose>
-      </include>
-    </model>
     <model name="BPCart_2">
       <include>
         <uri>model://BPCart</uri>
@@ -1284,6 +1277,13 @@
         <uri>model://Chair</uri>
         <static>true</static>
         <pose>1.30985 -9.727185 -0 0 0 -1.53446</pose>
+      </include>
+    </model>
+    <model name="Fallen_Person_HabCompartida2">
+      <include>
+        <uri>model://Scrubs</uri>
+        <static>true</static>
+        <pose>8.5 -26.0 0.1 1.57 -1.5 -1.57</pose> 
       </include>
     </model>
     <actor name="Walking_actor_reception">

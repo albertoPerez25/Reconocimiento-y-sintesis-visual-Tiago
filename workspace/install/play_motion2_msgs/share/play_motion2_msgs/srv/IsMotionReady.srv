@@ -1,1 +1,7 @@
-/home/alberto/tfg/Reconocimiento-y-sintesis-visual-Tiago/workspace/src/play_motion2/play_motion2_msgs/srv/IsMotionReady.srv
+# Shows whether the motion be can executed
+
+string motion_key
+
+---
+
+bool is_ready

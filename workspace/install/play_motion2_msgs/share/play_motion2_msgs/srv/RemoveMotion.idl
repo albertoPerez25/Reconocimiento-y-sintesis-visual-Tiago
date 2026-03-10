@@ -1,1 +1,17 @@
-/home/alberto/tfg/Reconocimiento-y-sintesis-visual-Tiago/workspace/build/play_motion2_msgs/rosidl_adapter/play_motion2_msgs/srv/RemoveMotion.idl
+// generated from rosidl_adapter/resource/srv.idl.em
+// with input from play_motion2_msgs/srv/RemoveMotion.srv
+// generated code does not contain a copyright notice
+
+
+module play_motion2_msgs {
+  module srv {
+    @verbatim (language="comment", text=
+      "Remove a motion")
+    struct RemoveMotion_Request {
+      string motion_key;
+    };
+    struct RemoveMotion_Response {
+      boolean success;
+    };
+  };
+};

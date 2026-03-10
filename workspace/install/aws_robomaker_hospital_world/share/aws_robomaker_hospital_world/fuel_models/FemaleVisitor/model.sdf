@@ -1,1 +1,26 @@
-/home/alberto/tfg/Reconocimiento-y-sintesis-visual-Tiago/workspace/src/aws-robomaker-hospital-world/fuel_models/FemaleVisitor/model.sdf
+<?xml version='1.0' encoding='utf-8'?>
+<sdf version="1.6">
+  <model name="FemaleVisitor">
+   <static>true</static>
+    <link name="body">
+      <pose>0 0 0 0 0 0</pose>
+
+      <visual name="visual">
+        <geometry>
+          <mesh>
+            <uri>model://FemaleVisitor/meshes/FemaleVisitor.obj</uri>
+          </mesh>
+        </geometry>
+      </visual>
+
+      <collision name="collision">
+        <geometry>
+          <mesh>
+            <uri>model://FemaleVisitor/meshes/FemaleVisitor_Col.obj</uri>
+          </mesh>
+        </geometry>
+      </collision>
+
+    </link>
+  </model>
+</sdf>

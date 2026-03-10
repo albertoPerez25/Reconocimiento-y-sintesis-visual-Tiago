@@ -1,1 +1,4 @@
-/home/alberto/tfg/Reconocimiento-y-sintesis-visual-Tiago/workspace/src/pal_gripper/pal_gripper_controller_configuration/config/gazebo_controller_manager_cfg.yaml
+controller_manager:
+  ros__parameters:
+    update_rate: 100 # Hz
+    use_sim_time: True

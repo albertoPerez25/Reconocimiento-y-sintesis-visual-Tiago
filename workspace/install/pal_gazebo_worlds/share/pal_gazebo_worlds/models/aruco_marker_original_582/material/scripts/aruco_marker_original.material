@@ -1,1 +1,14 @@
-/home/alberto/tfg/Reconocimiento-y-sintesis-visual-Tiago/workspace/src/pal_gazebo_worlds/models/aruco_marker_original_582/material/scripts/aruco_marker_original.material
+material Aruco/aruco_marker_original_582
+{
+	technique
+	{
+		pass
+		{
+			texture_unit
+			{
+				texture Aruco_original_582.png
+			}
+		}
+	}
+}
+

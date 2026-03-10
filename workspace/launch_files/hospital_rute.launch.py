@@ -82,6 +82,21 @@ def generate_launch_description():
             )
         ]
     )
+    
+    # Nodo Capturador de Fotos en terminal independiente
+    fotos_cmd = TimerAction(
+        period=26.0,
+        actions=[
+            Node(
+                package='ruta_hospital',
+                executable='fotos',
+                name='nodo_fotos',
+                parameters=[{'use_sim_time': True}],
+                output='screen',
+                prefix='gnome-terminal -- ' 
+            )
+        ]
+    )
 
     # Descripcion del Launch
     ld = LaunchDescription()
@@ -91,5 +106,6 @@ def generate_launch_description():
     ld.add_action(nav2_cmd)
     ld.add_action(rviz_cmd)
     ld.add_action(patrulla_cmd)
+    ld.add_action(fotos_cmd)
 
     return ld

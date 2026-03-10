@@ -1,1 +1,2 @@
-/home/alberto/tfg/Reconocimiento-y-sintesis-visual-Tiago/workspace/build/tiago_controller_configuration/ament_cmake_environment_hooks/local_setup.dsv
+source;share/tiago_controller_configuration/environment/ament_prefix_path.sh
+source;share/tiago_controller_configuration/environment/path.sh

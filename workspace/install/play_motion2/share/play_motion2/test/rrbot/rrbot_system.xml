@@ -1,1 +1,8 @@
-/home/alberto/tfg/Reconocimiento-y-sintesis-visual-Tiago/workspace/src/play_motion2/play_motion2/test/rrbot/rrbot_system.xml
+<library path="rrbot_system">
+    <class name="play_motion2/RRBotSystem" type="play_motion2::RRBotSystem"
+        base_class_type="hardware_interface::SystemInterface">
+    <description>
+      A minimal rrbot system hardware for play_motion2 testing
+    </description>
+  </class>
+</library>

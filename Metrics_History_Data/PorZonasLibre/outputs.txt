@@ -1,0 +1,64 @@
+SEQUENCE
+	INFORME FINAL
+RESUMEN DE SEGURIDAD GLOBAL:
+
+Durante la última patrulla, no se han detectado anomalías ni riesgos de seguridad vital en el hospital. Todas las zonas han sido encontradas despejadas y sin incidentes.
+
+No se ha reportado ni una sola situación que amerite atención inmediata, como personas caídas al suelo, corriendo, gritando o peleando. La actividad humana observada en el hospital ha sido normal y no hay indicio de peligro alguno.
+
+En general, la seguridad del hospital se encuentra dentro de los límites normales y no hay motivos para preocuparse por riesgos vitales o anomalías que afecten la integridad física o emocional de pacientes, personal médico o visitantes.
+
+Se recomienda continuar con las rutinas de patrulla y vigilancia establecidas para garantizar la seguridad del hospital y su personal.
+
+
+HYBRID
+	INFORME FINAL
+RESUMEN DE SEGURIDAD GLOBAL:
+
+A continuación, se presenta un resumen detallado de la vigilancia realizada por el robot patrullero en el hospital. En general, no se han detectado riesgos inminentes para la vida ni situaciones peligrosas dentro del hospital.
+
+Sin embargo, se han reportado algunas anomalías y situaciones que requieren atención:
+
+* Se ha detectado una persona sentada y tranquila en la zona de Escaleras 1 (ignorar).
+* En el pasillo cerca del Almacén 1, se ha detectado una caída y se necesita ayuda urgente.
+* En el pasillo cerca de Habitación Individual 1, se han detectado 4 personas a las [440s].
+* En la zona de Recepción cerca de Habitación Individual 2, se ha detectado 1 persona en pie (piernas parcialmente ocultas o predicción con poca confianza).
+* En el pasillo cerca de Quirófano 1, se han detectado 2 personas en el registro bruto de pasillo.
+* En la zona de Quirófano 2, se han detectado dos personas que requieren atención, una persona se encuentra parcialmente ocultada y con poca confianza en la predicción.
+* En la zona de Habitación Compartida 5, se han detectado incidentes, incluyendo a 2 personas caminando normalmente sin riesgo alguno.
+* En el pasillo cerca de Habitación Compartida 5, se han detectado personas en situaciones que pueden requerir ayuda, como personas sentadas o con piernas parcialmente ocultas.
+
+No se han reportado incendios, corriente eléctrica peligrosa ni objetos obstruyendo los pasillos. No se han detectado personas caídas al suelo ni personas en situaciones de emergencia que requieren atención inmediata.
+
+
+
+VLM
+	INFORME FINAL
+RESUMEN DE SEGURIDAD GLOBAL:
+
+En general, el hospital presenta una situación de seguridad estable y sin incidentes graves durante la última patrulla. Sin embargo, se han detectado dos eventos que merecen atención especial.
+
+En el pasillo cerca del quirófano 1, se observa a alguien de pie cerca de una cama con sábanas blancas y almohadas azules, lo que sugiere un posible incidente médico. Es importante realizar una investigación adicional para determinar la naturaleza y gravedad de este evento.
+
+En el pasillo cerca del quirófano 2, se detecta a alguien caminando hacia la cámara en [583s] y otra persona parada cerca de la recepción con alguien mirando el teléfono. Aunque no hay indicio de incidente grave, es importante estar atento a cualquier posible situación que pueda requerir ayuda.
+
+En cuanto a la seguridad general, no se han detectado fuegos, cables eléctricos expuestos ni objetos obstruyendo los pasillos o caminos. No se han reportado personas caídas en el suelo, corriendo, gritando o luchando.
+
+En resumen, aunque hay dos eventos que requieren atención especial, no hay indicio de incidentes graves que pongan en peligro la vida o integridad física de pacientes, personal médico o visitantes.
+
+
+
+YOLO
+	INFORME FINAL
+RESUMEN DE SEGURIDAD GLOBAL:
+
+Durante la última ronda de patrulla, se han detectado algunos incidentes y situaciones que requieren atención. A continuación, se presentan los detalles importantes:
+
+* En el área de Recepción cerca del Almacén 1, se ha detectado una caída en el pasillo, lo que es urgente enviar ayuda.
+* En la Sala Común, se ha detectado a una persona de pie o caminando sin necesidad obvia de ayuda inmediata.
+* En el área de Pasillo cerca del Almacén 2, se ha detectado a una persona sentada en el área del Almacén 2.
+
+No se han reportado riesgos ni incidentes peligrosos graves en otras áreas del hospital. Sin embargo, es importante tener en cuenta que algunos incidentes pueden haber pasado desapercibidos debido a la falta de información adicional disponible para evaluar el riesgo.
+
+En general, la seguridad global del hospital no presenta riesgos significativos durante esta ronda de patrulla.
+

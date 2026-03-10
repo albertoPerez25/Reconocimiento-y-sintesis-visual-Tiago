@@ -1,1 +1,1 @@
-/home/alberto/tfg/Reconocimiento-y-sintesis-visual-Tiago/workspace/build/urdf_test/ament_cmake_index/share/ament_index/resource_index/package_run_dependencies/urdf_test
+rclpy;liburdfdom-tools;ament_cmake_pytest;ament_lint_auto;ament_lint_common;launch;xacro

@@ -1,1 +1,15 @@
-/home/alberto/tfg/Reconocimiento-y-sintesis-visual-Tiago/workspace/src/tiago_robot/tiago_controller_configuration/config/torso_controller.yaml
+torso_controller:
+  ros__parameters:
+    type: joint_trajectory_controller/JointTrajectoryController
+    joints:
+      - torso_lift_joint
+    command_interfaces:
+      - position
+    state_interfaces:
+      - position
+
+    constraints:
+      goal_time: 0.6
+      stopped_velocity_tolerance: 5.0 # FIXME: See #8429
+      torso_lift_joint:
+        goal: 0.02
