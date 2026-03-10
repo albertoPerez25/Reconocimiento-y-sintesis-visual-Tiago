@@ -49,7 +49,8 @@ class VLMPerceptionNode(BasePerceptionNode):
         You are a security AI. Analyze the image and output ONLY a valid JSON.
         - If the room is empty and safe, the description must be exactly: "Despejado".
         - If there are people or danger, or someone has fallon on the ground, describe them briefly in SPANISH.
-        - Set "alerta" to true ONLY if there is an emergency or danger.
+        - If there's something in the way, like an out of place or tipped over trolley, say it.
+        - Set "alerta" to true ONLY if there is an emergency, danger or something out of place.
 
         Example of expected output:
         {
