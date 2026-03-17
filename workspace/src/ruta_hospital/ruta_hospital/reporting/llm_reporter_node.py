@@ -93,9 +93,9 @@ class LLMReporterNode(BaseReporterNode):
         }
         
         if self.perception_mode == 'sequence':
-            has_activity = self.process_sequence_mode(images,zone_data)
+            has_activity = await self.process_sequence_mode(images,zone_data)
         else:
-            has_activity = self.process_individual_mode(images,zone_data)
+            has_activity = await self.process_individual_mode(images,zone_data)
 
         if not has_activity:
             self.current_metrics["zonas_despejadas"] += 1

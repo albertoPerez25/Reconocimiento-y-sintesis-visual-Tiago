@@ -22,7 +22,7 @@ class VLMPerceptionNode(BasePerceptionNode):
     def process_image(self, image_path):
         '''Interactua con el modelo y devuelve el reporte en forma de string'''
 
-        payload = self.get_payload(self, image_path)
+        payload = self.get_payload(image_path)
 
         try:
             vlm_text = call_ollama_api(self.ollama_url, payload)
@@ -60,6 +60,8 @@ class VLMPerceptionNode(BasePerceptionNode):
         """
         base64_img = encode_image_to_base64(image_path)
         payload = {"model": self.vlm_model, "prompt": prompt, "images": [base64_img], "stream": False, "format": "json"}
+
+        return payload
     
     def check_path(self, path):
         '''Metodo para comprobar que el path es de una imagen que exista'''
