@@ -1,0 +1,50 @@
+[
+    {
+        "fecha": "2026-03-15 18:20:03.621192",
+        "modelo_reportero": "llm_reporter_node",
+        "total_imagenes_procesadas": 280,
+        "zonas_despejadas": 42,
+        "zonas_con_output": 1,
+        "tiempo_percepcion_segundos": 4.87,
+        "tiempo_llm_segundos": 16.54,
+        "tiempo_total_segundos": 21.41,
+        "caracteres_contexto_visual": 3209,
+        "caracteres_informe_final": 1046
+    },
+    {
+        "fecha": "2026-03-15 18:20:33.615989",
+        "modelo_reportero": "lla_reporter_node",
+        "total_imagenes_procesadas": 280,
+        "zonas_despejadas": 42,
+        "zonas_con_output": 1,
+        "tiempo_percepcion_segundos": 4.75,
+        "tiempo_llm_segundos": 11.97,
+        "tiempo_total_segundos": 16.72,
+        "caracteres_contexto_visual": 3209,
+        "caracteres_informe_final": 790
+    },
+    {
+        "fecha": "2026-03-15 18:21:06.508961",
+        "modelo_reportero": "lla_reporter_node",
+        "total_imagenes_procesadas": 280,
+        "zonas_despejadas": 0,
+        "zonas_con_output": 43,
+        "tiempo_percepcion_segundos": 0.63,
+        "tiempo_llm_segundos": 17.56,
+        "tiempo_total_segundos": 18.2,
+        "caracteres_contexto_visual": 58327,
+        "caracteres_informe_final": 917
+    },
+    {
+        "fecha": "2026-03-15 18:29:02.296416",
+        "modelo_reportero": "llm_reporter_node",
+        "total_imagenes_procesadas": 280,
+        "zonas_despejadas": 0,
+        "zonas_con_output": 43,
+        "tiempo_percepcion_segundos": 132.96,
+        "tiempo_llm_segundos": 25.18,
+        "tiempo_total_segundos": 158.15,
+        "caracteres_contexto_visual": 30352,
+        "caracteres_informe_final": 1323
+    }
+]

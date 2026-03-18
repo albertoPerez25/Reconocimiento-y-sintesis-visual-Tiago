@@ -1,0 +1,3 @@
+modelo_reportero,Tiempo Total (s),Latencia Visión (s/img),Contexto Generado (Caract.),Tiempo Redacción LLM (s)
+lla_reporter_node,17.46,0.01,30768.0,14.76
+llm_reporter_node,89.78,0.25,16780.5,20.86
