@@ -19,7 +19,7 @@ class YoloPerceptionNode(BasePerceptionNode):
         self.declare_parameter('min_confidence', DEFAULT_MIN_CONFIDENCE)
 
         selected_yolo_model = self.get_parameter('yolo_model').get_parameter_value().string_value
-        self.min_confidence = self.get_parameter('min_confidence').get_parameter_value().string_value
+        self.min_confidence = self.get_parameter('min_confidence').get_parameter_value().double_value
 
         self.model = YOLO(selected_yolo_model)
         self.get_logger().info(f"Modelo {selected_yolo_model} cargado")
