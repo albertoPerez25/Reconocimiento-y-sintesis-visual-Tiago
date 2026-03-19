@@ -69,6 +69,18 @@ def load_ragas_data(ragas_dir):
     df_summary = pd.DataFrame(summary_list).sort_values(by='Final_Score', ascending=False)
     return df_summary
 
+def get_dynamic_rotation(labels):
+    """Devuelve la rotacion de etiqueta óptima según el número y logitud de estas"""
+    num_labels = len(labels)
+    max_len = max([len(str(label)) for label in labels]) if num_labels > 0 else 0
+    
+    # Si hay pocos modelos y sus nombres son cortos horizontales
+    if num_labels <= 3 and max_len <= 18:
+        return 0, 'center'
+    # Si son muchos o muy largos rotacion de 45 grados
+    else:
+        return 45, 'right'
+
 def generate_performance_summary(df, output_dir):
     """Imprime y guarda los resultados"""
     print("\n" + "="*60)
@@ -91,7 +103,7 @@ def generate_performance_summary(df, output_dir):
     display_table.to_csv(os.path.join(output_dir, "tabla_resumen_rendimiento.csv"))
 
 def generate_ragas_summary(df, output_dir):
-    """Prints and saves the Ragas evaluation summary table."""
+    """Guarda la evaluacion de RAFAS"""
     print("\n" + "="*60)
     print("  RESUMEN DE EVALUACIÓN RAGAS (Calidad de Respuesta)")
     print("="*60)
@@ -102,25 +114,33 @@ def generate_ragas_summary(df, output_dir):
 
 def generate_performance_plots(df, output_dir):
     """Genera las gráficas de rendimientos """
+    unique_models = df['modelo_reportero'].unique() # para ordenarlos
+    ordered_labels = sorted(unique_models, key=lambda x: (x.replace('_JSON', ''), x))
+
+    rot, align = get_dynamic_rotation(ordered_labels)
+    
     # Tiempos de procesamiento
     plt.figure(figsize=(10, 6))
     summary_times = df.groupby('modelo_reportero')[['tiempo_percepcion_segundos', 'tiempo_llm_segundos']].mean()
+    summary_times = summary_times.reindex(ordered_labels)
+
     summary_times.plot(kind='bar', stacked=True, color=['#4C72B0', '#55A868'], figsize=(10, 6))
     plt.title("Tiempo Medio de Procesamiento por Patrulla", fontsize=14, pad=15)
     plt.xlabel("Modelo Utilizado", fontsize=12)
     plt.ylabel("Segundos", fontsize=12)
     plt.legend(["Percepción (Visión)", "Razonamiento (LLM)"])
-    plt.xticks(rotation=0)
+    plt.xticks(rotation=rot, ha=align)
     plt.tight_layout()
     plt.savefig(os.path.join(output_dir, "1_desglose_tiempos.png"), dpi=300)
     plt.close()
 
     # Latencia
     plt.figure(figsize=(8, 5))
-    sns.barplot(data=df, x='modelo_reportero', y='segundos_por_imagen', errorbar='sd', capsize=.1)
+    sns.barplot(data=df, x='modelo_reportero', y='segundos_por_imagen', order=ordered_labels, errorbar='sd', capsize=.1)
     plt.title("Latencia del Modelo Visual", fontsize=14, pad=15)
     plt.xlabel("Modelo Utilizado", fontsize=12)
     plt.ylabel("Segundos por Imagen procesada", fontsize=12)
+    plt.xticks(rotation=rot, ha=align)
     plt.tight_layout()
     plt.savefig(os.path.join(output_dir, "2_latencia_visual.png"), dpi=300)
     plt.close()
@@ -128,23 +148,25 @@ def generate_performance_plots(df, output_dir):
     # Análisis de verbosidad
     plt.figure(figsize=(10, 6))
     summary_chars = df.groupby('modelo_reportero')[['caracteres_contexto_visual', 'caracteres_informe_final']].mean()
+    summary_chars = summary_chars.reindex(ordered_labels)
     summary_chars.plot(kind='bar', width=0.7, color=['#C44E52', '#8172B3'], figsize=(10, 6))
     plt.title("Análisis de Verbosidad (Texto procesado)", fontsize=14, pad=15)
     plt.xlabel("Modelo Utilizado", fontsize=12)
     plt.ylabel("Cantidad de Caracteres", fontsize=12)
     plt.legend(["Contexto Visual Generado", "Informe Final (Llama-3)"])
-    plt.xticks(rotation=0)
+    plt.xticks(rotation=rot, ha=align)
     plt.tight_layout()
     plt.savefig(os.path.join(output_dir, "3_analisis_verbosidad.png"), dpi=300)
     plt.close()
 
     # Estabilidad (boxplot)
     plt.figure(figsize=(8, 6))
-    sns.boxplot(data=df, x='modelo_reportero', y='tiempo_total_segundos', palette="Set2")
+    sns.boxplot(data=df, x='modelo_reportero', y='tiempo_total_segundos', order=ordered_labels, palette="Set2")
     sns.stripplot(data=df, x='modelo_reportero', y='tiempo_total_segundos', color=".3", size=6, alpha=0.6)
     plt.title("Estabilidad del Tiempo de Ejecución (Boxplot)", fontsize=14, pad=15)
     plt.xlabel("Modelo Utilizado", fontsize=12)
     plt.ylabel("Tiempo Total (Segundos)", fontsize=12)
+    plt.xticks(rotation=rot, ha=align)
     plt.tight_layout()
     plt.savefig(os.path.join(output_dir, "4_estabilidad_tiempos.png"), dpi=300)
     plt.close()
@@ -155,6 +177,8 @@ def generate_ragas_plots(df, output_dir):
     correctness = df['Correctness'].tolist()
     relevancy = df['Relevancy'].tolist()
     final_score = df['Final_Score'].tolist()
+    
+    rot, align = get_dynamic_rotation(labels)
 
     x_positions = np.arange(len(labels))
     bar_width = 0.25
@@ -168,7 +192,7 @@ def generate_ragas_plots(df, output_dir):
     ax.set_ylabel('Puntuación (0.0 - 1.0)')
     ax.set_title('Comparativa de Calidad de Respuestas (Evaluación Ragas)')
     ax.set_xticks(x_positions)
-    ax.set_xticklabels(labels, rotation=15, ha="right")
+    ax.set_xticklabels(labels, rotation=rot, ha=align)
     ax.set_ylim(0, 1.1) 
     ax.legend()
 

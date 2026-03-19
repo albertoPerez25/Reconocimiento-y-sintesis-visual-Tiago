@@ -13,7 +13,7 @@
     },
     {
         "fecha": "2026-03-04 20:26:01.899593",
-        "modelo_reportero": "hybrid (yolo+moonlight)",
+        "modelo_reportero": "hybrid_(yolo+moonlight)",
         "total_imagenes_procesadas": 280,
         "zonas_despejadas": 0,
         "zonas_con_output": 43,
@@ -46,5 +46,5 @@
         "tiempo_total_segundos": 68.42,
         "caracteres_contexto_visual": 3114,
         "caracteres_informe_final": 1176
-    },
+    }
 ]
