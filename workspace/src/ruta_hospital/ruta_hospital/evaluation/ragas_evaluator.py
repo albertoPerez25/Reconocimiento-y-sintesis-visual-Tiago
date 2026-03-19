@@ -8,14 +8,20 @@ from langchain_ollama import ChatOllama, OllamaEmbeddings
 from ragas.run_config import RunConfig
 from ruta_hospital.commons.api_utils import call_ollama_api 
 
+class OllamaParams:
+    def __init__(self, ollama_url = "http://localhost:11434", evaluator_llm_model = "llama3", evaluator_embed_model = "nomic-embed-text"):
+        self.ollama_url=ollama_url
+        self.evaluator_llm_model = evaluator_llm_model
+        self.evaluator_embed_model = evaluator_embed_model
+
 class RagasEvaluator:
-    def __init__(self, quest_path, metrics_dir, ollama_url="http://localhost:11434"):
+    def __init__(self, quest_path, metrics_dir, ollama_params):
         self.quest_path = quest_path
         self.metrics_dir = metrics_dir
         
         # LLM evaluador y embeddings requeridos por Ragas
-        self.evaluator_llm = ChatOllama(model="llama3", base_url=ollama_url)
-        self.evaluator_embeddings = OllamaEmbeddings(model="nomic-embed-text", base_url=ollama_url)
+        self.evaluator_llm = ChatOllama(model=ollama_params.evaluator_llm_model, base_url=ollama_params.ollama_url)
+        self.evaluator_embeddings = OllamaEmbeddings(model=ollama_params.evaluator_embed_model, base_url=ollama_params.ollama_url)
 
     def evaluate_system(self, global_context_json):
         '''Genera respuestas y ejecuta Ragas'''
@@ -31,8 +37,8 @@ class RagasEvaluator:
             run_config=RunConfig(max_workers=1, timeout=120)
         )
         
-        df_results = result.to_pandas()
         output_path = os.path.join(self.metrics_dir, 'ragas_system_evaluation.csv')
+        df_results = result.to_pandas()
         df_results.to_csv(output_path, index=False)
         return df_results
 

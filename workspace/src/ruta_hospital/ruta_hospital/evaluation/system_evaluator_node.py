@@ -6,6 +6,12 @@ from std_srvs.srv import Trigger
 
 from ruta_hospital.reporting.llm_reporter_node import LLMReporterNode
 from ruta_hospital.evaluation.ragas_evaluator import RagasEvaluator
+from ruta_hospital.evaluation.ragas_evaluator import OllamaParams
+
+DEFAULT_OLLAMA_URL = "http://localhost:11434"
+DEFAULT_EVALUATOR_LLM_MODEL = "llama3"
+DEFAULT_EVALUATOR_EMBED_MODEL = "nomic-embed-text"
+DEFAULT_QUESTIONS_PATH = "/home/alberto/tfg/Reconocimiento-y-sintesis-visual-Tiago/workspace/config/quest.json"
 
 class SystemEvaluatorNode(Node):
     def __init__(self):
@@ -13,10 +19,21 @@ class SystemEvaluatorNode(Node):
         # Reportero original para acceder a sus métodos
         self.reporter_logic = LLMReporterNode()
 
+        # Parametros
+        self.declare_parameter('ollama_url', DEFAULT_OLLAMA_URL)
+        self.declare_parameter('evaluator_llm_model', DEFAULT_EVALUATOR_LLM_MODEL)
+        self.declare_parameter('evaluator_embed_model', DEFAULT_EVALUATOR_EMBED_MODEL)
+        self.declare_parameter('questions_path', DEFAULT_QUESTIONS_PATH)
+
+        ollama_url = self.get_parameter('ollama_url').get_parameter_value().string_value
+        llm_model = self.get_parameter('evaluator_llm_model').get_parameter_value().string_value
+        embed_model = self.get_parameter('evaluator_embed_model').get_parameter_value().string_value
+        quest_path = self.get_parameter('questions_path').get_parameter_value().string_value
+
         # Evaluador de Ragas
-        ruta_quest = "/home/alberto/tfg/Reconocimiento-y-sintesis-visual-Tiago/workspace/config/quest.json"
+        ollama_params = OllamaParams(ollama_url = ollama_url, llm_model = llm_model, embed_model = embed_model)
         self.metrics_dir = self.reporter_logic.metrics_dir # el mismo path de métricas
-        self.ragas_evaluator = RagasEvaluator(ruta_quest, self.metrics_dir)
+        self.ragas_evaluator = RagasEvaluator(quest_path, self.metrics_dir, ollama_params)
         
         # Servicio distinto para la evaluación
         self.eval_srv = self.create_service(
