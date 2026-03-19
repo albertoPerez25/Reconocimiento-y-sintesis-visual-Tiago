@@ -31,7 +31,7 @@ class SystemEvaluatorNode(Node):
         quest_path = self.get_parameter('questions_path').get_parameter_value().string_value
 
         # Evaluador de Ragas
-        ollama_params = OllamaParams(ollama_url = ollama_url, llm_model = llm_model, embed_model = embed_model)
+        ollama_params = OllamaParams(ollama_url = ollama_url, evaluator_llm_model = llm_model, evaluator_embed_model = embed_model)
         self.metrics_dir = self.reporter_logic.metrics_dir # el mismo path de métricas
         self.ragas_evaluator = RagasEvaluator(quest_path, self.metrics_dir, ollama_params)
         
