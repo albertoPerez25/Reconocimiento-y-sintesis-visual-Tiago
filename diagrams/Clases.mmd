@@ -1,0 +1,91 @@
+---
+config:
+  look: neo
+---
+classDiagram
+    class BaseReporterNode {
+        <<abstract>>
+        +csv_path: str
+        +photos_dir: str
+        +semantic_map: dict
+        +metrics: dict
+        +generate_report_callback(req, res)*
+        +clean_data_callback(req, res)
+        +get_zone_name(x, y)
+        +get_images_grouped_by_zone()
+        +save_metrics()
+    }
+    
+    class LLMReporterNode {
+        +perception_mode: str
+        +vision_cli: Client
+        +generate_report_callback(req, res)
+        +process_each_image(zone_groups, response)
+        +generate_global_summary(global_context, response)
+    }
+    
+    BaseReporterNode <|-- LLMReporterNode
+    
+    class SystemEvaluatorNode {
+        +reporter_logic: LLMReporterNode
+        +ragas_evaluator: RagasEvaluator
+        +metrics_dir: str
+        +evaluate_callback(req, res)
+    }
+    
+    class RagasEvaluator {
+        +evaluator_llm: ChatOllama
+        +evaluator_embeddings: OllamaEmbeddings
+        +evaluate_system(global_context_json)
+        +generate_answers(global_context_json)
+    }
+    
+    class OllamaParams {
+        +ollama_url: str
+        +evaluator_llm_model: str
+        +evaluator_embed_model: str
+    }
+    
+    SystemEvaluatorNode *-- LLMReporterNode
+    SystemEvaluatorNode *-- RagasEvaluator
+    RagasEvaluator --> OllamaParams : Configura con
+    
+    class BasePerceptionNode {
+        <<abstract>>
+        +analyze_callback(req, res)
+        +process_image(image_path)*
+        +check_path(path)*
+    }
+    
+    class VLMPerceptionNode {
+        +vlm_model: str
+        +ollama_url: str
+        +process_image(image_path)
+        +get_payload(image_path)
+    }
+    
+    class YoloPerceptionNode {
+        +model: YOLO
+        +min_confidence: float
+        +process_image(image_path)
+        +calculate_posture(...)
+    }
+    
+    class HybridPerceptionNode {
+        +yolo_logic: YoloPerceptionNode
+        +vlm_logic: VLMPerceptionNode
+        +process_image(image_path)
+        +get_combined_json(yolo, vlm)
+    }
+    
+    class SequencePerceptionNode {
+        +vlm_model: str
+        +ollama_url: str
+        +process_image(image_paths_str)
+        +extract_key_frames(...)
+    }
+    
+    BasePerceptionNode <|-- VLMPerceptionNode
+    BasePerceptionNode <|-- YoloPerceptionNode
+    BasePerceptionNode <|-- HybridPerceptionNode
+    BasePerceptionNode <|-- SequencePerceptionNode
