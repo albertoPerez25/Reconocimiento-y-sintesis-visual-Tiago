@@ -1,0 +1,6 @@
+action/GenerateReport.action
+action/GenerateReport.idl
+srv/AnalyzeActivity.idl
+srv/AnalyzeActivity.srv
+srv/AnalyzeActivity_Request.msg
+srv/AnalyzeActivity_Response.msg

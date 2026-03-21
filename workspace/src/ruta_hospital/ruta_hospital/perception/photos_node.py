@@ -171,22 +171,6 @@ class PhotoCapturer(rclpy.node.Node):
 
         self.try_save_data()
         
-        """if self.accumulated_distance >= target_distance:
-
-            if self.last_image is not None:
-                self.accumulated_distance = 0.0
-                cv_image = self.bridge.imgmsg_to_cv2(self.last_image, "bgr8")
-                
-                if self.is_image_different(cv_image):
-                    image_name, filename = self.save_photo(cv_image)
-
-                    if image_name is not None and os.path.isfile(filename):
-                        self.save_metadata(image_name)
-                        self.last_saved_cv_image = cv_image 
-                else:
-                    self.get_logger().info("Foto omitida al no superar el límite de diferencia")
-             """
-        
     def try_save_data(self):
         '''Evalua si se cumplen los requisitos para guardar foto y metadatos.'''
         target_distance = self.get_parameter(TARGET_DISTANCE_METERS).value
