@@ -10,11 +10,16 @@ from nav_msgs.msg import Odometry
 #from cv_bridge import CvBridge
 
 from tf2_ros import Buffer, TransformListener
+from rcl_interfaces.msg import ParameterDescriptor
+from hospital_interfaces.srv import AnalyzeActivity
+from rcl_interfaces.msg import SetParametersResult
+
 
 # Variables de configuracion global
 TARGET_DISTANCE_METERS = "target_distance_meters" # en metros
 SIMILARITY_THRESHOLD = "similarity_threshold"
-SAVE_DIR = "./hospital_photos/"
+CURRENT_SAVE_DIR_PARAM = "current_save_dir"
+
 CAMERA_TOPIC = "/head_front_camera/rgb/image_raw"
 ODOM_TOPIC = "/odom"
 CSV_FILENAME = "metadata.csv"
@@ -29,18 +34,24 @@ class PhotoCapturer(rclpy.node.Node):
         self.declare_parameter(TARGET_DISTANCE_METERS, 1.0) # (nombre, valor por defecto)
         self.declare_parameter(SIMILARITY_THRESHOLD, 25.0) # minimo de diferencia con la ultima imagen
 
+        # Parámetro dinámico para la carpeta actual
+        self.declare_parameter(CURRENT_SAVE_DIR_PARAM, "")
+
         #self.bridge = CvBridge()
         self.last_image = None
         self.last_pose = None
         self.last_saved_cv_image = None
         self.accumulated_distance = 0.0
 
+        self.current_dir = ""
+        self.photo_count = 1
+
         # para la posición más precisa
         self.tf_buffer = Buffer()
         self.tf_listener = TransformListener(self.tf_buffer, self)
 
-        self.setup_directory()
-        self.photo_count = self.get_starting_photo_count()
+        """ self.setup_directory()
+        self.photo_count = self.get_starting_photo_count() """
 
         self.image_sub = self.create_subscription(
             Image, 
@@ -56,14 +67,32 @@ class PhotoCapturer(rclpy.node.Node):
             10
         )
 
+        self.add_on_set_parameters_callback(self.parameters_callback) # para cambiar el directorio dinámicamente
         self.get_logger().info("Photos Node")
+
+    def parameters_callback(self, params):
+        '''Callback que se ejecuta cuando cambian los parámetros del nodo'''        
+        for param in params:
+            if param.name == CURRENT_SAVE_DIR_PARAM:
+                new_dir = param.value
+                if new_dir and new_dir != self.current_dir:
+                    self.current_dir = new_dir
+                    self.setup_directory()
+                    self.photo_count = self.get_starting_photo_count()
+                    self.last_saved_cv_image = None
+                    self.accumulated_distance = 0.0
+        
+        return SetParametersResult(successful=True)
 
     def setup_directory(self):
         '''Crea la carpeta de destino y el archivo CSV si no se encuentran'''
-        if not os.path.exists(SAVE_DIR):
-            os.makedirs(SAVE_DIR)
+        if not self.current_dir:
+            return 1
+        
+        if not os.path.exists(self.current_dir):
+            os.makedirs(self.current_dir)
 
-        csv_path = os.path.join(SAVE_DIR, CSV_FILENAME)
+        csv_path = os.path.join(self.current_dir, CSV_FILENAME)
         file_exists = os.path.isfile(csv_path)
 
         # Crear el CSV con cabeceras si es la primera vez
@@ -75,7 +104,10 @@ class PhotoCapturer(rclpy.node.Node):
 
     def get_starting_photo_count(self):
         '''Busca la ultima foto registrada en el CSV para continuar la numeracion'''
-        csv_path = os.path.join(SAVE_DIR, CSV_FILENAME)
+        if not self.current_dir: 
+            return 1
+
+        csv_path = os.path.join(self.current_dir, CSV_FILENAME)
         
         if not os.path.isfile(csv_path):
             return 1
@@ -123,6 +155,10 @@ class PhotoCapturer(rclpy.node.Node):
 
     def odom_callback(self, msg):
         '''Suma la distancia recorrida y evalua si hay que procesar otra captura'''
+        # Si no hay directorio asignado no procesa la odometría
+        if not self.current_dir:
+            return
+
         current_pose = msg.pose.pose
 
         if self.last_pose is None:
@@ -183,7 +219,7 @@ class PhotoCapturer(rclpy.node.Node):
 
     def check_photo_count(self):
         '''Resetea el CSV y el contador si se ha resetado la carpeta de fotos'''
-        csv_path = os.path.join(SAVE_DIR, CSV_FILENAME)
+        csv_path = os.path.join(self.current_dir, CSV_FILENAME)
         csv_exists = os.path.isfile(csv_path)
         if not csv_exists:
             with open(csv_path, mode='a', newline='') as file:
@@ -196,7 +232,7 @@ class PhotoCapturer(rclpy.node.Node):
         '''Traduce el mensaje de ROS2 a OpenCV y guarda el archivo'''
         try:
             image_name = f"{self.photo_count:06d}.jpg"
-            filename = os.path.join(SAVE_DIR, image_name)
+            filename = os.path.join(self.current_dir, image_name)
             
             cv2.imwrite(filename, cv_image)
             self.get_logger().info(f"Foto guardada en: {filename}")
@@ -225,7 +261,7 @@ class PhotoCapturer(rclpy.node.Node):
             pos = trans.transform.translation
             ori = trans.transform.rotation
 
-            csv_path = os.path.join(SAVE_DIR, CSV_FILENAME)
+            csv_path = os.path.join(self.current_dir, CSV_FILENAME)
             with open(csv_path, mode='a', newline='') as file:
                 writer = csv.writer(file)
                 writer.writerow([image_name, t_sec, t_nanosec, pos.x, pos.y, pos.z,\
