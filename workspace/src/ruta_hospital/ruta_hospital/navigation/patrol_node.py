@@ -1,14 +1,23 @@
-#!/usr/bin/env python3
+#!/usr/bin/env python3ç
+import os
+import shutil
 import time
 import rclpy
-from nav2_simple_commander.robot_navigator import BasicNavigator, TaskResult
-from geometry_msgs.msg import PoseStamped
+
 import sys
 import select
 import tty
 import termios
 import json
-from std_srvs.srv import Trigger
+
+from nav2_simple_commander.robot_navigator import BasicNavigator, TaskResult
+from geometry_msgs.msg import PoseStamped
+
+from rclpy.action import ActionClient
+from hospital_interfaces.action import GenerateReport
+
+from rcl_interfaces.srv import SetParameters # Para cambiar el dir del photo_capturer
+from rcl_interfaces.msg import Parameter, ParameterValue, ParameterType
 
 PATH_POINTS = [
     [4.83898, 8.27372],
@@ -46,77 +55,114 @@ class PatrolNode(rclpy.node.Node):
         # Cargar JSON con los puntos de ruta
         self.declare_parameter('route_file_path', 'default_route.json')
         self.route_file_path = self.get_parameter('route_file_path').get_parameter_value().string_value
+
+        # Directorio raíz para las subcarpetas
+        self.declare_parameter('base_photos_dir', '/home/alberto/tfg/Reconocimiento-y-sintesis-visual-Tiago/workspace/hospital_photos/')
+        self.base_photos_dir = self.get_parameter('base_photos_dir').get_parameter_value().string_value
+
         self.path_points = self.load_route()
 
         self.navigator = BasicNavigator()
         self.navigator.waitUntilNav2Active()
-        self.get_logger().info("Patrol Node Initialized")
+        self.get_logger().info("Nodo patrulla iniciado")
         self.route_poses = self.list_to_pose()
-        self.report_client = self.create_client(Trigger, '/generate_patrol_report') # Para iniciar el reporte
-        self.clean_client = self.create_client(Trigger, '/clean_patrol_data')
+        
+        self.report_action_client = ActionClient(self, GenerateReport, 'generate_patrol_report')     
+        self.param_client = self.create_client(SetParameters, '/photo_capturer/set_parameters')
+        self.current_folder_path = ""
+
+    def clean_all_orphan_folders(self):
+        '''Borra todas las subcarpetas'''
+        if not os.path.exists(self.base_photos_dir):
+            return
+        for item in os.listdir(self.base_photos_dir):
+            if item.startswith("vuelta_"):
+                shutil.rmtree(os.path.join(self.base_photos_dir, item))
+                self.get_logger().info(f"Borrada subcarpeta {item}")
+
+    def get_next_available_folder(self):
+        '''Busca la primera letra disponible (A-Z) y crea la carpeta'''
+        if not os.path.exists(self.base_photos_dir):
+            os.makedirs(self.base_photos_dir)
+            
+        for char in "ABCDEFGHIJKLMNOPQRSTUVWXYZ":
+            folder_name = f"vuelta_{char}"
+            folder_path = os.path.join(self.base_photos_dir, folder_name)
+            if not os.path.exists(folder_path):
+                os.makedirs(folder_path)
+                return folder_path
+                
+        self.get_logger().error("Búffer de carpetas lleno")
+        return None
+
+    def set_capturer_folder(self, folder_path):
+        '''Avisa al photo_capturer de la nueva carpeta usando SetParameters'''
+        if not self.param_client.wait_for_service(timeout_sec=2.0):
+            self.get_logger().warn("No se pudo conectar con el nodo foto")
+            return
+            
+        req = SetParameters.Request()
+        param = Parameter()
+        param.name = "current_save_dir"
+        param.value = ParameterValue(type=ParameterType.PARAMETER_STRING, string_value=folder_path)
+        req.parameters.append(param)
+        self.param_client.call_async(req)
+        self.current_folder_path = folder_path
 
     def trigger_report(self):
         '''Llama al servicio de generación de informes al final de una vuelta'''
         self.get_logger().info("Iniciado el informe")
         
         # 3 segundos de espera para ver si el nodo reportero está encendido
-        if not self.report_client.wait_for_service(timeout_sec=3.0):
-            self.get_logger().warn("El servicio '/generate_patrol_report' no está activo, no se hará el informe")
-            self.request_data_cleanup()
+        if not self.report_action_client.wait_for_server(timeout_sec=3.0):
+            self.get_logger().warn("El servidor de acción '/generate_patrol_report' no está activo.")
+            self.delete_folder(self.current_folder_path) 
             return
 
-        req = Trigger.Request()
-        future_response = self.report_client.call_async(req)
-                
-        #rclpy.spin_until_future_complete(self, future_response) # espera hasta que recibe la respuesta
-        completed = self.wait_response(future_response)
+        goal_msg = GenerateReport.Goal()
+        goal_msg.folder_path = self.current_folder_path
 
-        if completed:
-            try:
-                response = future_response.result()
-                if response.success:
-                    self.get_logger().info(response.message)
-                else:
-                    self.get_logger().warn(f"El nodo LLM reportó un problema: {response.message}")
-            except Exception as e:
-                self.get_logger().error(f"Fallo al invocar el servicio: {e}")
+
+        send_goal_future = self.report_action_client.send_goal_async(goal_msg, feedback_callback=self.report_feedback_callback)
+        send_goal_future.add_done_callback(self.goal_response_callback)
+
+    def goal_response_callback(self, future):
+        '''Se ejecuta cuando el servidor de acción responde si acepta o rechaza la meta'''
+        goal_handle = future.result()
+        if not goal_handle.accepted:
+            self.get_logger().warn('La meta fue rechazada por el reportero, no se generará informe')
+            # TODO: pasarle el path de otra forma si es rechazado
+            # por ahora confio en que el servidor la acepte
+            return
+
+        self.get_logger().info('Generando informe...')
+        # Callback para cuando la meta termine definitivamente
+        self._get_result_future = goal_handle.get_result_async()
+        self._get_result_future.add_done_callback(self.get_result_callback)
+
+    def report_feedback_callback(self, feedback_msg):
+        '''Recibe y muestra el progreso temporal del reportero'''
+        feedback = feedback_msg.feedback
+        self.get_logger().info(f"[Reportero]: Zona: {feedback.current_zone} ({feedback.percentage_complete}%)")
+
+    def get_result_callback(self, future):
+        '''Se ejecuta cuando el reportero ha terminado y respondido con el informe'''
+        result = future.result().result
+        if result.success:
+            self.get_logger().info(f"\nINFORME COMPLETADO \n{result.final_report}\n")
         else:
-            self.get_logger().warn("El informe no pudo generarse y/o fué interrumpido")
-        
-        self.request_data_cleanup()
+            self.get_logger().warn("Error generando el informe en el reportero")
+            
+        pass # TODO: Implementar un borrado seguro de las subcarpetas
 
-    def wait_response(self, future_response, timeout_max=5000.0, spin_timeout_sec=0.2):
-        '''
-        Espera a recibir el informe, permitiendo saltar con ENTER o timeout
-        Devuelve True si eterminó, o False si se interrumpió la espera.
-        '''
-        self.get_logger().info("(s para saltar)")
-        waiting_time = 0.0
-
-        while rclpy.ok() and not future_response.done():
-            # Spin de medio segundo para no congelar el robot
-            rclpy.spin_until_future_complete(self, future_response, timeout_sec=spin_timeout_sec)
-            waiting_time += spin_timeout_sec
-
-            # lectura no bloqueante
-            key = self.get_key_non_blocking()
-            if key and key.lower() == 's':
-                sys.stdin.readline() # Limpiar buffer
-                return False
-
-            if waiting_time >= timeout_max:
-                self.get_logger().error("Timeout superado. Se omitirá el informe")
-                return False
-        return future_response.done()
-
-    def request_data_cleanup(self):
-        '''Pide que detenga el informe y borre las fotos'''
-        #self.get_logger().info("Solicitando limpieza de datos")
-        if self.clean_client.wait_for_service(timeout_sec=2.0):
-            req = Trigger.Request()
-            self.clean_client.call_async(req) # Llamada asíncrona para no bloquear a la patrulla
-        else:
-            self.get_logger().warn("No se pudo alcanzar al servicio de limpieza")
+    def delete_folder(self, path):
+        '''Borra una carpeta'''
+        try:
+            if os.path.exists(path):
+                shutil.rmtree(path)
+                #self.get_logger().info(f"Carpeta eliminada: {path}")
+        except Exception as e:
+            self.get_logger().error(f"Fallo al eliminar carpeta {path}: {e}")
 
     def load_route(self):
         '''Carga la lista de waypoints desde el archivo JSON'''
@@ -235,13 +281,19 @@ class PatrolNode(rclpy.node.Node):
         '''Bucle infinito de iteraciones de patrullas al hospital'''
         self.get_logger().info(f"Ruta cargada con {len(self.route_poses)} puntos")
         iteration = 1
-        self.request_data_cleanup()
+        self.clean_all_orphan_folders()
         while rclpy.ok():
             self.get_logger().info(f"\nVUELTA Nº {iteration}")
+
+            new_folder = self.get_next_available_folder()
+            if not new_folder:
+                time.sleep(5)
+                continue
+            
+            self.set_capturer_folder(new_folder)
             self.do_patrol_iteration()
             self.trigger_report()
             iteration += 1
-            break
 
 def main(args=None):
     rclpy.init(args=args)
