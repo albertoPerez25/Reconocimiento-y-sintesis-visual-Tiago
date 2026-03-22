@@ -1,13 +1,6 @@
-#!/usr/bin/env python3ç
-import os
-import shutil
+#!/usr/bin/env python3
 import time
 import rclpy
-
-import sys
-import select
-import tty
-import termios
 import json
 
 from nav2_simple_commander.robot_navigator import BasicNavigator, TaskResult
@@ -19,7 +12,12 @@ from hospital_interfaces.action import GenerateReport
 from rcl_interfaces.srv import SetParameters # Para cambiar el dir del photo_capturer
 from rcl_interfaces.msg import Parameter, ParameterValue, ParameterType
 
-PATH_POINTS = [
+from ruta_hospital.navigation.utils.route_parser_utils import load_route,list_to_pose
+from ruta_hospital.navigation.utils.file_utils import clean_all_orphan_folders, get_next_available_folder
+from ruta_hospital.commons.file_utils import delete_folder
+from ruta_hospital.commons.terminal_utils import get_key_non_blocking
+
+DEFAULT_PATH_POINTS = [
     [4.83898, 8.27372],
     [8.21112, 6.68955],
     [11.4583, 1.65471],
@@ -47,53 +45,31 @@ PATH_POINTS = [
     [-7.6369, 5.47739],
     [-4.3140, 7.82489],
 ]
+DEFAULT_ROUTE_PATH = "default_route.json"
+DEFAULT_PHOTOS_DIR = "/home/alberto/tfg/Reconocimiento-y-sintesis-visual-Tiago/workspace/hospital_photos/"
 
 class PatrolNode(rclpy.node.Node):
     def __init__(self):
         super().__init__('patrol_node')
 
         # Cargar JSON con los puntos de ruta
-        self.declare_parameter('route_file_path', 'default_route.json')
+        self.declare_parameter('route_file_path', DEFAULT_ROUTE_PATH)
         self.route_file_path = self.get_parameter('route_file_path').get_parameter_value().string_value
 
         # Directorio raíz para las subcarpetas
-        self.declare_parameter('base_photos_dir', '/home/alberto/tfg/Reconocimiento-y-sintesis-visual-Tiago/workspace/hospital_photos/')
+        self.declare_parameter('base_photos_dir', DEFAULT_PHOTOS_DIR)
         self.base_photos_dir = self.get_parameter('base_photos_dir').get_parameter_value().string_value
 
-        self.path_points = self.load_route()
+        self.path_points = load_route(self.route_file_path, DEFAULT_PATH_POINTS, self.get_logger())
 
         self.navigator = BasicNavigator()
         self.navigator.waitUntilNav2Active()
         self.get_logger().info("Nodo patrulla iniciado")
-        self.route_poses = self.list_to_pose()
+        self.route_poses = list_to_pose(self.path_points, self.navigator.get_clock())
         
         self.report_action_client = ActionClient(self, GenerateReport, 'generate_patrol_report')     
         self.param_client = self.create_client(SetParameters, '/photo_capturer/set_parameters')
         self.current_folder_path = ""
-
-    def clean_all_orphan_folders(self):
-        '''Borra todas las subcarpetas'''
-        if not os.path.exists(self.base_photos_dir):
-            return
-        for item in os.listdir(self.base_photos_dir):
-            if item.startswith("vuelta_"):
-                shutil.rmtree(os.path.join(self.base_photos_dir, item))
-                self.get_logger().info(f"Borrada subcarpeta {item}")
-
-    def get_next_available_folder(self):
-        '''Busca la primera letra disponible (A-Z) y crea la carpeta'''
-        if not os.path.exists(self.base_photos_dir):
-            os.makedirs(self.base_photos_dir)
-            
-        for char in "ABCDEFGHIJKLMNOPQRSTUVWXYZ":
-            folder_name = f"vuelta_{char}"
-            folder_path = os.path.join(self.base_photos_dir, folder_name)
-            if not os.path.exists(folder_path):
-                os.makedirs(folder_path)
-                return folder_path
-                
-        self.get_logger().error("Búffer de carpetas lleno")
-        return None
 
     def set_capturer_folder(self, folder_path):
         '''Avisa al photo_capturer de la nueva carpeta usando SetParameters'''
@@ -116,7 +92,7 @@ class PatrolNode(rclpy.node.Node):
         # 3 segundos de espera para ver si el nodo reportero está encendido
         if not self.report_action_client.wait_for_server(timeout_sec=3.0):
             self.get_logger().warn("El servidor de acción '/generate_patrol_report' no está activo.")
-            self.delete_folder(self.current_folder_path) 
+            delete_folder(self.current_folder_path, self.get_logger()) 
             return
 
         goal_msg = GenerateReport.Goal()
@@ -155,45 +131,6 @@ class PatrolNode(rclpy.node.Node):
             
         pass # TODO: Implementar un borrado seguro de las subcarpetas
 
-    def delete_folder(self, path):
-        '''Borra una carpeta'''
-        try:
-            if os.path.exists(path):
-                shutil.rmtree(path)
-                #self.get_logger().info(f"Carpeta eliminada: {path}")
-        except Exception as e:
-            self.get_logger().error(f"Fallo al eliminar carpeta {path}: {e}")
-
-    def load_route(self):
-        '''Carga la lista de waypoints desde el archivo JSON'''
-        try:
-            with open(self.route_file_path, 'r') as f:
-                data = json.load(f)
-                route = data.get("PATH_POINTS", [])
-                self.get_logger().info(f"Ruta cargada exitosamente desde {self.route_file_path}")
-                return route
-        except Exception as e:
-            self.get_logger().error(f"Error cargando el archivo de ruta: {e}")
-            return PATH_POINTS
-
-    def list_to_pose(self):
-        '''Pasa la lista de waypoints a poses'''
-        route_poses = []
-        for point in self.path_points:
-            pose = self.create_pose(point[0], point[1])
-            route_poses.append(pose)
-        return route_poses
-
-    def create_pose(self, x, y):
-        '''Crea poses neutras'''
-        pose = PoseStamped()
-        pose.header.frame_id = 'map'
-        pose.header.stamp = self.navigator.get_clock().now().to_msg()
-        pose.pose.position.x = float(x)
-        pose.pose.position.y = float(y)
-        pose.pose.orientation.w = 1.0 # Orientación neutra
-        return pose
-
     def state_check(self, result, index, iteration): 
         '''Devuelve el estado actual/final'''
         if result == TaskResult.SUCCEEDED:
@@ -222,21 +159,6 @@ class PatrolNode(rclpy.node.Node):
         self.navigator.clearAllCostmaps()   # Para eliminar obstáculos
         time.sleep(1.5)                # Para que el sensor láser se ajuste
 
-    def get_key_non_blocking(self):
-        '''Lee una tecla sin pulsar Enter asíncronamente'''
-        try:
-            file_descriptor_stdin = sys.stdin.fileno()
-            old_settings = termios.tcgetattr(file_descriptor_stdin) # en caso de un crasheo, restaurar
-            try:
-                tty.setcbreak(file_descriptor_stdin) # modo cbreak no necesita pulsar enter
-                if select.select([sys.stdin], [], [], 0.2)[0]: # input en cada instante, asíncrono
-                    return sys.stdin.read(1)
-            finally:
-                termios.tcsetattr(file_descriptor_stdin, termios.TCSADRAIN, old_settings) # restaura terminal
-        except Exception:
-            pass # Falla silenciosamente si la terminal no soporta lectura cruda
-        return None
-
     def navigate_to_waypoint(self, pose, current_index, total_points, max_retries=2):
         '''Intenta llegar a un waypoint. Si falla, ejecuta el rescate y lo vuelve a intentar'''
         for it in range(max_retries):
@@ -246,7 +168,7 @@ class PatrolNode(rclpy.node.Node):
                 # El feedback de goToPose no tiene current_waypoint
                 print(f"Punto actual: {current_index}/{total_points} | Intento: {it + 1}/{max_retries} | (s) Saltar", end='\r')
                 
-                key = self.get_key_non_blocking()
+                key = get_key_non_blocking()
                 if key and key.lower() == 's':
                     self.get_logger().warn(f"\n [Salto] Punto {current_index} omitido por el usuario")
                     self.navigator.cancelTask()
@@ -281,11 +203,11 @@ class PatrolNode(rclpy.node.Node):
         '''Bucle infinito de iteraciones de patrullas al hospital'''
         self.get_logger().info(f"Ruta cargada con {len(self.route_poses)} puntos")
         iteration = 1
-        self.clean_all_orphan_folders()
+        clean_all_orphan_folders(self.base_photos_dir, self.get_logger())
         while rclpy.ok():
             self.get_logger().info(f"\nVUELTA Nº {iteration}")
 
-            new_folder = self.get_next_available_folder()
+            new_folder = get_next_available_folder(self.base_photos_dir, self.get_logger())
             if not new_folder:
                 time.sleep(5)
                 continue
