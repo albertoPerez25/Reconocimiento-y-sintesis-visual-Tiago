@@ -98,20 +98,20 @@ class PatrolNode(rclpy.node.Node):
         goal_msg = GenerateReport.Goal()
         goal_msg.folder_path = self.current_folder_path
 
-
         send_goal_future = self.report_action_client.send_goal_async(goal_msg, feedback_callback=self.report_feedback_callback)
-        send_goal_future.add_done_callback(self.goal_response_callback)
+        send_goal_future.add_done_callback(lambda future: self.goal_response_callback(future, self.current_folder_path))
 
-    def goal_response_callback(self, future):
+    def goal_response_callback(self, future, folder_to_clean):
         '''Se ejecuta cuando el servidor de acción responde si acepta o rechaza la meta'''
         goal_handle = future.result()
         if not goal_handle.accepted:
             self.get_logger().warn('La meta fue rechazada por el reportero, no se generará informe')
-            # TODO: pasarle el path de otra forma si es rechazado
-            # por ahora confio en que el servidor la acepte
+            delete_folder(folder_to_clean, self.get_logger())
             return
 
         self.get_logger().info('Generando informe...')
+        self.active_goal_handle = goal_handle # En caso de ser necesario cancelarlo luego
+
         # Callback para cuando la meta termine definitivamente
         self._get_result_future = goal_handle.get_result_async()
         self._get_result_future.add_done_callback(self.get_result_callback)
@@ -119,17 +119,22 @@ class PatrolNode(rclpy.node.Node):
     def report_feedback_callback(self, feedback_msg):
         '''Recibe y muestra el progreso temporal del reportero'''
         feedback = feedback_msg.feedback
-        self.get_logger().info(f"[Reportero]: Zona: {feedback.current_zone} ({feedback.percentage_complete}%)")
+        self.get_logger().info(f"[Reportero]: Zona: {feedback.current_zone} ({feedback.percentage_complete:.1f}%)")
 
-    def get_result_callback(self, future):
+    def get_result_callback(self, future, folder_to_clean):
         '''Se ejecuta cuando el reportero ha terminado y respondido con el informe'''
         result = future.result().result
-        if result.success:
+        status = future.result().status
+
+        # Estado 4 (SUCCEEDED) en rclpy.action significa éxito
+        if status == 4 and result.success:
             self.get_logger().info(f"\nINFORME COMPLETADO \n{result.final_report}\n")
         else:
-            self.get_logger().warn("Error generando el informe en el reportero")
+            self.get_logger().error("ERROR generando el informe en el reportero: {result.final_report}")
             
-        pass # TODO: Implementar un borrado seguro de las subcarpetas
+        self.get_logger().info(f"Limpiando datos de sesión: {folder_to_clean}")
+        delete_folder(folder_to_clean, self.get_logger())
+        self.active_goal_handle = None # Limpiar referencia
 
     def state_check(self, result, index, iteration): 
         '''Devuelve el estado actual/final'''
@@ -166,14 +171,19 @@ class PatrolNode(rclpy.node.Node):
 
             while not self.navigator.isTaskComplete():
                 # El feedback de goToPose no tiene current_waypoint
-                print(f"Punto actual: {current_index}/{total_points} | Intento: {it + 1}/{max_retries} | (s) Saltar", end='\r')
+                print(f"Punto actual: {current_index}/{total_points} | Intento: {it + 1}/{max_retries} | (s) Saltar | (d) Detener informe", end='\r')
                 
                 key = get_key_non_blocking()
                 if key and key.lower() == 's':
                     self.get_logger().warn(f"\n [Salto] Punto {current_index} omitido por el usuario")
                     self.navigator.cancelTask()
+
                     time.sleep(0.2) # Que le de tiempo a procesarlo
                     return True # para que no salte error
+
+                if key and key.lower( ) == 'd' and hasattr(self, 'active_goal_handle') and self.active_goal_handle:
+                    self.get_logger().warn("[Informe] Cancelado el informe en curso")
+                    self.active_goal_handle.cancel_goal_async()
 
             result = self.navigator.getResult()
             
