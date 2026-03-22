@@ -80,7 +80,7 @@ class LLMReporterNode(BaseReporterNode):
         t_init_perception = time.time()
         total_zones = len(zone_groups)
 
-        for zone, images in zone_groups.items():
+        for i, (zone, images) in enumerate(zone_groups.items()):
             if goal_handle.is_cancel_requested:
                 return None
             
@@ -195,11 +195,11 @@ class LLMReporterNode(BaseReporterNode):
             self.current_metrics["caracteres_informe_final"] = len(final_report)
             
             result.success = True
-            result.message = f"Informe generado:\n{final_report}"
+            result.final_report = f"Informe generado:\n{final_report}"
         except Exception as e:
             self.get_logger().error(f"Error conectando con Ollama: {e}")
             result.success = False
-            result.message = str(e)
+            result.final_report = str(e)
 
         return result 
     
