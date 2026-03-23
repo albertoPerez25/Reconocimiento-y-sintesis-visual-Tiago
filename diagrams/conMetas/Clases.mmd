@@ -1,0 +1,101 @@
+---
+config:
+  look: neo
+---
+classDiagram
+    class BaseReporterNode {
+        <<abstract>>
+        +semantic_map: dict
+        +metrics: dict
+        +report_action_server: ActionServer
+        +execute_report_callback(goal_handle)*
+        +get_zone_name(x, y)
+        +get_images_grouped_by_zone(photos_dir)
+        +save_metrics()
+    }
+    
+    class LLMReporterNode {
+        +perception_mode: str
+        +vision_cli: Client
+        +execute_report_callback(goal_handle)
+        +process_each_image(zone_groups, goal_handle, result)
+        +generate_global_summary(global_context, result)
+    }
+    
+    BaseReporterNode <|-- LLMReporterNode
+    
+    class SystemEvaluatorNode {
+        +reporter_logic: LLMReporterNode
+        +ragas_evaluator: RagasEvaluator
+        +metrics_dir: str
+        +evaluate_callback(req, res)
+    }
+    SystemEvaluatorNode *-- LLMReporterNode
+    SystemEvaluatorNode *-- RagasEvaluator
+    
+    class PatrolNode {
+        +base_photos_dir: str
+        +current_folder_path: str
+        +report_action_client: ActionClient
+        +param_client: Client
+        +active_goal_handle
+        +set_capturer_folder(folder_path)
+        +trigger_report()
+        +goal_response_callback(...)
+        +report_feedback_callback(...)
+        +get_result_callback(...)
+        +navigate_to_waypoint(...)
+        +run_patrol()
+    }
+    
+    class PhotoCapturerNode {
+        +current_dir: str
+        +parameters_callback(params)
+        +setup_directory()
+        +save_photo(cv_image)
+        +save_metadata(image_name)
+    }
+
+    class Utils_Modules {
+        <<utility>>
+        +load_route(...)
+        +list_to_pose(...)
+        +clean_all_orphan_folders(...)
+        +get_next_available_folder(...)
+        +delete_folder(...)
+        +get_key_non_blocking()
+    }
+    PatrolNode ..> Utils_Modules : Usa
+    
+    class BasePerceptionNode {
+        <<abstract>>
+        +analyze_callback(req, res)
+        +process_image(image_path)*
+        +check_path(path)*
+    }
+    
+    class VLMPerceptionNode {
+        +vlm_model: str
+        +ollama_url: str
+        +process_image(image_path)
+    }
+    
+    class YoloPerceptionNode {
+        +model: YOLO
+        +process_image(image_path)
+    }
+    
+    class HybridPerceptionNode {
+        +yolo_logic: YoloPerceptionNode
+        +vlm_logic: VLMPerceptionNode
+        +process_image(image_path)
+    }
+    
+    class SequencePerceptionNode {
+        +process_image(image_paths_str)
+    }
+    
+    BasePerceptionNode <|-- VLMPerceptionNode
+    BasePerceptionNode <|-- YoloPerceptionNode
+    BasePerceptionNode <|-- HybridPerceptionNode
+    BasePerceptionNode <|-- SequencePerceptionNode
