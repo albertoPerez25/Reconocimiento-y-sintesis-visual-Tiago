@@ -4,6 +4,7 @@ import rclpy
 import json
 from rclpy.executors import MultiThreadedExecutor
 from hospital_interfaces.srv import AnalyzeActivity
+from hospital_interfaces.action import GenerateReport
 from ruta_hospital.reporting.base_reporter import BaseReporterNode
 from ruta_hospital.commons.api_utils import call_ollama_api
 
@@ -20,60 +21,75 @@ class LLMReporterNode(BaseReporterNode):
             self.get_logger().info("MODO IMAGENES INDIVIDUALES")
 
 
-    async def generate_report_callback(self, request, response):
-        '''Se ejecuta de manera asíncrona al llamar al servicio /generate_patrol_report'''
-        self.abort_processing = False
+    async def execute_report_callback(self, goal_handle):
+        '''Se ejecuta de manera asíncrona de la accion /generate_patrol_report'''
+        folder_path = goal_handle.request.folder_path
         self.get_logger().info("Iniciada generación del informe")
 
         t_inicio_total = time.time()
+        result = GenerateReport.Result()
         
-        zone_groups = self.validate_data(response)
+        zone_groups = self.validate_data(folder_path, result)
         if not zone_groups:
-            return response
+            goal_handle.abort()
+            return result
         
-        global_context_json = await self.process_each_image(zone_groups, response)
-        if not global_context_json or self.abort_processing:
-            return response
+        global_context_json = await self.process_each_image(zone_groups, goal_handle, result)
+        
+        if goal_handle.is_cancel_requested:
+            self.get_logger().warn("Proceso cancelado por el nodo patrulla")
+            goal_handle.canceled()
+            result.success = False
+            result.final_report = "Cancelado por el usuario"
+            return result
+            
+        if not global_context_json:
+            goal_handle.abort()
+            return result
         
         t_init_llm = time.time()
 
-        global_sum = self.generate_global_summary(global_context_json, response)
+        global_sum = self.generate_global_summary(global_context_json, result)
         
         self.current_metrics["tiempo_llm_segundos"] = round(time.time() - t_init_llm, 2)
         self.current_metrics["tiempo_total_segundos"] = round(time.time() - t_inicio_total, 2)
         self.save_metrics()
 
+        goal_handle.succeed()
         return global_sum
         
 
-    def validate_data(self, response):
+    def validate_data(self, folder_path, result):
         if not self.vision_cli.wait_for_service(timeout_sec=5.0):
-            response.success = False
-            response.message = "Error: Nodo visual inactivo"
+            result.success = False
+            result.final_report = "Error: Nodo visual inactivo"
             return None
         
-        zone_groups = self.get_images_grouped_by_zone()
+        zone_groups = self.get_images_grouped_by_zone(folder_path)
         if not zone_groups:
-            response.success = False
-            response.message = "No hay datos"
-            return response  
+            result.success = False
+            result.message = "No hay datos"
+            return result  
         
         self.current_metrics["total_imagenes_procesadas"] = sum(len(imgs) for imgs in zone_groups.values())
         return zone_groups
     
 
-    async def process_each_image(self, zone_groups, response):
+    async def process_each_image(self, zone_groups, goal_handle, result):
         hospital_data = {}
         t_init_perception = time.time()
+        total_zones = len(zone_groups)
 
-        for zone, images in zone_groups.items():
-            if self.abort_processing:
-                self.get_logger().warn("Procesamiento abortado a petición del nodo de patrulla")
-                response.success = False
-                response.message = "Abortado por el usuario"
+        for i, (zone, images) in enumerate(zone_groups.items()):
+            if goal_handle.is_cancel_requested:
                 return None
+            
+            feedback_msg = GenerateReport.Feedback()
+            feedback_msg.current_zone = zone
+            feedback_msg.percentage_complete = float((i / total_zones) * 100.0)
+            goal_handle.publish_feedback(feedback_msg)
 
-            zona_dict = await self.process_zone(zone, images)
+            zona_dict = await self.process_zone(zone, images, goal_handle)
             hospital_data[zone] = zona_dict
 
         global_context_json = json.dumps(hospital_data, ensure_ascii=False, indent=2)
@@ -83,9 +99,9 @@ class LLMReporterNode(BaseReporterNode):
         return global_context_json
     
 
-    async def process_zone(self, zona, images):
+    async def process_zone(self, zone, images, goal_handle):
         '''Analiza las imágenes de una zona y devuelve su mini-reporte'''
-        self.get_logger().info(f"Procesando zona: {zona} ({len(images)} imágenes)...")
+        self.get_logger().info(f"Procesando zona: {zone} ({len(images)} imágenes)...")
 
         zone_data = {
             #"limites": self.get_zone_limits(zona),
@@ -93,9 +109,9 @@ class LLMReporterNode(BaseReporterNode):
         }
         
         if self.perception_mode == 'sequence':
-            has_activity = await self.process_sequence_mode(images,zone_data)
+            has_activity = await self.process_sequence_mode(images, zone_data, goal_handle)
         else:
-            has_activity = await self.process_individual_mode(images,zone_data)
+            has_activity = await self.process_individual_mode(images, zone_data, goal_handle)
 
         if not has_activity:
             self.current_metrics["zonas_despejadas"] += 1
@@ -104,9 +120,9 @@ class LLMReporterNode(BaseReporterNode):
         return zone_data
     
 
-    async def process_sequence_mode(self,images,zone_data,):
+    async def process_sequence_mode(self, images, zone_data, goal_handle):
         '''Procesa una zona según la lógica de secuencia'''
-        if not self.abort_processing and len(images) > 0:
+        if goal_handle.is_cancel_requested or len(images) == 0:
             return False
         
         rutas_str = ",".join([img['path'] for img in images])
@@ -132,12 +148,13 @@ class LLMReporterNode(BaseReporterNode):
         return has_activity
         
     
-    async def process_individual_mode(self,images,zone_data):
+    async def process_individual_mode(self, images, zone_data, goal_handle):
         '''Procesa una zona según para el modo de imágenes sueltas'''
         has_activity = False
         for img in images:
-            if self.abort_processing:
+            if goal_handle.is_cancel_requested:
                 break
+
             req = AnalyzeActivity.Request()
             req.image_path = img['path']
             result = await self.vision_cli.call_async(req) 
@@ -162,7 +179,7 @@ class LLMReporterNode(BaseReporterNode):
         return has_activity
 
 
-    def generate_global_summary(self, global_context, response):
+    def generate_global_summary(self, global_context, result):
         '''Toma todos los mini reportes y genera el resumen final unificado'''
         self.get_logger().info("Generando informe global unificado con Llama-3...")
         self.get_logger().info(f"CONTEXTO:{global_context}")
@@ -177,14 +194,14 @@ class LLMReporterNode(BaseReporterNode):
             self.get_logger().info(f"\n\n\tINFORME FINAL\n{final_report}\n")
             self.current_metrics["caracteres_informe_final"] = len(final_report)
             
-            response.success = True
-            response.message = f"Informe generado:\n{final_report}"
+            result.success = True
+            result.final_report = f"Informe generado:\n{final_report}"
         except Exception as e:
             self.get_logger().error(f"Error conectando con Ollama: {e}")
-            response.success = False
-            response.message = str(e)
+            result.success = False
+            result.final_report = str(e)
 
-        return response 
+        return result 
     
     def get_final_prompt(self, global_context):
         '''Devuelve el prompt final del llm'''

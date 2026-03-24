@@ -1,0 +1,50 @@
+---
+config:
+  look: classic
+---
+sequenceDiagram
+    participant P as PatrolNode
+    participant Ph as PhotoCapturer
+    participant R as LLMReporterNode
+    participant V as PerceptionNode
+    participant O@{ "type": "entity" } as Ollama API
+    participant Disco@{ "type": "database" } as Disco Local
+
+    P->>Disco: clean_all_orphan_folders() (Borra basura previa)
+    loop Bucle Infinito de Patrullas
+        P->>Disco: get_next_available_folder() (Crea ej. vuelta_A)
+        P->>Ph: Service SetParameters (current_save_dir = vuelta_A)
+        par Navegación y Captura
+            loop Cada punto de ruta
+                P->>P: Navega hacia Waypoint
+                opt Usuario pulsa 'd'
+                    P->>R: cancel_goal_async() (Aborta meta anterior)
+                end
+                opt Usuario pulsa 's'
+                    P->>P: cancelTask() (Salta Waypoint actual)
+                end
+                Ph->>Ph: Escucha /odom y /head_front_camera
+                alt Si avanzó y MSE > umbral
+                    Ph->>Disco: Guarda foto y metadata.csv en vuelta_A
+                end
+            end
+        end
+
+        P-)R: Envía Meta Asíncrona (Action: /generate_patrol_report)
+        par Proceso A: Inicia Siguiente Vuelta (Inmediato)
+            P->>P: Pasa al inicio del bucle (Crea vuelta_B...)
+        and Proceso B: Análisis IA en Segundo Plano
+            R->>Disco: Lee datos de vuelta_A
+            loop Por cada zona
+                R->>V: Llama /analyze_image(path)
+                V->>O: Inferencia (VLM / YOLO)
+                O-->>V: JSON {descripción, alerta}
+                V-->>R: Devuelve actividades
+                R-->>P: Publish Feedback (% completado, Zona actual)
+            end
+            R->>O: Envía Mini-Reportes globales al LLM
+            O-->>R: Genera Resumen Global
+            R-->>P: Devuelve Result (Éxito y Reporte Final)
+            P->>Disco: delete_folder(vuelta_A)
+        end
+    end

@@ -1,0 +1,28 @@
+// generated from rosidl_adapter/resource/action.idl.em
+// with input from hospital_interfaces/action/GenerateReport.action
+// generated code does not contain a copyright notice
+
+
+module hospital_interfaces {
+  module action {
+    @verbatim (language="comment", text=
+      "Request (meta que envía el nodo patrulla)")
+    struct GenerateReport_Goal {
+      string folder_path;
+    };
+    @verbatim (language="comment", text=
+      "Result (respuesta del reportero al finalizar)")
+    struct GenerateReport_Result {
+      boolean success;
+
+      string final_report;
+    };
+    @verbatim (language="comment", text=
+      "Feedback ")
+    struct GenerateReport_Feedback {
+      string current_zone;
+
+      float percentage_complete;
+    };
+  };
+};
