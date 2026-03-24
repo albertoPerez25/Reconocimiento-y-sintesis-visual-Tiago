@@ -30,8 +30,31 @@ classDiagram
         +metrics_dir: str
         +evaluate_callback(req, res)
     }
+
+    class MockGoalHandle {
+        +is_cancel_requested: bool
+        +publish_feedback(msg)
+    }
+
+    class RagasEvaluator {
+        +quest_path: str
+        +metrics_dir: str
+        +evaluator_llm: ChatOllama
+        +evaluator_embeddings: OllamaEmbeddings
+        +evaluate_system(global_context_json)
+        +generate_answers(global_context_json)
+    }
+
+    class OllamaParams {
+        +ollama_url: str
+        +evaluator_llm_model: str
+        +evaluator_embed_model: str
+    }
+
     SystemEvaluatorNode *-- LLMReporterNode
     SystemEvaluatorNode *-- RagasEvaluator
+    SystemEvaluatorNode ..> MockGoalHandle : Instancia
+    RagasEvaluator --> OllamaParams : Configura con
     
     class PatrolNode {
         +base_photos_dir: str
