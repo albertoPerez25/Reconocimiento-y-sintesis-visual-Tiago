@@ -23,7 +23,7 @@ class MockGoalHandle:
         self.is_cancel_requested = False
 
     def publish_feedback(self, msg):
-        # Ignoramos el feedback durante la evaluación en segundo plano
+        # Ignorar el feedback durante la evaluación en segundo plano
         pass
 
 class SystemEvaluatorNode(Node):
@@ -71,12 +71,12 @@ class SystemEvaluatorNode(Node):
             response.message = mock_result.final_report # Captura el error
             return response
             
-        self.get_logger().info("Extrayendo contexto de perceptores (YOLO/VLM)...")
+        self.get_logger().info("Extrayendo contexto de perceptores")
         global_context_json = await self.reporter_logic.process_each_image(zone_groups, mock_goal_handle, mock_result)
         
         if not global_context_json:
             response.success = False
-            response.message = "Fallo en el procesamiento de imágenes por YOLO/VLM."
+            response.message = "Fallo en el procesamiento de imágenes en el perceptor"
             return response
             
         self.get_logger().info("Generando respuestas...")
@@ -84,7 +84,7 @@ class SystemEvaluatorNode(Node):
             self.ragas_evaluator.evaluate_system(global_context_json)
             
             response.success = True
-            response.message = f"Evaluación Ragas completada con éxito. Revisa la carpeta de métricas: {self.metrics_dir}"
+            response.message = f"Evaluación Ragas completada con éxito. Guardado en: {self.metrics_dir}"
         except Exception as e:
             self.get_logger().error(f"Error durante Ragas: {e}")
             response.success = False
