@@ -1,7 +1,7 @@
 [
     {
         "fecha": "2026-03-08 10:53:30.429833",
-        "modelo_reportero": "sequence_moonlight",
+        "modelo_reportero": "sequence_moonlight_JSON",
         "total_imagenes_procesadas": 280,
         "zonas_despejadas": 43,
         "zonas_con_output": 0,
@@ -13,7 +13,7 @@
     },
     {
         "fecha": "2026-03-08 11:15:40.362231",
-        "modelo_reportero": "hybrid (yolo+moonlight)",
+        "modelo_reportero": "hybrid_(yolo+moonlight)_JSON",
         "total_imagenes_procesadas": 280,
         "zonas_despejadas": 42,
         "zonas_con_output": 1,
@@ -25,7 +25,7 @@
     },
     {
         "fecha": "2026-03-08 11:18:25.202012",
-        "modelo_reportero": "vlm_moonlight",
+        "modelo_reportero": "vlm_moonlight_JSON",
         "total_imagenes_procesadas": 280,
         "zonas_despejadas": 0,
         "zonas_con_output": 43,
@@ -37,7 +37,7 @@
     },
     {
         "fecha": "2026-03-08 11:34:20.974152",
-        "modelo_reportero": "yolo",
+        "modelo_reportero": "yolo_JSON",
         "total_imagenes_procesadas": 280,
         "zonas_despejadas": 42,
         "zonas_con_output": 1,

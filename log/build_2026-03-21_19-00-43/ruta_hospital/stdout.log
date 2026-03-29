@@ -1,0 +1,107 @@
+running egg_info
+creating ../../../build/ruta_hospital/ruta_hospital.egg-info
+writing ../../../build/ruta_hospital/ruta_hospital.egg-info/PKG-INFO
+writing dependency_links to ../../../build/ruta_hospital/ruta_hospital.egg-info/dependency_links.txt
+writing entry points to ../../../build/ruta_hospital/ruta_hospital.egg-info/entry_points.txt
+writing requirements to ../../../build/ruta_hospital/ruta_hospital.egg-info/requires.txt
+writing top-level names to ../../../build/ruta_hospital/ruta_hospital.egg-info/top_level.txt
+writing manifest file '../../../build/ruta_hospital/ruta_hospital.egg-info/SOURCES.txt'
+reading manifest file '../../../build/ruta_hospital/ruta_hospital.egg-info/SOURCES.txt'
+writing manifest file '../../../build/ruta_hospital/ruta_hospital.egg-info/SOURCES.txt'
+running build
+running build_py
+creating /home/alberto/tfg/Reconocimiento-y-sintesis-visual-Tiago/build/ruta_hospital/build
+creating /home/alberto/tfg/Reconocimiento-y-sintesis-visual-Tiago/build/ruta_hospital/build/lib
+creating /home/alberto/tfg/Reconocimiento-y-sintesis-visual-Tiago/build/ruta_hospital/build/lib/ruta_hospital
+copying ruta_hospital/__init__.py -> /home/alberto/tfg/Reconocimiento-y-sintesis-visual-Tiago/build/ruta_hospital/build/lib/ruta_hospital
+creating /home/alberto/tfg/Reconocimiento-y-sintesis-visual-Tiago/build/ruta_hospital/build/lib/ruta_hospital/reporting
+copying ruta_hospital/reporting/vlm_direct_reporter_node.py -> /home/alberto/tfg/Reconocimiento-y-sintesis-visual-Tiago/build/ruta_hospital/build/lib/ruta_hospital/reporting
+copying ruta_hospital/reporting/__init__.py -> /home/alberto/tfg/Reconocimiento-y-sintesis-visual-Tiago/build/ruta_hospital/build/lib/ruta_hospital/reporting
+copying ruta_hospital/reporting/llm_reporter_node.py -> /home/alberto/tfg/Reconocimiento-y-sintesis-visual-Tiago/build/ruta_hospital/build/lib/ruta_hospital/reporting
+copying ruta_hospital/reporting/base_reporter.py -> /home/alberto/tfg/Reconocimiento-y-sintesis-visual-Tiago/build/ruta_hospital/build/lib/ruta_hospital/reporting
+creating /home/alberto/tfg/Reconocimiento-y-sintesis-visual-Tiago/build/ruta_hospital/build/lib/ruta_hospital/commons
+copying ruta_hospital/commons/api_utils.py -> /home/alberto/tfg/Reconocimiento-y-sintesis-visual-Tiago/build/ruta_hospital/build/lib/ruta_hospital/commons
+copying ruta_hospital/commons/__init__.py -> /home/alberto/tfg/Reconocimiento-y-sintesis-visual-Tiago/build/ruta_hospital/build/lib/ruta_hospital/commons
+creating /home/alberto/tfg/Reconocimiento-y-sintesis-visual-Tiago/build/ruta_hospital/build/lib/ruta_hospital/perception
+copying ruta_hospital/perception/sequence_perception_node.py -> /home/alberto/tfg/Reconocimiento-y-sintesis-visual-Tiago/build/ruta_hospital/build/lib/ruta_hospital/perception
+copying ruta_hospital/perception/__init__.py -> /home/alberto/tfg/Reconocimiento-y-sintesis-visual-Tiago/build/ruta_hospital/build/lib/ruta_hospital/perception
+copying ruta_hospital/perception/photos_node.py -> /home/alberto/tfg/Reconocimiento-y-sintesis-visual-Tiago/build/ruta_hospital/build/lib/ruta_hospital/perception
+copying ruta_hospital/perception/yolo_perception_node.py -> /home/alberto/tfg/Reconocimiento-y-sintesis-visual-Tiago/build/ruta_hospital/build/lib/ruta_hospital/perception
+copying ruta_hospital/perception/hybrid_perception_node.py -> /home/alberto/tfg/Reconocimiento-y-sintesis-visual-Tiago/build/ruta_hospital/build/lib/ruta_hospital/perception
+copying ruta_hospital/perception/vlm_perception_node.py -> /home/alberto/tfg/Reconocimiento-y-sintesis-visual-Tiago/build/ruta_hospital/build/lib/ruta_hospital/perception
+copying ruta_hospital/perception/base_perception.py -> /home/alberto/tfg/Reconocimiento-y-sintesis-visual-Tiago/build/ruta_hospital/build/lib/ruta_hospital/perception
+creating /home/alberto/tfg/Reconocimiento-y-sintesis-visual-Tiago/build/ruta_hospital/build/lib/ruta_hospital/navigation
+copying ruta_hospital/navigation/patrol_node.py -> /home/alberto/tfg/Reconocimiento-y-sintesis-visual-Tiago/build/ruta_hospital/build/lib/ruta_hospital/navigation
+copying ruta_hospital/navigation/__init__.py -> /home/alberto/tfg/Reconocimiento-y-sintesis-visual-Tiago/build/ruta_hospital/build/lib/ruta_hospital/navigation
+creating /home/alberto/tfg/Reconocimiento-y-sintesis-visual-Tiago/build/ruta_hospital/build/lib/ruta_hospital/evaluation
+copying ruta_hospital/evaluation/generate_metrics.py -> /home/alberto/tfg/Reconocimiento-y-sintesis-visual-Tiago/build/ruta_hospital/build/lib/ruta_hospital/evaluation
+copying ruta_hospital/evaluation/system_evaluator_node.py -> /home/alberto/tfg/Reconocimiento-y-sintesis-visual-Tiago/build/ruta_hospital/build/lib/ruta_hospital/evaluation
+copying ruta_hospital/evaluation/__init__.py -> /home/alberto/tfg/Reconocimiento-y-sintesis-visual-Tiago/build/ruta_hospital/build/lib/ruta_hospital/evaluation
+copying ruta_hospital/evaluation/ragas_evaluator.py -> /home/alberto/tfg/Reconocimiento-y-sintesis-visual-Tiago/build/ruta_hospital/build/lib/ruta_hospital/evaluation
+running install
+running install_lib
+creating /home/alberto/tfg/Reconocimiento-y-sintesis-visual-Tiago/install/ruta_hospital/lib/python3.10/site-packages/ruta_hospital
+creating /home/alberto/tfg/Reconocimiento-y-sintesis-visual-Tiago/install/ruta_hospital/lib/python3.10/site-packages/ruta_hospital/reporting
+copying /home/alberto/tfg/Reconocimiento-y-sintesis-visual-Tiago/build/ruta_hospital/build/lib/ruta_hospital/reporting/vlm_direct_reporter_node.py -> /home/alberto/tfg/Reconocimiento-y-sintesis-visual-Tiago/install/ruta_hospital/lib/python3.10/site-packages/ruta_hospital/reporting
+copying /home/alberto/tfg/Reconocimiento-y-sintesis-visual-Tiago/build/ruta_hospital/build/lib/ruta_hospital/reporting/__init__.py -> /home/alberto/tfg/Reconocimiento-y-sintesis-visual-Tiago/install/ruta_hospital/lib/python3.10/site-packages/ruta_hospital/reporting
+copying /home/alberto/tfg/Reconocimiento-y-sintesis-visual-Tiago/build/ruta_hospital/build/lib/ruta_hospital/reporting/llm_reporter_node.py -> /home/alberto/tfg/Reconocimiento-y-sintesis-visual-Tiago/install/ruta_hospital/lib/python3.10/site-packages/ruta_hospital/reporting
+copying /home/alberto/tfg/Reconocimiento-y-sintesis-visual-Tiago/build/ruta_hospital/build/lib/ruta_hospital/reporting/base_reporter.py -> /home/alberto/tfg/Reconocimiento-y-sintesis-visual-Tiago/install/ruta_hospital/lib/python3.10/site-packages/ruta_hospital/reporting
+copying /home/alberto/tfg/Reconocimiento-y-sintesis-visual-Tiago/build/ruta_hospital/build/lib/ruta_hospital/__init__.py -> /home/alberto/tfg/Reconocimiento-y-sintesis-visual-Tiago/install/ruta_hospital/lib/python3.10/site-packages/ruta_hospital
+creating /home/alberto/tfg/Reconocimiento-y-sintesis-visual-Tiago/install/ruta_hospital/lib/python3.10/site-packages/ruta_hospital/commons
+copying /home/alberto/tfg/Reconocimiento-y-sintesis-visual-Tiago/build/ruta_hospital/build/lib/ruta_hospital/commons/api_utils.py -> /home/alberto/tfg/Reconocimiento-y-sintesis-visual-Tiago/install/ruta_hospital/lib/python3.10/site-packages/ruta_hospital/commons
+copying /home/alberto/tfg/Reconocimiento-y-sintesis-visual-Tiago/build/ruta_hospital/build/lib/ruta_hospital/commons/__init__.py -> /home/alberto/tfg/Reconocimiento-y-sintesis-visual-Tiago/install/ruta_hospital/lib/python3.10/site-packages/ruta_hospital/commons
+creating /home/alberto/tfg/Reconocimiento-y-sintesis-visual-Tiago/install/ruta_hospital/lib/python3.10/site-packages/ruta_hospital/perception
+copying /home/alberto/tfg/Reconocimiento-y-sintesis-visual-Tiago/build/ruta_hospital/build/lib/ruta_hospital/perception/sequence_perception_node.py -> /home/alberto/tfg/Reconocimiento-y-sintesis-visual-Tiago/install/ruta_hospital/lib/python3.10/site-packages/ruta_hospital/perception
+copying /home/alberto/tfg/Reconocimiento-y-sintesis-visual-Tiago/build/ruta_hospital/build/lib/ruta_hospital/perception/__init__.py -> /home/alberto/tfg/Reconocimiento-y-sintesis-visual-Tiago/install/ruta_hospital/lib/python3.10/site-packages/ruta_hospital/perception
+copying /home/alberto/tfg/Reconocimiento-y-sintesis-visual-Tiago/build/ruta_hospital/build/lib/ruta_hospital/perception/photos_node.py -> /home/alberto/tfg/Reconocimiento-y-sintesis-visual-Tiago/install/ruta_hospital/lib/python3.10/site-packages/ruta_hospital/perception
+copying /home/alberto/tfg/Reconocimiento-y-sintesis-visual-Tiago/build/ruta_hospital/build/lib/ruta_hospital/perception/yolo_perception_node.py -> /home/alberto/tfg/Reconocimiento-y-sintesis-visual-Tiago/install/ruta_hospital/lib/python3.10/site-packages/ruta_hospital/perception
+copying /home/alberto/tfg/Reconocimiento-y-sintesis-visual-Tiago/build/ruta_hospital/build/lib/ruta_hospital/perception/hybrid_perception_node.py -> /home/alberto/tfg/Reconocimiento-y-sintesis-visual-Tiago/install/ruta_hospital/lib/python3.10/site-packages/ruta_hospital/perception
+copying /home/alberto/tfg/Reconocimiento-y-sintesis-visual-Tiago/build/ruta_hospital/build/lib/ruta_hospital/perception/vlm_perception_node.py -> /home/alberto/tfg/Reconocimiento-y-sintesis-visual-Tiago/install/ruta_hospital/lib/python3.10/site-packages/ruta_hospital/perception
+copying /home/alberto/tfg/Reconocimiento-y-sintesis-visual-Tiago/build/ruta_hospital/build/lib/ruta_hospital/perception/base_perception.py -> /home/alberto/tfg/Reconocimiento-y-sintesis-visual-Tiago/install/ruta_hospital/lib/python3.10/site-packages/ruta_hospital/perception
+creating /home/alberto/tfg/Reconocimiento-y-sintesis-visual-Tiago/install/ruta_hospital/lib/python3.10/site-packages/ruta_hospital/navigation
+copying /home/alberto/tfg/Reconocimiento-y-sintesis-visual-Tiago/build/ruta_hospital/build/lib/ruta_hospital/navigation/patrol_node.py -> /home/alberto/tfg/Reconocimiento-y-sintesis-visual-Tiago/install/ruta_hospital/lib/python3.10/site-packages/ruta_hospital/navigation
+copying /home/alberto/tfg/Reconocimiento-y-sintesis-visual-Tiago/build/ruta_hospital/build/lib/ruta_hospital/navigation/__init__.py -> /home/alberto/tfg/Reconocimiento-y-sintesis-visual-Tiago/install/ruta_hospital/lib/python3.10/site-packages/ruta_hospital/navigation
+creating /home/alberto/tfg/Reconocimiento-y-sintesis-visual-Tiago/install/ruta_hospital/lib/python3.10/site-packages/ruta_hospital/evaluation
+copying /home/alberto/tfg/Reconocimiento-y-sintesis-visual-Tiago/build/ruta_hospital/build/lib/ruta_hospital/evaluation/generate_metrics.py -> /home/alberto/tfg/Reconocimiento-y-sintesis-visual-Tiago/install/ruta_hospital/lib/python3.10/site-packages/ruta_hospital/evaluation
+copying /home/alberto/tfg/Reconocimiento-y-sintesis-visual-Tiago/build/ruta_hospital/build/lib/ruta_hospital/evaluation/system_evaluator_node.py -> /home/alberto/tfg/Reconocimiento-y-sintesis-visual-Tiago/install/ruta_hospital/lib/python3.10/site-packages/ruta_hospital/evaluation
+copying /home/alberto/tfg/Reconocimiento-y-sintesis-visual-Tiago/build/ruta_hospital/build/lib/ruta_hospital/evaluation/__init__.py -> /home/alberto/tfg/Reconocimiento-y-sintesis-visual-Tiago/install/ruta_hospital/lib/python3.10/site-packages/ruta_hospital/evaluation
+copying /home/alberto/tfg/Reconocimiento-y-sintesis-visual-Tiago/build/ruta_hospital/build/lib/ruta_hospital/evaluation/ragas_evaluator.py -> /home/alberto/tfg/Reconocimiento-y-sintesis-visual-Tiago/install/ruta_hospital/lib/python3.10/site-packages/ruta_hospital/evaluation
+byte-compiling /home/alberto/tfg/Reconocimiento-y-sintesis-visual-Tiago/install/ruta_hospital/lib/python3.10/site-packages/ruta_hospital/reporting/vlm_direct_reporter_node.py to vlm_direct_reporter_node.cpython-310.pyc
+byte-compiling /home/alberto/tfg/Reconocimiento-y-sintesis-visual-Tiago/install/ruta_hospital/lib/python3.10/site-packages/ruta_hospital/reporting/__init__.py to __init__.cpython-310.pyc
+byte-compiling /home/alberto/tfg/Reconocimiento-y-sintesis-visual-Tiago/install/ruta_hospital/lib/python3.10/site-packages/ruta_hospital/reporting/llm_reporter_node.py to llm_reporter_node.cpython-310.pyc
+byte-compiling /home/alberto/tfg/Reconocimiento-y-sintesis-visual-Tiago/install/ruta_hospital/lib/python3.10/site-packages/ruta_hospital/reporting/base_reporter.py to base_reporter.cpython-310.pyc
+byte-compiling /home/alberto/tfg/Reconocimiento-y-sintesis-visual-Tiago/install/ruta_hospital/lib/python3.10/site-packages/ruta_hospital/__init__.py to __init__.cpython-310.pyc
+byte-compiling /home/alberto/tfg/Reconocimiento-y-sintesis-visual-Tiago/install/ruta_hospital/lib/python3.10/site-packages/ruta_hospital/commons/api_utils.py to api_utils.cpython-310.pyc
+byte-compiling /home/alberto/tfg/Reconocimiento-y-sintesis-visual-Tiago/install/ruta_hospital/lib/python3.10/site-packages/ruta_hospital/commons/__init__.py to __init__.cpython-310.pyc
+byte-compiling /home/alberto/tfg/Reconocimiento-y-sintesis-visual-Tiago/install/ruta_hospital/lib/python3.10/site-packages/ruta_hospital/perception/sequence_perception_node.py to sequence_perception_node.cpython-310.pyc
+byte-compiling /home/alberto/tfg/Reconocimiento-y-sintesis-visual-Tiago/install/ruta_hospital/lib/python3.10/site-packages/ruta_hospital/perception/__init__.py to __init__.cpython-310.pyc
+byte-compiling /home/alberto/tfg/Reconocimiento-y-sintesis-visual-Tiago/install/ruta_hospital/lib/python3.10/site-packages/ruta_hospital/perception/photos_node.py to photos_node.cpython-310.pyc
+byte-compiling /home/alberto/tfg/Reconocimiento-y-sintesis-visual-Tiago/install/ruta_hospital/lib/python3.10/site-packages/ruta_hospital/perception/yolo_perception_node.py to yolo_perception_node.cpython-310.pyc
+byte-compiling /home/alberto/tfg/Reconocimiento-y-sintesis-visual-Tiago/install/ruta_hospital/lib/python3.10/site-packages/ruta_hospital/perception/hybrid_perception_node.py to hybrid_perception_node.cpython-310.pyc
+byte-compiling /home/alberto/tfg/Reconocimiento-y-sintesis-visual-Tiago/install/ruta_hospital/lib/python3.10/site-packages/ruta_hospital/perception/vlm_perception_node.py to vlm_perception_node.cpython-310.pyc
+byte-compiling /home/alberto/tfg/Reconocimiento-y-sintesis-visual-Tiago/install/ruta_hospital/lib/python3.10/site-packages/ruta_hospital/perception/base_perception.py to base_perception.cpython-310.pyc
+byte-compiling /home/alberto/tfg/Reconocimiento-y-sintesis-visual-Tiago/install/ruta_hospital/lib/python3.10/site-packages/ruta_hospital/navigation/patrol_node.py to patrol_node.cpython-310.pyc
+byte-compiling /home/alberto/tfg/Reconocimiento-y-sintesis-visual-Tiago/install/ruta_hospital/lib/python3.10/site-packages/ruta_hospital/navigation/__init__.py to __init__.cpython-310.pyc
+byte-compiling /home/alberto/tfg/Reconocimiento-y-sintesis-visual-Tiago/install/ruta_hospital/lib/python3.10/site-packages/ruta_hospital/evaluation/generate_metrics.py to generate_metrics.cpython-310.pyc
+byte-compiling /home/alberto/tfg/Reconocimiento-y-sintesis-visual-Tiago/install/ruta_hospital/lib/python3.10/site-packages/ruta_hospital/evaluation/system_evaluator_node.py to system_evaluator_node.cpython-310.pyc
+byte-compiling /home/alberto/tfg/Reconocimiento-y-sintesis-visual-Tiago/install/ruta_hospital/lib/python3.10/site-packages/ruta_hospital/evaluation/__init__.py to __init__.cpython-310.pyc
+byte-compiling /home/alberto/tfg/Reconocimiento-y-sintesis-visual-Tiago/install/ruta_hospital/lib/python3.10/site-packages/ruta_hospital/evaluation/ragas_evaluator.py to ragas_evaluator.cpython-310.pyc
+running install_data
+creating /home/alberto/tfg/Reconocimiento-y-sintesis-visual-Tiago/install/ruta_hospital/share/ament_index
+creating /home/alberto/tfg/Reconocimiento-y-sintesis-visual-Tiago/install/ruta_hospital/share/ament_index/resource_index
+creating /home/alberto/tfg/Reconocimiento-y-sintesis-visual-Tiago/install/ruta_hospital/share/ament_index/resource_index/packages
+copying resource/ruta_hospital -> /home/alberto/tfg/Reconocimiento-y-sintesis-visual-Tiago/install/ruta_hospital/share/ament_index/resource_index/packages
+copying package.xml -> /home/alberto/tfg/Reconocimiento-y-sintesis-visual-Tiago/install/ruta_hospital/share/ruta_hospital
+running install_egg_info
+Copying ../../../build/ruta_hospital/ruta_hospital.egg-info to /home/alberto/tfg/Reconocimiento-y-sintesis-visual-Tiago/install/ruta_hospital/lib/python3.10/site-packages/ruta_hospital-0.0.2-py3.10.egg-info
+running install_scripts
+Installing fotos script to /home/alberto/tfg/Reconocimiento-y-sintesis-visual-Tiago/install/ruta_hospital/lib/ruta_hospital
+Installing hybrid_perception_node script to /home/alberto/tfg/Reconocimiento-y-sintesis-visual-Tiago/install/ruta_hospital/lib/ruta_hospital
+Installing llm_reporter_node script to /home/alberto/tfg/Reconocimiento-y-sintesis-visual-Tiago/install/ruta_hospital/lib/ruta_hospital
+Installing patrulla script to /home/alberto/tfg/Reconocimiento-y-sintesis-visual-Tiago/install/ruta_hospital/lib/ruta_hospital
+Installing sequence_perception_node script to /home/alberto/tfg/Reconocimiento-y-sintesis-visual-Tiago/install/ruta_hospital/lib/ruta_hospital
+Installing system_evaluator_node script to /home/alberto/tfg/Reconocimiento-y-sintesis-visual-Tiago/install/ruta_hospital/lib/ruta_hospital
+Installing vlm_direct_reporter_node script to /home/alberto/tfg/Reconocimiento-y-sintesis-visual-Tiago/install/ruta_hospital/lib/ruta_hospital
+Installing vlm_perception_node script to /home/alberto/tfg/Reconocimiento-y-sintesis-visual-Tiago/install/ruta_hospital/lib/ruta_hospital
+Installing yolo_perception_node script to /home/alberto/tfg/Reconocimiento-y-sintesis-visual-Tiago/install/ruta_hospital/lib/ruta_hospital
+writing list of installed files to '/home/alberto/tfg/Reconocimiento-y-sintesis-visual-Tiago/build/ruta_hospital/install.log'

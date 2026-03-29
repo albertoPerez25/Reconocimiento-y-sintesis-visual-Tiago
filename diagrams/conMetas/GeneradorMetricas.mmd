@@ -1,0 +1,24 @@
+flowchart LR
+    subgraph "Entradas de Datos (Generados por los nodos)"
+        M1[(comparativa_modelos.json Latencias y Verbosidad)]
+        M2[(ragas_*.csv Correctness y Relevancy)]
+    end
+
+    subgraph "generate_metrics.py (Procesamiento)"
+        P1[load_performance_data]
+        P2[load_ragas_data]
+        P3[Pandas]
+        
+        M1 --> P1
+        M2 --> P2
+        P1 & P2 --> P3
+    end
+
+    subgraph "Salidas"
+        C1[tabla_resumen_rendimiento.csv]
+        C2[tabla_resumen_ragas.csv]
+        G1{{"Gráficos de Barras y Boxplots (Seaborn, Matplotlib)"}}
+        
+        P3 --> C1 & C2
+        P3 --> G1
+    end
