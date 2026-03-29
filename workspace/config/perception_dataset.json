@@ -17,7 +17,7 @@
       },
       {
         "question": "¿Debería activarse la alerta?",
-        "ground_truth": "No, la alerta debe ser falsa."
+        "ground_truth": "No, la alerta debe ser falsa"
       }
     ]
   }
