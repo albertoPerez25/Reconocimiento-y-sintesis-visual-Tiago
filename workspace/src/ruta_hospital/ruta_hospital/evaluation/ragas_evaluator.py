@@ -74,3 +74,55 @@ class RagasEvaluator:
             eval_data["ground_truth"].append(ground_truth)
 
         return eval_data
+    
+    def evaluate_perception(self, perception_data, model_name="perception_model"):
+        '''Genera respuestas imagen por imagen y ejecuta Ragas para el perceptor'''
+        eval_dict = self.generate_perception_answers(perception_data)
+        
+        dataset = Dataset.from_dict(eval_dict)
+        
+        result = evaluate(
+            dataset=dataset,
+            metrics=[answer_correctness, answer_relevancy],
+            llm=self.evaluator_llm,
+            embeddings=self.evaluator_embeddings,
+            run_config=RunConfig(max_workers=1, timeout=120)
+        )
+        
+        # CSV con el nombre del modelo que evaluado
+        output_path = os.path.join(self.metrics_dir, f'ragas_eval_{model_name}.csv')
+        df_results = result.to_pandas()
+        df_results.to_csv(output_path, index=False)
+        return df_results
+
+    def generate_perception_answers(self, perception_data):
+        '''Usa el LLM para responder basándose en el output de una sola imagen'''
+        eval_data = {"question": [], "answer": [], "ground_truth": []}
+
+        for item in perception_data:
+            context = item["context"]
+            question = item["question"]
+            ground_truth = item["ground_truth"]
+            
+            prompt = f"""
+            Eres un sistema analizador de actividades humanas en un hospital. 
+            Basándote ÚNICAMENTE en este JSON generado por un modelo de visión artificial para una imagen:
+            {context}
+            
+            Responde de forma breve y concisa a la siguiente pregunta. 
+            Si el JSON dice "Despejado" y se pregunta por actividades, responde que no hay actividades.
+            Si no tienes información para responder en el JSON, di "No hay información".
+            
+            Pregunta: {question}
+            """
+            
+            llm_answer = call_ollama_api(
+                "http://localhost:11434/api/generate", 
+                {"model": "llama3", "prompt": prompt, "stream": False}
+            )
+
+            eval_data["question"].append(question)
+            eval_data["answer"].append(llm_answer.strip())
+            eval_data["ground_truth"].append(ground_truth)
+
+        return eval_data

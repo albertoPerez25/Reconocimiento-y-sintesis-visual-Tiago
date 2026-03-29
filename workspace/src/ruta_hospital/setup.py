@@ -36,6 +36,7 @@ setup(
             'vlm_direct_reporter_node = ruta_hospital.reporting.vlm_direct_reporter_node:main',
 
             'system_evaluator_node = ruta_hospital.evaluation.system_evaluator_node:main',
+            'perception_evaluator_node = ruta_hospital.evaluation.perception_evaluator_node:main',
         ],
     },
 )
