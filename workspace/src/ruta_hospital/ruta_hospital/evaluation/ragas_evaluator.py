@@ -20,7 +20,9 @@ class RagasEvaluator:
         self.metrics_dir = metrics_dir
         
         # LLM evaluador y embeddings requeridos por Ragas
-        self.evaluator_llm = ChatOllama(model=ollama_params.evaluator_llm_model, base_url=ollama_params.ollama_url)
+        self.evaluator_llm = ChatOllama(model=ollama_params.evaluator_llm_model, 
+                                        base_url=ollama_params.ollama_url, 
+                                        temperature=0.0)# Evita que Llama-3 añada texto extra al JSON
         self.evaluator_embeddings = OllamaEmbeddings(model=ollama_params.evaluator_embed_model, base_url=ollama_params.ollama_url)
 
     def evaluate_system(self, global_context_json):

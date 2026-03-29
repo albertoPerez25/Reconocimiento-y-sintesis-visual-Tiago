@@ -9,7 +9,7 @@ from geometry_msgs.msg import PoseStamped
 from rclpy.action import ActionClient
 from hospital_interfaces.action import GenerateReport
 
-from rcl_interfaces.srv import SetParameters # Para cambiar el dir del photo_capturer
+from rcl_interfaces.srv import SetParameters # Para cambiar el dir del photos_node
 from rcl_interfaces.msg import Parameter, ParameterValue, ParameterType
 
 from ruta_hospital.navigation.utils.route_parser_utils import load_route,list_to_pose
@@ -68,11 +68,11 @@ class PatrolNode(rclpy.node.Node):
         self.route_poses = list_to_pose(self.path_points, self.navigator.get_clock())
         
         self.report_action_client = ActionClient(self, GenerateReport, 'generate_patrol_report')     
-        self.param_client = self.create_client(SetParameters, '/photo_capturer/set_parameters')
+        self.param_client = self.create_client(SetParameters, '/photos_node/set_parameters')
         self.current_folder_path = ""
 
     def set_capturer_folder(self, folder_path):
-        '''Avisa al photo_capturer de la nueva carpeta usando SetParameters'''
+        '''Avisa al photos_node de la nueva carpeta usando SetParameters'''
         if not self.param_client.wait_for_service(timeout_sec=2.0):
             self.get_logger().warn("No se pudo conectar con el nodo foto")
             return

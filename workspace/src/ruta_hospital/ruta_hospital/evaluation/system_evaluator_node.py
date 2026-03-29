@@ -14,7 +14,7 @@ DEFAULT_OLLAMA_URL = "http://localhost:11434"
 DEFAULT_EVALUATOR_LLM_MODEL = "llama3"
 DEFAULT_EVALUATOR_EMBED_MODEL = "nomic-embed-text"
 DEFAULT_QUESTIONS_PATH = "/home/alberto/tfg/Reconocimiento-y-sintesis-visual-Tiago/workspace/config/quest.json"
-DEFAULT_EVAL_FOLDER = "/home/alberto/tfg/Reconocimiento-y-sintesis-visual-Tiago/workspace/test_dataset/"
+DEFAULT_EVAL_FOLDER = "/home/alberto/tfg/Reconocimiento-y-sintesis-visual-Tiago/workspace/hospital_photos/vuelta_A/"
 
 class MockGoalHandle:
     ''' Falso Goal Handle para reutilizar el código de LLMReporterNode

@@ -70,12 +70,12 @@ def generate_launch_description():
 
     # Nodo Patrulla 
     patrulla_cmd = TimerAction(
-        period=25.0,
+        period=27.0,
         actions=[
             Node(
                 package='ruta_hospital',
                 executable='patrulla',
-                name='nodo_patrulla',
+                name='patrol_node',
                 parameters=[{'use_sim_time': True}],
                 output='screen',
                 prefix='gnome-terminal -- ' # para que salga en otra terminal
@@ -85,12 +85,12 @@ def generate_launch_description():
     
     # Nodo Capturador de Fotos en terminal independiente
     fotos_cmd = TimerAction(
-        period=26.0,
+        period=25.0,
         actions=[
             Node(
                 package='ruta_hospital',
                 executable='fotos',
-                name='nodo_fotos',
+                name='photos_node',
                 parameters=[{'use_sim_time': True}],
                 output='screen',
                 prefix='gnome-terminal -- ' 
