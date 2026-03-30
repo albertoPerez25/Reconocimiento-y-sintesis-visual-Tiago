@@ -3,7 +3,7 @@ import os
 import pandas as pd
 from datasets import Dataset
 from ragas import evaluate
-from ragas.metrics import answer_correctness, answer_relevancy
+from ragas.metrics import answer_correctness, answer_relevancy, faithfulness
 from langchain_ollama import ChatOllama, OllamaEmbeddings
 from ragas.run_config import RunConfig
 from ruta_hospital.commons.api_utils import call_ollama_api 
@@ -33,10 +33,10 @@ class RagasEvaluator:
         
         result = evaluate(
             dataset=dataset,
-            metrics=[answer_correctness, answer_relevancy],
+            metrics=[answer_correctness, answer_relevancy, faithfulness],
             llm=self.evaluator_llm,
             embeddings=self.evaluator_embeddings,
-            run_config=RunConfig(max_workers=1, timeout=120)
+            run_config=RunConfig(max_workers=4, timeout=120)
         )
         
         output_path = os.path.join(self.metrics_dir, 'ragas_system_evaluation.csv')
@@ -49,7 +49,7 @@ class RagasEvaluator:
         with open(self.quest_path, 'r', encoding='utf-8') as f:
             questions_data = json.load(f)
 
-        eval_data = {"question": [], "answer": [], "ground_truth": []}
+        eval_data = {"question": [], "answer": [], "ground_truth": [], "contexts": []}
 
         for item in questions_data:
             question = item["question"]
@@ -74,6 +74,7 @@ class RagasEvaluator:
             eval_data["question"].append(question)
             eval_data["answer"].append(llm_answer.strip())
             eval_data["ground_truth"].append(ground_truth)
+            eval_data["contexts"].append([global_context_json])
 
         return eval_data
     
@@ -88,7 +89,7 @@ class RagasEvaluator:
             metrics=[answer_correctness, answer_relevancy],
             llm=self.evaluator_llm,
             embeddings=self.evaluator_embeddings,
-            run_config=RunConfig(max_workers=1, timeout=120)
+            run_config=RunConfig(max_workers=4, timeout=120)
         )
         
         # CSV con el nombre del modelo que evaluado
