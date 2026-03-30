@@ -1,5 +1,6 @@
 import json
 import os
+import re
 import pandas as pd
 from datasets import Dataset
 from ragas import evaluate
@@ -36,7 +37,7 @@ class RagasEvaluator:
             metrics=[answer_correctness, answer_relevancy, faithfulness],
             llm=self.evaluator_llm,
             embeddings=self.evaluator_embeddings,
-            run_config=RunConfig(max_workers=4, timeout=120)
+            run_config=RunConfig(max_workers=4, timeout=420)
         )
         
         output_path = os.path.join(self.metrics_dir, 'ragas_system_evaluation.csv')
@@ -60,8 +61,7 @@ class RagasEvaluator:
             Basándote ÚNICAMENTE en este registro visual de tu patrulla:
             {global_context_json}
             
-            Responde de forma breve y concisa a la siguiente pregunta. 
-            Si no tienes información para responder, di "No hay información".
+            Responde de forma breve y concisa a la siguiente pregunta.
             
             Pregunta: {question}
             """
@@ -74,7 +74,11 @@ class RagasEvaluator:
             eval_data["question"].append(question)
             eval_data["answer"].append(llm_answer.strip())
             eval_data["ground_truth"].append(ground_truth)
-            eval_data["contexts"].append([global_context_json])
+
+            natural_language_context = self.format_context_for_ragas(global_context_json)
+            relevant_contexts = self.get_relevant_context(natural_language_context, question.lower())
+                
+            eval_data["contexts"].append(relevant_contexts)
 
         return eval_data
     
@@ -129,3 +133,47 @@ class RagasEvaluator:
             eval_data["ground_truth"].append(ground_truth)
 
         return eval_data
+
+    def format_context_for_ragas(self, json_context):
+        '''Convierte el JSON de los perceptores en lenguaje natural para que RAGAS lo entienda'''
+        try:
+            data = json.loads(json_context)
+            formatted_contexts = []
+            
+            if isinstance(data, dict) and any(isinstance(v, dict) for v in data.values()): #el json esta dividido en zonas
+                for zone, info in data.items():
+                    eventos = info.get("eventos_recientes", [])
+                    if not eventos:
+                        formatted_contexts.append(f"La zona '{zone}' está despejada, sin eventos ni personas.")
+                    else:
+                        for ev in eventos:
+                            desc = ev.get("descripcion_vlm", "sin descripción")
+                            alerta = "HAY UNA ALERTA O PELIGRO" if ev.get("alerta") else "No hay alertas ni peligros"
+                            formatted_contexts.append(f"En la zona '{zone}': {desc}. {alerta}.")
+            
+
+            if not formatted_contexts:
+                return ["El entorno está completamente despejado y sin incidencias."]
+                
+            return formatted_contexts
+        except Exception:
+            # texto plano encapsulado en una lista (lo que espera RAGAS)
+            return [str(json_context).strip()]
+        
+    def get_relevant_context(self, natural_language_context, question_lower):
+        '''Filtra el contexto y devuelve solo la zona relevante para facilitar el trabajo a RAGAS'''
+        relevant_contexts = []
+        for chunk in natural_language_context:
+            match = re.search(r"'(.*?)'", chunk)
+            if match:
+                complete_zone = match.group(1).lower()
+                # Cosas como "Recepción (cerca de X)"
+                base_zone = complete_zone.split(" (")[0] 
+                
+                if base_zone in question_lower or complete_zone in question_lower:
+                    relevant_contexts.append(chunk)
+        
+        if not relevant_contexts:
+            relevant_contexts = natural_language_context
+
+        return relevant_contexts
