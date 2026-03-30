@@ -5,6 +5,10 @@
       {
         "question": "¿Hay alguna emergencia médica o persona en el suelo?",
         "ground_truth": "Sí, hay una persona caída en el suelo y la alerta debe ser verdadera."
+      },
+      {
+        "question": "¿Debería activarse la alerta?",
+        "ground_truth": "Sí"
       }
     ]
   },

@@ -5,6 +5,7 @@ import rclpy
 from rclpy.node import Node
 from rclpy.executors import MultiThreadedExecutor
 from std_srvs.srv import Trigger
+from rclpy.callback_groups import ReentrantCallbackGroup
 
 from hospital_interfaces.srv import AnalyzeActivity
 from ruta_hospital.evaluation.ragas_evaluator import RagasEvaluator, OllamaParams
@@ -44,13 +45,21 @@ class PerceptionEvaluatorNode(Node):
         ollama_params = OllamaParams(ollama_url=ollama_url, evaluator_llm_model=llm_model, evaluator_embed_model=embed_model)
         self.ragas_evaluator = RagasEvaluator(quest_path="", metrics_dir=self.metrics_dir, ollama_params=ollama_params)
         
-        self.vision_cli = self.create_client(AnalyzeActivity, 'analyze_image')
+        self.cb_group = ReentrantCallbackGroup()
+
+        self.vision_cli = self.create_client(
+            AnalyzeActivity, 
+            'analyze_image',
+            callback_group=self.cb_group
+        )
         
-        self.eval_srv = self.create_service( # Servidor para iniciar la evaluación
+        self.eval_srv = self.create_service( # servidor para iniciar la evaluacion
             Trigger, 
             'evaluate_perception_model', 
-            self.evaluate_callback
+            self.evaluate_callback,
+            callback_group=self.cb_group
         )
+        
         self.get_logger().info(f"Evaluador de Percepción listo. Llama a '/evaluate_perception_model' para testear el modelo activo.")
 
     async def evaluate_callback(self, request, response):        
