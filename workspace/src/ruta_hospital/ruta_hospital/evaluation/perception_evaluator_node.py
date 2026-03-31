@@ -2,71 +2,39 @@
 import os
 import json
 import rclpy
-from rclpy.node import Node
 from rclpy.executors import MultiThreadedExecutor
 from std_srvs.srv import Trigger
 from rclpy.callback_groups import ReentrantCallbackGroup
 
 from hospital_interfaces.srv import AnalyzeActivity
-from ruta_hospital.evaluation.ragas_evaluator import RagasEvaluator, OllamaParams, EvaluatorRunParams
-
-DEFAULT_OLLAMA_URL = "http://localhost:11434"
-DEFAULT_EVALUATOR_LLM_MODEL = "llama3"
-DEFAULT_EVALUATOR_EMBED_MODEL = "nomic-embed-text"
+from ruta_hospital.evaluation.ragas_evaluator import RagasEvaluator
+from ruta_hospital.evaluation.base_evaluator import BaseEvaluatorNode
 
 DEFAULT_DATASET_PATH = "/home/alberto/tfg/Reconocimiento-y-sintesis-visual-Tiago/workspace/config/perception_dataset.json"
 DEFAULT_IMAGES_DIR = "/home/alberto/tfg/Reconocimiento-y-sintesis-visual-Tiago/workspace/test_dataset/"
 DEFAULT_METRICS_DIR = "/home/alberto/tfg/Reconocimiento-y-sintesis-visual-Tiago/autogenerate_metrics/"
 
-DEFAULT_SYSTEM_WORKERS = 4
-DEFAULT_SYSTEM_TIMEOUT = 420
-DEFAULT_PERCEPTOR_WORKERS = DEFAULT_SYSTEM_WORKERS
-DEFAULT_PERCEPTOR_TIMEOUT = DEFAULT_SYSTEM_TIMEOUT
-
-class PerceptionEvaluatorNode(Node):
+class PerceptionEvaluatorNode(BaseEvaluatorNode):
     '''Nodo encargado de evaluar la agudeza visual de los modelos de percepción (YOLO/VLM) de forma aislada'''
     def __init__(self):
         super().__init__('perception_evaluator_node')
 
-        self.declare_parameter('ollama_url', DEFAULT_OLLAMA_URL)
-        self.declare_parameter('evaluator_llm_model', DEFAULT_EVALUATOR_LLM_MODEL)
-        self.declare_parameter('evaluator_embed_model', DEFAULT_EVALUATOR_EMBED_MODEL)
         self.declare_parameter('dataset_path', DEFAULT_DATASET_PATH)
         self.declare_parameter('images_dir', DEFAULT_IMAGES_DIR)
         self.declare_parameter('metrics_dir', DEFAULT_METRICS_DIR)
         self.declare_parameter('tested_model_name', 'unknown_model') # Para nombrar el CSV resultante
 
-        self.declare_parameter('system_workers', DEFAULT_SYSTEM_WORKERS)
-        self.declare_parameter('perceptor_workers', DEFAULT_PERCEPTOR_WORKERS)
-        self.declare_parameter('system_timeout', DEFAULT_SYSTEM_TIMEOUT)
-        self.declare_parameter('perceptor_timeout', DEFAULT_PERCEPTOR_TIMEOUT)
-
         # Extracción de parámetros
-        ollama_url = self.get_parameter('ollama_url').get_parameter_value().string_value
-        llm_model = self.get_parameter('evaluator_llm_model').get_parameter_value().string_value
-        embed_model = self.get_parameter('evaluator_embed_model').get_parameter_value().string_value
 
         self.dataset_path = self.get_parameter('dataset_path').get_parameter_value().string_value
         self.images_dir = self.get_parameter('images_dir').get_parameter_value().string_value
         self.metrics_dir = self.get_parameter('metrics_dir').get_parameter_value().string_value
         self.tested_model_name = self.get_parameter('tested_model_name').get_parameter_value().string_value
 
-        sys_workers = self.get_parameter('system_workers').get_parameter_value().integer_value
-        perc_workers = self.get_parameter('perceptor_workers').get_parameter_value().integer_value
-        sys_timeout = self.get_parameter('system_timeout').get_parameter_value().integer_value
-        perc_timeout = self.get_parameter('perceptor_timeout').get_parameter_value().integer_value
-
         # Evaluador RAGAS
-        ollama_params = OllamaParams(ollama_url=ollama_url, evaluator_llm_model=llm_model, evaluator_embed_model=embed_model)
-        run_params = EvaluatorRunParams(
-            system_workers = sys_workers, 
-            system_timeout = sys_timeout, 
-            perceptor_workers = perc_workers, 
-            perceptors_timeout = perc_timeout
-        )
-        self.ragas_evaluator = RagasEvaluator(quest_path="", metrics_dir=self.metrics_dir, ollama_params=ollama_params, run_params=run_params)
+        self.ragas_evaluator = RagasEvaluator(quest_path="", metrics_dir=self.metrics_dir, ollama_params=self.ollama_params, run_params=self.run_params)
         
-        self.cb_group = ReentrantCallbackGroup()
+        self.cb_group = ReentrantCallbackGroup() # Evitar Deadlocks. El de sistema usa el grupo del reportero, pero este no así que hay que crear otro grupo
 
         self.vision_cli = self.create_client(
             AnalyzeActivity, 

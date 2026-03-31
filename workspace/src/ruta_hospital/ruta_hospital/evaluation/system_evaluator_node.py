@@ -1,24 +1,16 @@
 #!/usr/bin/env python3
 import rclpy
-from rclpy.node import Node
 from rclpy.executors import MultiThreadedExecutor
 from std_srvs.srv import Trigger
 
 from ruta_hospital.reporting.llm_reporter_node import LLMReporterNode
-from ruta_hospital.evaluation.ragas_evaluator import RagasEvaluator, OllamaParams, EvaluatorRunParams
+from ruta_hospital.evaluation.ragas_evaluator import RagasEvaluator
+from ruta_hospital.evaluation.base_evaluator import BaseEvaluatorNode
 
 from hospital_interfaces.action import GenerateReport
 
-DEFAULT_OLLAMA_URL = "http://localhost:11434"
-DEFAULT_EVALUATOR_LLM_MODEL = "llama3"
-DEFAULT_EVALUATOR_EMBED_MODEL = "nomic-embed-text"
 DEFAULT_QUESTIONS_PATH = "/home/alberto/tfg/Reconocimiento-y-sintesis-visual-Tiago/workspace/config/quest.json"
 DEFAULT_EVAL_FOLDER = "/home/alberto/tfg/Reconocimiento-y-sintesis-visual-Tiago/workspace/hospital_photos/vuelta_A/"
-
-DEFAULT_SYSTEM_WORKERS = 4
-DEFAULT_SYSTEM_TIMEOUT = 420
-DEFAULT_PERCEPTOR_WORKERS = DEFAULT_SYSTEM_WORKERS
-DEFAULT_PERCEPTOR_TIMEOUT = DEFAULT_SYSTEM_TIMEOUT
 
 class MockGoalHandle:
     ''' Falso Goal Handle para reutilizar el código de LLMReporterNode
@@ -30,57 +22,28 @@ class MockGoalHandle:
         # Ignorar el feedback durante la evaluación en segundo plano
         pass
 
-class SystemEvaluatorNode(Node):
+class SystemEvaluatorNode(BaseEvaluatorNode):
     def __init__(self):
         super().__init__('system_evaluator_node')
         # Reportero original para acceder a sus métodos
         self.reporter_logic = LLMReporterNode()
 
         # Parametros
-        self.declare_parameter('ollama_url', DEFAULT_OLLAMA_URL)
-        self.declare_parameter('evaluator_llm_model', DEFAULT_EVALUATOR_LLM_MODEL)
-        self.declare_parameter('evaluator_embed_model', DEFAULT_EVALUATOR_EMBED_MODEL)
         self.declare_parameter('questions_path', DEFAULT_QUESTIONS_PATH)
         self.declare_parameter('eval_folder_path', DEFAULT_EVAL_FOLDER)
 
-        self.declare_parameter('system_workers', DEFAULT_SYSTEM_WORKERS)
-        self.declare_parameter('perceptor_workers', DEFAULT_PERCEPTOR_WORKERS)
-        self.declare_parameter('system_timeout', DEFAULT_SYSTEM_TIMEOUT)
-        self.declare_parameter('perceptor_timeout', DEFAULT_PERCEPTOR_TIMEOUT)
-
-        ollama_url = self.get_parameter('ollama_url').get_parameter_value().string_value
-        llm_model = self.get_parameter('evaluator_llm_model').get_parameter_value().string_value
-        embed_model = self.get_parameter('evaluator_embed_model').get_parameter_value().string_value
         quest_path = self.get_parameter('questions_path').get_parameter_value().string_value
         self.eval_folder_path = self.get_parameter('eval_folder_path').get_parameter_value().string_value
-
-        sys_workers = self.get_parameter('system_workers').get_parameter_value().integer_value
-        perc_workers = self.get_parameter('perceptor_workers').get_parameter_value().integer_value
-        sys_timeout = self.get_parameter('system_timeout').get_parameter_value().integer_value
-        perc_timeout = self.get_parameter('perceptor_timeout').get_parameter_value().integer_value
-
-        # Evaluador de Ragas
-        ollama_params = OllamaParams(
-            ollama_url = ollama_url, 
-            evaluator_llm_model = llm_model, 
-            evaluator_embed_model = embed_model
-        )
-        run_params = EvaluatorRunParams(
-            system_workers = sys_workers, 
-            system_timeout = sys_timeout, 
-            perceptor_workers = perc_workers, 
-            perceptors_timeout = perc_timeout
-        )
         
         self.metrics_dir = self.reporter_logic.metrics_dir # el mismo path de métricas
-        self.ragas_evaluator = RagasEvaluator(quest_path, self.metrics_dir, ollama_params, run_params)
+        self.ragas_evaluator = RagasEvaluator(quest_path, self.metrics_dir, self.ollama_params, self.run_params)
         
         # Servicio distinto para la evaluación
         self.eval_srv = self.create_service(
             Trigger, 
             'evaluate_patrol_system', 
             self.evaluate_callback,
-            callback_group=self.reporter_logic.cb_group
+            callback_group=self.reporter_logic.cb_group # Evita Deadlocks rehusando el grupo del reportero
         )
         self.get_logger().info("Nodo Evaluador listo. Llama al servicio '/evaluate_patrol_system'")
 
