@@ -15,10 +15,18 @@ class OllamaParams:
         self.evaluator_llm_model = evaluator_llm_model
         self.evaluator_embed_model = evaluator_embed_model
 
+class EvaluatorRunParams:
+    def __init__(self, system_workers = 4, system_timeout = 420, perceptor_workers = 4, perceptors_timeout = 420):
+        self.system_workers = system_workers
+        self.system_timeout = system_timeout
+        self.perceptors_workers = perceptor_workers
+        self.perceptors_timeout = perceptors_timeout
+
 class RagasEvaluator:
-    def __init__(self, quest_path, metrics_dir, ollama_params):
+    def __init__(self, quest_path, metrics_dir, ollama_params, run_params):
         self.quest_path = quest_path
         self.metrics_dir = metrics_dir
+        self.run_params = run_params
         
         # LLM evaluador y embeddings requeridos por Ragas
         self.evaluator_llm = ChatOllama(model=ollama_params.evaluator_llm_model, 
@@ -37,7 +45,8 @@ class RagasEvaluator:
             metrics=[answer_correctness, answer_relevancy, faithfulness],
             llm=self.evaluator_llm,
             embeddings=self.evaluator_embeddings,
-            run_config=RunConfig(max_workers=4, timeout=420)
+            run_config=RunConfig(max_workers=self.run_params.perceptors_workers, 
+                                 timeout=self.run_params.perceptors_timeout)
         )
         
         output_path = os.path.join(self.metrics_dir, 'ragas_system_evaluation.csv')
@@ -93,7 +102,8 @@ class RagasEvaluator:
             metrics=[answer_correctness, answer_relevancy],
             llm=self.evaluator_llm,
             embeddings=self.evaluator_embeddings,
-            run_config=RunConfig(max_workers=4, timeout=120)
+            run_config=RunConfig(max_workers=self.run_params.perceptors_workers, 
+                                 timeout=self.run_params.perceptors_timeout)
         )
         
         # CSV con el nombre del modelo que evaluado

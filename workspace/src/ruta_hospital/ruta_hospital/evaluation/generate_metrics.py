@@ -7,13 +7,15 @@ import numpy as np
 import matplotlib.pyplot as plt
 import seaborn as sns
 
-# Theme configuration for professional plots
+# Tema para los gráficos
 sns.set_theme(style="whitegrid", palette="pastel")
 
-# Default Paths
+# Rutas por defecto
 JSON_PATH = "/home/alberto/tfg/Reconocimiento-y-sintesis-visual-Tiago/autogenerate_metrics/comparativa_modelos.json"
 RAGAS_DIR = "/home/alberto/tfg/Reconocimiento-y-sintesis-visual-Tiago/autogenerate_metrics/"
 OUTPUT_DIR = "/home/alberto/tfg/Reconocimiento-y-sintesis-visual-Tiago/autogenerate_metrics/"
+
+FINAL_SCORE_WITH_FAITHFULNESS = False
 
 def load_performance_data(json_path):
     """Carga el JSON de rendimientos y calcula métricas a partir de él"""
@@ -53,7 +55,7 @@ def load_ragas_data(ragas_dir):
                 mean_correctness = df['answer_correctness'].mean()
                 mean_relevancy = df['answer_relevancy'].mean()
 
-                if 'faithfulness' in df.columns :
+                if FINAL_SCORE_WITH_FAITHFULNESS and 'faithfulness' in df.columns:
                     mean_faithfulness = df['faithfulness'].mean()
                     final_score = (mean_correctness + mean_relevancy + mean_faithfulness) / 3.0
                 else:# archivos csv legacy
@@ -210,7 +212,7 @@ def generate_ragas_system_plot(df, output_dir):
     ax.bar_label(rects4, padding=3, fmt='%.2f', fontsize=8)
 
     fig.tight_layout()
-    plt.savefig(os.path.join(output_dir, '5a_grafica_ragas_sistema.png'), dpi=300)
+    plt.savefig(os.path.join(output_dir, '5_grafica_ragas_sistema.png'), dpi=300)
     plt.close()
 
 def generate_ragas_perception_plot(df, output_dir):
@@ -223,7 +225,7 @@ def generate_ragas_perception_plot(df, output_dir):
     rot, align = get_dynamic_rotation(labels)
 
     x_positions = np.arange(len(labels))
-    bar_width = 0.25 # Al ser 3 barras, las hacemos un poco más anchas
+    bar_width = 0.25 
 
     fig, ax = plt.subplots(figsize=(11, 6))
     
@@ -243,7 +245,7 @@ def generate_ragas_perception_plot(df, output_dir):
     ax.bar_label(rects3, padding=3, fmt='%.2f', fontsize=8)
 
     fig.tight_layout()
-    plt.savefig(os.path.join(output_dir, '5b_grafica_ragas_percepcion.png'), dpi=300)
+    plt.savefig(os.path.join(output_dir, '6_grafica_ragas_percepcion.png'), dpi=300)
     plt.close()
 
 def main():
