@@ -5,9 +5,7 @@ from rclpy.executors import MultiThreadedExecutor
 from std_srvs.srv import Trigger
 
 from ruta_hospital.reporting.llm_reporter_node import LLMReporterNode
-from ruta_hospital.evaluation.ragas_evaluator import RagasEvaluator
-from ruta_hospital.evaluation.ragas_evaluator import OllamaParams
-from ruta_hospital.evaluation.ragas_evaluator import EvaluatorRunParams
+from ruta_hospital.evaluation.ragas_evaluator import RagasEvaluator, OllamaParams, EvaluatorRunParams
 
 from hospital_interfaces.action import GenerateReport
 
