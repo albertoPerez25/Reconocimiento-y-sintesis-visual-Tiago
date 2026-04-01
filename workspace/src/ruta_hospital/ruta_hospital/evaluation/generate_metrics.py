@@ -7,13 +7,15 @@ import numpy as np
 import matplotlib.pyplot as plt
 import seaborn as sns
 
-# Theme configuration for professional plots
+# Tema para los gráficos
 sns.set_theme(style="whitegrid", palette="pastel")
 
-# Default Paths
+# Rutas por defecto
 JSON_PATH = "/home/alberto/tfg/Reconocimiento-y-sintesis-visual-Tiago/autogenerate_metrics/comparativa_modelos.json"
 RAGAS_DIR = "/home/alberto/tfg/Reconocimiento-y-sintesis-visual-Tiago/autogenerate_metrics/"
 OUTPUT_DIR = "/home/alberto/tfg/Reconocimiento-y-sintesis-visual-Tiago/autogenerate_metrics/"
+
+FINAL_SCORE_WITH_FAITHFULNESS = False
 
 def load_performance_data(json_path):
     """Carga el JSON de rendimientos y calcula métricas a partir de él"""
@@ -52,12 +54,18 @@ def load_ragas_data(ragas_dir):
             if 'answer_correctness' in df.columns and 'answer_relevancy' in df.columns:
                 mean_correctness = df['answer_correctness'].mean()
                 mean_relevancy = df['answer_relevancy'].mean()
-                final_score = (mean_correctness + mean_relevancy) / 2.0
+
+                if FINAL_SCORE_WITH_FAITHFULNESS and 'faithfulness' in df.columns:
+                    mean_faithfulness = df['faithfulness'].mean()
+                    final_score = (mean_correctness + mean_relevancy + mean_faithfulness) / 3.0
+                else:# archivos csv legacy
+                    final_score = (mean_correctness + mean_relevancy) / 2.0 
                 
                 summary_list.append({
                     'Configuracion': config_name,
                     'Correctness': round(mean_correctness, 3),
                     'Relevancy': round(mean_relevancy, 3),
+                    'Faithfulness': round(mean_faithfulness, 3),
                     'Final_Score': round(final_score, 3)
                 })
         except Exception as e:
@@ -171,8 +179,44 @@ def generate_performance_plots(df, output_dir):
     plt.savefig(os.path.join(output_dir, "4_estabilidad_tiempos.png"), dpi=300)
     plt.close()
 
-def generate_ragas_plots(df, output_dir):
-    """Genera las graficas agrupadas"""
+def generate_ragas_system_plot(df, output_dir):
+    """Genera la gráfica con Faithfulness solo para el sistema completo"""
+    labels = df['Configuracion'].tolist()
+    correctness = df['Correctness'].tolist()
+    relevancy = df['Relevancy'].tolist()
+    faithfulness = df['Faithfulness'].tolist()
+    final_score = df['Final_Score'].tolist()
+    
+    rot, align = get_dynamic_rotation(labels)
+
+    x_positions = np.arange(len(labels))
+    bar_width = 0.2 
+
+    fig, ax = plt.subplots(figsize=(11, 6))
+    
+    rects1 = ax.bar(x_positions - 1.5 * bar_width, correctness, bar_width, label='Correctness (Sistema)', color='#4C72B0')
+    rects2 = ax.bar(x_positions - 0.5 * bar_width, relevancy, bar_width, label='Relevancy', color='#55A868')
+    rects3 = ax.bar(x_positions + 0.5 * bar_width, faithfulness, bar_width, label='Faithfulness (LLM)', color='#E1A95F')
+    rects4 = ax.bar(x_positions + 1.5 * bar_width, final_score, bar_width, label='Final Score', color='#C44E52')
+
+    ax.set_ylabel('Puntuación (0.0 - 1.0)')
+    ax.set_title('Evaluación Ragas: Sistema Completo')
+    ax.set_xticks(x_positions)
+    ax.set_xticklabels(labels, rotation=rot, ha=align)
+    ax.set_ylim(0, 1.15) 
+    ax.legend(loc='upper right', ncol=2)
+
+    ax.bar_label(rects1, padding=3, fmt='%.2f', fontsize=8)
+    ax.bar_label(rects2, padding=3, fmt='%.2f', fontsize=8)
+    ax.bar_label(rects3, padding=3, fmt='%.2f', fontsize=8)
+    ax.bar_label(rects4, padding=3, fmt='%.2f', fontsize=8)
+
+    fig.tight_layout()
+    plt.savefig(os.path.join(output_dir, '5_grafica_ragas_sistema.png'), dpi=300)
+    plt.close()
+
+def generate_ragas_perception_plot(df, output_dir):
+    """Genera la gráfica clásica de 3 barras para los perceptores aislados"""
     labels = df['Configuracion'].tolist()
     correctness = df['Correctness'].tolist()
     relevancy = df['Relevancy'].tolist()
@@ -181,27 +225,27 @@ def generate_ragas_plots(df, output_dir):
     rot, align = get_dynamic_rotation(labels)
 
     x_positions = np.arange(len(labels))
-    bar_width = 0.25
+    bar_width = 0.25 
 
-    fig, ax = plt.subplots(figsize=(10, 6))
+    fig, ax = plt.subplots(figsize=(11, 6))
     
-    rects1 = ax.bar(x_positions - bar_width, correctness, bar_width, label='Correctness', color='#4C72B0')
+    rects1 = ax.bar(x_positions - bar_width, correctness, bar_width, label='Correctness (Visión)', color='#4C72B0')
     rects2 = ax.bar(x_positions, relevancy, bar_width, label='Relevancy', color='#55A868')
     rects3 = ax.bar(x_positions + bar_width, final_score, bar_width, label='Final Score', color='#C44E52')
 
     ax.set_ylabel('Puntuación (0.0 - 1.0)')
-    ax.set_title('Comparativa de Calidad de Respuestas (Evaluación Ragas)')
+    ax.set_title('Evaluación Ragas: Modelos de Percepción Aislados')
     ax.set_xticks(x_positions)
     ax.set_xticklabels(labels, rotation=rot, ha=align)
-    ax.set_ylim(0, 1.1) 
-    ax.legend()
+    ax.set_ylim(0, 1.15) 
+    ax.legend(loc='upper right', ncol=3) 
 
-    ax.bar_label(rects1, padding=3, fmt='%.2f', fontsize=9)
-    ax.bar_label(rects2, padding=3, fmt='%.2f', fontsize=9)
-    ax.bar_label(rects3, padding=3, fmt='%.2f', fontsize=9)
+    ax.bar_label(rects1, padding=3, fmt='%.2f', fontsize=8)
+    ax.bar_label(rects2, padding=3, fmt='%.2f', fontsize=8)
+    ax.bar_label(rects3, padding=3, fmt='%.2f', fontsize=8)
 
     fig.tight_layout()
-    plt.savefig(os.path.join(output_dir, '5_grafica_comparativa_ragas.png'), dpi=300)
+    plt.savefig(os.path.join(output_dir, '6_grafica_ragas_percepcion.png'), dpi=300)
     plt.close()
 
 def main():
@@ -218,8 +262,18 @@ def main():
     df_ragas = load_ragas_data(RAGAS_DIR)
     if df_ragas is not None and not df_ragas.empty:
         generate_ragas_summary(df_ragas, OUTPUT_DIR)
-        generate_ragas_plots(df_ragas, OUTPUT_DIR)
-        print("- Gráficos de evaluación Ragas generados (5).")
+
+        # Si el nombre del CSV incluye "system", va a la gráfica A. Si no a la B.
+        df_system = df_ragas[df_ragas['Configuracion'].str.contains('system')].copy()
+        df_percept = df_ragas[~df_ragas['Configuracion'].str.contains('system')].copy()
+        
+        if not df_system.empty:
+            generate_ragas_system_plot(df_system, OUTPUT_DIR)
+        
+        if not df_percept.empty:
+            generate_ragas_perception_plot(df_percept, OUTPUT_DIR)
+
+        print("- Gráficos de evaluación Ragas generados (5 y 6).")
 
 if __name__ == "__main__":
     main()

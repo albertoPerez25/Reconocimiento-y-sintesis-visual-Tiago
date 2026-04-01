@@ -1,0 +1,3 @@
+Configuracion,Correctness,Relevancy,Faithfulness,Final_Score
+ragas_eval_yolo26n,0.647,0.601,0.659,0.624
+ragas_system_evaluation,0.599,0.422,0.659,0.56
