@@ -1,7 +1,9 @@
 #!/usr/bin/env python3
+import os
 import rclpy
 from rclpy.executors import MultiThreadedExecutor
 from std_srvs.srv import Trigger
+from ament_index_python.packages import get_package_share_directory
 
 from ruta_hospital.reporting.llm_reporter_node import LLMReporterNode
 from ruta_hospital.evaluation.ragas_evaluator import RagasEvaluator
@@ -9,8 +11,9 @@ from ruta_hospital.evaluation.base_evaluator import BaseEvaluatorNode
 
 from hospital_interfaces.action import GenerateReport
 
-DEFAULT_QUESTIONS_PATH = "/home/alberto/tfg/Reconocimiento-y-sintesis-visual-Tiago/workspace/config/quest.json"
-DEFAULT_EVAL_FOLDER = "/home/alberto/tfg/Reconocimiento-y-sintesis-visual-Tiago/workspace/hospital_photos/vuelta_A/"
+PKG_DIR = get_package_share_directory('ruta_hospital')
+DEFAULT_QUESTIONS_PATH = os.path.join(PKG_DIR, 'config', 'quest.json')
+DEFAULT_EVAL_FOLDER = "/home/alberto/tfg/Reconocimiento-y-sintesis-visual-Tiago/hospital_photos/vuelta_A/"
 
 class MockGoalHandle:
     ''' Falso Goal Handle para reutilizar el código de LLMReporterNode

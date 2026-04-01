@@ -2,10 +2,10 @@ import os
 import csv
 import json
 import math
-import glob
 from abc import ABC, abstractmethod
 from rclpy.node import Node
 from rclpy.callback_groups import ReentrantCallbackGroup
+from ament_index_python.packages import get_package_share_directory
 
 from rclpy.action import ActionServer
 from hospital_interfaces.action import GenerateReport
@@ -15,7 +15,9 @@ import datetime
 import json
 
 # Rutas por defecto
-SEMANTIC_PATH_MAP = "/home/alberto/tfg/Reconocimiento-y-sintesis-visual-Tiago/workspace/config/semantic_map.json"
+PKG_DIR = get_package_share_directory('ruta_hospital')
+
+SEMANTIC_PATH_MAP = os.path.join(PKG_DIR, 'config', 'semantic_map.json')
 METRICS_DIR = "/home/alberto/tfg/Reconocimiento-y-sintesis-visual-Tiago/autogenerate_metrics/"
 
 class BaseReporterNode(Node, ABC):

@@ -10,8 +10,6 @@ from nav_msgs.msg import Odometry
 #from cv_bridge import CvBridge
 
 from tf2_ros import Buffer, TransformListener
-from rcl_interfaces.msg import ParameterDescriptor
-from hospital_interfaces.srv import AnalyzeActivity
 from rcl_interfaces.msg import SetParametersResult
 
 

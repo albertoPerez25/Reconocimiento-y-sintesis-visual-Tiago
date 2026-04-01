@@ -5,13 +5,15 @@ import rclpy
 from rclpy.executors import MultiThreadedExecutor
 from std_srvs.srv import Trigger
 from rclpy.callback_groups import ReentrantCallbackGroup
+from ament_index_python.packages import get_package_share_directory
 
 from hospital_interfaces.srv import AnalyzeActivity
 from ruta_hospital.evaluation.ragas_evaluator import RagasEvaluator
 from ruta_hospital.evaluation.base_evaluator import BaseEvaluatorNode
 
-DEFAULT_DATASET_PATH = "/home/alberto/tfg/Reconocimiento-y-sintesis-visual-Tiago/workspace/config/perception_dataset.json"
-DEFAULT_IMAGES_DIR = "/home/alberto/tfg/Reconocimiento-y-sintesis-visual-Tiago/workspace/test_dataset/"
+PKG_DIR = get_package_share_directory('ruta_hospital')
+DEFAULT_DATASET_PATH = os.path.join(PKG_DIR, 'config', 'perception_dataset.json')
+DEFAULT_IMAGES_DIR = "/home/alberto/tfg/Reconocimiento-y-sintesis-visual-Tiago/test_dataset/"
 DEFAULT_METRICS_DIR = "/home/alberto/tfg/Reconocimiento-y-sintesis-visual-Tiago/autogenerate_metrics/"
 
 class PerceptionEvaluatorNode(BaseEvaluatorNode):
