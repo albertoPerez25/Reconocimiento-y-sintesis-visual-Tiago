@@ -1,3 +1,5 @@
+import os
+from glob import glob
 from setuptools import find_packages, setup
 
 package_name = 'ruta_hospital'
@@ -10,6 +12,10 @@ setup(
         ('share/ament_index/resource_index/packages',
             ['resource/' + package_name]),
         ('share/' + package_name, ['package.xml']),
+        (os.path.join('share', package_name, 'launch_files'), glob('launch_files/*.py')),
+        (os.path.join('share', package_name, 'config'), glob('config/*.*')),
+        (os.path.join('share', package_name, 'slam_maps'), glob('slam_maps/*.*')),
+        (os.path.join('share', package_name, 'rviz_configs'), glob('rviz_configs/*.rviz')),
     ],
     install_requires=['setuptools'],
     zip_safe=True,
