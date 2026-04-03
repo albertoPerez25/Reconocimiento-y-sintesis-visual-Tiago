@@ -103,6 +103,9 @@ class PerceptionEvaluatorNode(BaseEvaluatorNode):
             # Llamada al servicio del perceptor
             req = AnalyzeActivity.Request()
             req.image_path = img_path
+            req.zone_name = image.get("zone_name", "Desconocida")
+            req.time = image.get("time", "Desconocida")
+            req.expected_objects = image.get("expected_objects", "No especificados")
             
             try:
                 result = await self.vision_cli.call_async(req)
@@ -111,10 +114,16 @@ class PerceptionEvaluatorNode(BaseEvaluatorNode):
                 self.get_logger().error(f"Fallo al analizar {img_name}: {e}")
                 continue
 
+            # para que el evaluador sepa qué pistas se le dieron al perceptor
+            enriched_perceptor_output = (
+                f"[RAG INYECTADO] Zona: {req.zone_name} | Hora: {req.time} | Esperado: {req.expected_objects}\n"
+                f"[OUTPUT PERCEPTOR] {perceptor_output}"
+            )
+
             # Empaquetar las preguntas de la imagen y el output del modelo
             for q in questions:
                 perception_data_for_ragas.append({
-                    "context": perceptor_output,
+                    "context": enriched_perceptor_output,
                     "question": q["question"],
                     "ground_truth": q["ground_truth"]
                 })

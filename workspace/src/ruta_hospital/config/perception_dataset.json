@@ -1,6 +1,9 @@
 [
   {
     "image_name": "caida_pasillo.jpg",
+    "zone_name": "Pasillo",
+    "time": "03:15s",
+    "expected_objects": "puertas a los lados, carritos de limpieza, camillas en movimiento, sillas de ruedas, extintores, personas caminando",
     "questions": [
       {
         "question": "¿Hay alguna emergencia médica o persona en el suelo?",
@@ -14,6 +17,9 @@
   },
   {
     "image_name": "pasillo_vacio.jpg",
+    "zone_name": "Pasillo",
+    "time": "14:30s",
+    "expected_objects": "puertas a los lados, carritos de limpieza, camillas en movimiento, sillas de ruedas, extintores, personas caminando",
     "questions": [
       {
         "question": "¿Cuál es la descripción del estado de la zona?",
