@@ -20,6 +20,7 @@ PKG_DIR = get_package_share_directory('ruta_hospital')
 
 SEMANTIC_PATH_MAP = os.path.join(PKG_DIR, 'config', 'semantic_map.json')
 METRICS_DIR = "/home/alberto/tfg/Reconocimiento-y-sintesis-visual-Tiago/autogenerate_metrics/"
+METADATA_PATH = os.path.join(PKG_DIR, 'config', 'hospital_metadata.json')
 
 class BaseReporterNode(Node, ABC):
     '''Clase abstracta para los nodos generadores de informes'''
@@ -30,11 +31,14 @@ class BaseReporterNode(Node, ABC):
         # Parámetros comunes
         self.declare_parameter('semantic_map_path', SEMANTIC_PATH_MAP)
         self.declare_parameter('metrics_dir', METRICS_DIR)
+        self.declare_parameter('metadata_path', METADATA_PATH)
 
         self.semantic_map_path = self.get_parameter('semantic_map_path').get_parameter_value().string_value
         self.metrics_dir = self.get_parameter('metrics_dir').get_parameter_value().string_value
+        self.metadata_path = self.get_parameter('metadata_path').get_parameter_value().string_value
 
         self.hospital_zones, self.reception_zone = load_semantic_map(self.semantic_map_path, self.get_logger())
+        self.hospital_metadata = self.load_hospital_metadata()
 
         self.cb_group = ReentrantCallbackGroup()
         
@@ -128,6 +132,30 @@ class BaseReporterNode(Node, ABC):
         
         # Resetear para la siguiente vuelta
         self.current_metrics = self.init_metrics_dict()
+
+    def load_hospital_metadata(self):
+        '''Carga las reglas y objetos comunes desde el JSON de metadatos (RAG)'''
+        if not os.path.exists(self.metadata_path):
+            self.get_logger().warn(f"No se encontró metadatos en {self.metadata_path}")
+            return {}
+        try:
+            with open(self.metadata_path, 'r', encoding='utf-8') as f:
+                data = json.load(f)
+                return data.get("ZONAS", {})
+        except Exception as e:
+            self.get_logger().error(f"Error cargando metadatos: {e}")
+            return {}
+        
+    def get_zone_metadata(self, zone_name):
+        '''Busca metadatos de una zona '''
+        if zone_name in self.hospital_metadata:
+            return self.hospital_metadata[zone_name]
+        
+        # Búsqueda parcial para nombres compuestos como "Pasillo (cerca de X)"
+        for key, data in self.hospital_metadata.items():
+            if key in zone_name:
+                return data
+        return {}
 
     async def generate_report_callback(self, request, response):
         self.get_logger().error("ERROR: metodo deprecado \"generate_report_callback\" usado")
