@@ -18,7 +18,7 @@ class SequencePerceptionNode(BasePerceptionNode):
         self.vlm_model = self.get_parameter('vlm_model').get_parameter_value().string_value
         self.ollama_url = self.get_parameter('ollama_url').get_parameter_value().string_value
 
-    def process_image(self, image_paths_str):
+    def process_image(self, image_paths_str, zone_name="Desconocida", time_str="Desconocida", expected_objects="No especificados"):
         '''Recibe múltiples rutas de frames separadas por coma y los manda al VLM'''
         
         paths = image_paths_str.split(',')
@@ -26,7 +26,7 @@ class SequencePerceptionNode(BasePerceptionNode):
         
         if not ok_paths:
             return json.dumps({"descripcion_vlm": "Error: No se encontraron imágenes válidas en la secuencia.", "alerta": False}, ensure_ascii=False)
-        payload = self.get_payload(ok_paths)
+        payload = self.get_payload(ok_paths, zone_name, time_str, expected_objects)
 
         try:
             vlm_text = call_ollama_api(self.ollama_url, payload)
@@ -47,23 +47,27 @@ class SequencePerceptionNode(BasePerceptionNode):
             self.get_logger().error(f"Error procesando secuencia: {e}")
             return json.dumps({"descripcion_vlm": f"Error en inferencia de secuencia: {e}", "alerta": False}, ensure_ascii=False)
 
-    def get_payload(self,ok_paths):
+    def get_payload(self, ok_paths, zone_name, time_str, expected_objects):
         '''Crea el prompt y devuelve el payload completo para enviarle al modelo'''
         base64_frames = self.extract_key_frames(ok_paths, max_frames=40) 
 
-        prompt = """
+        prompt = f"""
         You are a security AI analyzing a chronological SEQUENCE of images from a hospital camera.
         Analyze the sequence globally as a single continuous action and output ONLY a valid JSON.
         
-        - If the sequence shows an empty room or everything is safe, the description must be exactly: "descripcion_vlm": "Despejado"
+        Estás en la zona '{zone_name}' a las {time_str}. 
+        Objetos esperados: {expected_objects}. 
+        Infiere la actividad humana considerando este contexto.
+        
+        - If the sequence shows an empty room or everything is safe, the description must be exactly: "Despejado"
         - If there are people, describe their actions over time briefly in SPANISH. Pay special attention to fights, people fallen on the ground, or emergencies.
         - Set "alerta" to true ONLY if there is an emergency, danger, or someone in need of help.
 
         Example of expected output:
-        {
+        {{
           "descripcion_vlm": "Despejado",
           "alerta": false
-        }
+        }}
         """
         
         payload = {

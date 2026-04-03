@@ -22,14 +22,14 @@ class HybridPerceptionNode(BasePerceptionNode):
         
         self.get_logger().info("Nodo percepcion con YOLO y VLM iniciado")
 
-    def process_image(self, image_path: str) -> str:
+    def process_image(self, image_path: str, zone_name="Desconocida", time_str="Desconocida", expected_objects="No especificados") -> str:
         '''Combina los reportes de YOLO y VLM'''
         self.get_logger().info(f"Procesamiento híbrido iniciado para: {image_path}")
 
         # Posiciones y conteo exacto
-        yolo_json_str = self.yolo_logic.process_image(image_path)
+        yolo_json_str = self.yolo_logic.process_image(image_path, zone_name, time_str, expected_objects)
         # Contexto, peligros y descripción
-        vlm_json_str = self.vlm_logic.process_image(image_path)
+        vlm_json_str = self.vlm_logic.process_image(image_path, zone_name, time_str, expected_objects)
 
         try:
             yolo_data = json.loads(yolo_json_str)

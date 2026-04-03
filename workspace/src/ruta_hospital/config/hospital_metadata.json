@@ -1,0 +1,114 @@
+{
+    "ZONAS": {
+        "Almacén 1": {
+            "tipo_zona": "Restringida",
+            "objetos_comunes": ["cajas", "estanterías", "carritos de suministros médicos", "material estéril", "botes"],
+            "reglas_horarias": "Acceso exclusivo para personal del hospital. Las puertas deben permanecer cerradas en todo momento. No debe haber pacientes ni visitantes."
+        },
+        "Almacén 2": {
+            "tipo_zona": "Restringida",
+            "objetos_comunes": ["cajas", "estanterías", "carritos de suministros médicos", "material estéril", "botes"],
+            "reglas_horarias": "Acceso exclusivo para personal del hospital. Las puertas deben permanecer cerradas en todo momento. No debe haber pacientes ni visitantes."
+        },
+        "Habitación Individual 1": {
+            "tipo_zona": "Privada / Pacientes",
+            "objetos_comunes": ["cama de hospital", "portasueros", "monitor de constantes", "sillón de acompañante", "mesita", "paciente en pijama"],
+            "reglas_horarias": "Horario de visitas: 16:00 a 20:00. Horario de descanso (silencio): 22:00 a 08:00. Esperable encontrar a un paciente descansando o recibiendo tratamiento."
+        },
+        "Habitación Individual 2": {
+            "tipo_zona": "Privada / Pacientes",
+            "objetos_comunes": ["cama de hospital", "portasueros", "monitor de constantes", "sillón de acompañante", "mesita", "paciente en pijama"],
+            "reglas_horarias": "Horario de visitas: 16:00 a 20:00. Horario de descanso (silencio): 22:00 a 08:00. Esperable encontrar a un paciente descansando o recibiendo tratamiento."
+        },
+        "Habitación Individual 3": {
+            "tipo_zona": "Privada / Pacientes",
+            "objetos_comunes": ["cama de hospital", "portasueros", "monitor de constantes", "sillón de acompañante", "mesita", "paciente en pijama"],
+            "reglas_horarias": "Horario de visitas: 16:00 a 20:00. Horario de descanso (silencio): 22:00 a 08:00. Esperable encontrar a un paciente descansando o recibiendo tratamiento."
+        },
+        "Habitación Individual 4": {
+            "tipo_zona": "Privada / Pacientes",
+            "objetos_comunes": ["cama de hospital", "portasueros", "monitor de constantes", "sillón de acompañante", "mesita", "paciente en pijama"],
+            "reglas_horarias": "Horario de visitas: 16:00 a 20:00. Horario de descanso (silencio): 22:00 a 08:00. Esperable encontrar a un paciente descansando o recibiendo tratamiento."
+        },
+        "Habitación Compartida 1": {
+            "tipo_zona": "Privada / Pacientes",
+            "objetos_comunes": ["varias camas de hospital", "cortinas separadoras", "portasueros", "monitores de constantes", "sillones", "pacientes en pijama"],
+            "reglas_horarias": "Horario de visitas: 16:00 a 20:00. Horario de descanso (silencio): 22:00 a 08:00. Mayor probabilidad de interacción entre múltiples pacientes."
+        },
+        "Habitación Compartida 2": {
+            "tipo_zona": "Privada / Pacientes",
+            "objetos_comunes": ["varias camas de hospital", "cortinas separadoras", "portasueros", "monitores de constantes", "sillones", "pacientes en pijama"],
+            "reglas_horarias": "Horario de visitas: 16:00 a 20:00. Horario de descanso (silencio): 22:00 a 08:00. Mayor probabilidad de interacción entre múltiples pacientes."
+        },
+        "Habitación Compartida 3": {
+            "tipo_zona": "Privada / Pacientes",
+            "objetos_comunes": ["varias camas de hospital", "cortinas separadoras", "portasueros", "monitores de constantes", "sillones", "pacientes en pijama"],
+            "reglas_horarias": "Horario de visitas: 16:00 a 20:00. Horario de descanso (silencio): 22:00 a 08:00. Mayor probabilidad de interacción entre múltiples pacientes."
+        },
+        "Habitación Compartida 4": {
+            "tipo_zona": "Privada / Pacientes",
+            "objetos_comunes": ["varias camas de hospital", "cortinas separadoras", "portasueros", "monitores de constantes", "sillones", "pacientes en pijama"],
+            "reglas_horarias": "Horario de visitas: 16:00 a 20:00. Horario de descanso (silencio): 22:00 a 08:00. Mayor probabilidad de interacción entre múltiples pacientes."
+        },
+        "Habitación Compartida 5": {
+            "tipo_zona": "Privada / Pacientes",
+            "objetos_comunes": ["varias camas de hospital", "cortinas separadoras", "portasueros", "monitores de constantes", "sillones", "pacientes en pijama"],
+            "reglas_horarias": "Horario de visitas: 16:00 a 20:00. Horario de descanso (silencio): 22:00 a 08:00. Mayor probabilidad de interacción entre múltiples pacientes."
+        },
+        "Oficina 1": {
+            "tipo_zona": "Administrativa / Personal",
+            "objetos_comunes": ["escritorios", "sillas de oficina", "ordenadores", "archivadores", "papeleras", "personal médico en bata"],
+            "reglas_horarias": "Uso exclusivo del personal médico y administrativo. Horario laboral activo de 08:00 a 20:00. Suele estar vacía de madrugada."
+        },
+        "Oficina 2": {
+            "tipo_zona": "Administrativa / Personal",
+            "objetos_comunes": ["escritorios", "sillas de oficina", "ordenadores", "archivadores", "papeleras", "personal médico en bata"],
+            "reglas_horarias": "Uso exclusivo del personal médico y administrativo. Horario laboral activo de 08:00 a 20:00. Suele estar vacía de madrugada."
+        },
+        "Sala Común": {
+            "tipo_zona": "Pública / Espera",
+            "objetos_comunes": ["sillas dispuestas en filas", "sofás", "mesas bajas", "televisión", "máquina expendedora", "revistas", "personas con ropa de calle"],
+            "reglas_horarias": "Zona de alta ocupación diurna. Se espera que los familiares esperen aquí sentados. Cualquier altercado o ruido fuerte debe ser reportado."
+        },
+        "Quirófano 1": {
+            "tipo_zona": "Crítica / Alta Esterilidad",
+            "objetos_comunes": ["mesa de operaciones", "focos quirúrgicos", "equipos de anestesia", "monitores", "carritos de instrumental", "personal con uniforme quirúrgico verde/azul"],
+            "reglas_horarias": "Máxima restricción. Solo personal autorizado. Obligatorio uso de ropa quirúrgica (pijamas, gorros, mascarillas). Presencia de pacientes altamente vulnerables."
+        },
+        "Quirófano 2": {
+            "tipo_zona": "Crítica / Alta Esterilidad",
+            "objetos_comunes": ["mesa de operaciones", "focos quirúrgicos", "equipos de anestesia", "monitores", "carritos de instrumental", "personal con uniforme quirúrgico verde/azul"],
+            "reglas_horarias": "Máxima restricción. Solo personal autorizado. Obligatorio uso de ropa quirúrgica (pijamas, gorros, mascarillas). Presencia de pacientes altamente vulnerables."
+        },
+        "Baño 1": {
+            "tipo_zona": "Privada / Servicios",
+            "objetos_comunes": ["lavabo", "espejo", "inodoro", "dispensador de papel", "papelera"],
+            "reglas_horarias": "Zona de privacidad. Prestar especial atención a posibles caídas en el suelo. Nadie debe permanecer durmiendo o deambulando aquí mucho tiempo."
+        },
+        "Baño 2": {
+            "tipo_zona": "Privada / Servicios",
+            "objetos_comunes": ["lavabo", "espejo", "inodoro", "dispensador de papel", "papelera"],
+            "reglas_horarias": "Zona de privacidad. Prestar especial atención a posibles caídas en el suelo. Nadie debe permanecer durmiendo o deambulando aquí mucho tiempo."
+        },
+        "Escaleras 1": {
+            "tipo_zona": "Tránsito / Evacuación",
+            "objetos_comunes": ["escalones", "barandillas", "puertas cortafuegos", "carteles de salida", "extintor"],
+            "reglas_horarias": "Vía de tránsito continuo. Extremadamente importante reportar bloqueos, objetos en los escalones o personas sentadas en las escaleras."
+        },
+        "Escaleras 2": {
+            "tipo_zona": "Tránsito / Evacuación",
+            "objetos_comunes": ["escalones", "barandillas", "puertas cortafuegos", "carteles de salida", "extintor"],
+            "reglas_horarias": "Vía de tránsito continuo. Extremadamente importante reportar bloqueos, objetos en los escalones o personas sentadas en las escaleras."
+        },
+        "Pasillo": {
+            "tipo_zona": "Pública / Tránsito",
+            "objetos_comunes": ["puertas a los lados", "carritos de limpieza", "camillas en movimiento", "sillas de ruedas", "extintores", "personas caminando"],
+            "reglas_horarias": "Zona de tránsito fluido. No debe haber personas durmiendo en el suelo ni obstáculos bloqueando el paso de las camillas."
+        },
+        "Recepción": {
+            "tipo_zona": "Pública / Control",
+            "objetos_comunes": ["mostrador ancho", "ordenadores", "sillas de espera", "carteles informativos", "personal administrativo", "visitantes"],
+            "reglas_horarias": "Punto central de información. Tránsito continuo durante el día. Por la noche (22:00-08:00) debe estar muy tranquilo y vigilado."
+        }
+    }
+}

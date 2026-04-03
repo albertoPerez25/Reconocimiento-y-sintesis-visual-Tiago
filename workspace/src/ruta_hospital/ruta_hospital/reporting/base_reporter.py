@@ -96,7 +96,7 @@ class BaseReporterNode(Node, ABC):
                     continue
 
                 x, y = float(row['x']), float(row['y'])
-                zone = get_zone_name((x,y), self.hospital_zones, getattr(self, 'reception_zone', None))
+                zone = get_zone_name((x,y), self.hospital_zones, self.reception_zone)
                 
                 if zone not in zone_groups:
                     zone_groups[zone] = []

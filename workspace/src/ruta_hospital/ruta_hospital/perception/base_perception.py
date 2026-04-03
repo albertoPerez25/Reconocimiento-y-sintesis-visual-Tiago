@@ -29,11 +29,16 @@ class BasePerceptionNode(Node, ABC):
                     
         self.get_logger().info(f"Analizando imagen: {os.path.basename(request.image_path)}...")
         
-        response.report = self.process_image(request.image_path)
+        # RAG context
+        zone_name = getattr(request, 'zone_name', 'Desconocida') # por si en alguna llamada faltan datos
+        time_str = getattr(request, 'time', 'Desconocida')
+        expected_objects = getattr(request, 'expected_objects', 'No especificados')
+        
+        response.report = self.process_image(request.image_path, zone_name, time_str, expected_objects)
         return response
 
     @abstractmethod
-    def process_image(self, image_path):
+    def process_image(self, image_path, zone_name="Desconocida", time_str="Desconocida", expected_objects="No especificados"):
         '''Método que implementa cada nodo hijo. Devuelve el reporte en forma de string '''
         pass
 

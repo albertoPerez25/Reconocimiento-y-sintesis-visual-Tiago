@@ -2,9 +2,11 @@
 
 
 # Request: ruta absoluta de la imagen a analizar
-
 string image_path
 
+string zone_name
+string time
+string expected_objects
 ---
 
 # Response: texto con la descripción de las personas
