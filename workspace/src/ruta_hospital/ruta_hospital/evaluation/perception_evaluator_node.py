@@ -105,7 +105,8 @@ class PerceptionEvaluatorNode(BaseEvaluatorNode):
             req.image_path = img_path
             req.zone_name = image.get("zone_name", "Desconocida")
             req.time = image.get("time", "Desconocida")
-            req.expected_objects = image.get("expected_objects", "No especificados")
+            req.expected_activities = image.get("expected_activities", "No especificadas")
+            req.zone_type = image.get("zone_type", "Desconocida")
             
             try:
                 result = await self.vision_cli.call_async(req)
