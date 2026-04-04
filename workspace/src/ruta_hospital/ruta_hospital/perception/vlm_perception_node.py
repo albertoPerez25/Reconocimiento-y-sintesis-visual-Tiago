@@ -19,52 +19,50 @@ class VLMPerceptionNode(BasePerceptionNode):
         self.vlm_model = self.get_parameter('vlm_model').get_parameter_value().string_value
         self.ollama_url = self.get_parameter('ollama_url').get_parameter_value().string_value
 
-    def process_image(self, image_path, zone_name="Desconocida", time_str="Desconocida", expected_objects="No especificados"):
+    def process_image(self, image_path, context):
         '''Interactua con el modelo y devuelve el reporte en forma de string'''
-
-        payload = self.get_payload(image_path, zone_name, time_str, expected_objects)
+        payload = self.get_payload(image_path, context.zone_name, context.time_str, context.expected_activities, context.zone_type)
 
         try:
-            vlm_text = call_ollama_api(self.ollama_url, payload)
+            vlm_text = call_ollama_api(self.ollama_url, payload).strip()
             
-            # Limpiamos el output por si el LLM mete texto extra antes o después del JSON
-            match = re.search(r'\{.*\}', vlm_text, re.DOTALL)
-            
-            if match:
-                json_str = match.group(0)
-                # para comprobar que realmente es un JSON antes de enviarlo
-                json.loads(json_str) 
-                return json_str
+            if any(term in vlm_text.lower() for term in ["despejado", "empty", "no people"]):
+                descripcion = "Despejado"
+                alerta = False
             else:
-                self.get_logger().warn(f"El VLM no devolvió un JSON válido: {vlm_text}")
-                return '{"descripcion_vlm": "Error de formato VLM", "alerta": false}'
+                descripcion = vlm_text
+                alerta = True # Si dijo cualquier otra cosa, es que hay personas
+            
+            json_str = json.dumps({
+                "descripcion_vlm": descripcion,
+                "alerta": alerta
+            }, ensure_ascii=False)
+
+            self.get_logger().debug(f"RESPUESTA DEL VLM: {json_str}")
+            return json_str
                 
         except Exception as e:
             self.get_logger().error(f"Error conectando con el VLM: {e}")
-            return f"Error de inferencia VLM: {e}"
+            error_json = {
+                "descripcion_vlm": f"Error de inferencia VLM: {e}", 
+                "alerta": False
+            }
+            return json.dumps(error_json, ensure_ascii=False)
         
-    def get_payload(self, image_path, zone_name, time_str, expected_objects):
+    def get_payload(self, image_path, zone_name, time_str, expected_activities, zone_type):
         '''Crea el prompt y devuelve el payload completo para enviarle al modelo'''
+        #               Contexto:        Ubicación: {zone_name}.  - Hora: {time_str}(Puede que veas estos objetos en la zona: {expected_objects}. Ignóralos a menos que una persona esté interactuando con ellos).
         prompt = f"""
-        You are a security AI. Analyze the image and output ONLY a valid JSON.
-        
-        Estás en la zona '{zone_name}' a las {time_str}. 
-        Objetos esperados: {expected_objects}. 
-        Infiere la actividad humana considerando este contexto.
-
-        - If the room is empty and safe, the description must be exactly: "Despejado".
-        - If there are people or danger, or someone has fallon on the ground, describe them briefly in SPANISH.
-        - If there's something in the way, like an out of place or tipped over trolley, say it.
-        - Set "alerta" to true ONLY if there is an emergency, danger or something out of place.
-
-        Example of expected output:
-        {{
-          "descripcion_vlm": "Despejado",
-          "alerta": false
-        }}
+        Estás en {zone_name} dentro de un hospital. Es una zona de tipo {zone_type}. 
+        En esta zona puede que veas gente {expected_activities}.
+        Describe BREVEMENTE QUÉ HACEN las personas de la imagen. 
+        Si no ves personas responde única y exactamente con "Despejado."
         """
+        
+    
+        self.get_logger().debug(f"PROMPT AL VLM: {prompt}")
         base64_img = encode_image_to_base64(image_path)
-        payload = {"model": self.vlm_model, "prompt": prompt, "images": [base64_img], "stream": False, "format": "json"}
+        payload = {"model": self.vlm_model, "prompt": prompt, "images": [base64_img], "stream": False}
 
         return payload
     

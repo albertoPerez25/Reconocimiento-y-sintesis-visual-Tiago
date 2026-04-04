@@ -24,7 +24,7 @@ class YoloPerceptionNode(BasePerceptionNode):
         self.model = YOLO(selected_yolo_model)
         self.get_logger().info(f"Modelo {selected_yolo_model} cargado")
 
-    def process_image(self, image_path: str, zone_name="Desconocida", time_str="Desconocida", expected_objects="No especificados") -> str:
+    def process_image(self, image_path, context):
         '''Procesa la imagen y devuelve el reporte en forma de string '''
         image = cv2.imread(image_path)
         if image is None:

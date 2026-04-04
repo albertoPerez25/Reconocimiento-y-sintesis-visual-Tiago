@@ -140,8 +140,9 @@ class LLMReporterNode(BaseReporterNode):
 
         req.zone_name = zone
         req.time = f"{images[0]['time']}s - {images[-1]['time']}s"
-        objects = self.get_zone_metadata(zone).get("objetos_comunes", [])
-        req.expected_objects = ", ".join(objects) if objects else "No especificados"
+        activities = self.get_zone_metadata(zone).get("actividades_comunes", [])
+        req.expected_activities = ", ".join(activities) if activities else "No especificados"
+        req.zone_type = zone_data["tipo_zona"] # TODO: Cambiar todo para que sea coherente con el nuevo json de metadatos de hospital
 
         result = await self.vision_cli.call_async(req)
         
@@ -175,8 +176,9 @@ class LLMReporterNode(BaseReporterNode):
 
             req.zone_name = zone
             req.time = f"{img['time']}s"
-            objects = self.get_zone_metadata(zone).get("objetos_comunes", [])
-            req.expected_objects = ", ".join(objects) if objects else "No especificados"
+            activities = self.get_zone_metadata(zone).get("actividades_comunes", [])
+            req.expected_activities = ", ".join(activities) if activities else "No especificados"
+            req.zone_type = zone_data["tipo_zona"] # TODO: Cambiar todo para que sea coherente con el nuevo json de metadatos de hospital
 
             result = await self.vision_cli.call_async(req) 
             
@@ -202,8 +204,8 @@ class LLMReporterNode(BaseReporterNode):
 
     def generate_global_summary(self, global_context, result):
         '''Toma todos los mini reportes y genera el resumen final unificado'''
-        self.get_logger().info("Generando informe global unificado con Llama-3...")
-        self.get_logger().info(f"CONTEXTO:{global_context}")
+        self.get_logger().info("Generando informe global unificado...")
+        self.get_logger().debug(f"CONTEXTO:{global_context}")
         
         final_prompt = self.get_final_prompt(global_context)
         

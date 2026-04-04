@@ -1279,6 +1279,34 @@
         <pose>1.30985 -9.727185 -0 0 0 -1.53446</pose>
       </include>
     </model>
+    <model name="Fallen_Person_HabCompartida2">
+      <include>
+        <uri>model://Scrubs</uri>
+        <static>true</static>
+        <pose>8.5 -26.0 0.1 1.57 -1.5 -1.57</pose> 
+      </include>
+    </model>
+    <model name="PhoneVisitor_SalaComun_1">
+      <include>
+        <uri>model://MaleVisitorOnPhone</uri>
+        <static>true</static>
+        <pose>-10.5 -35.5 0 0 0 0</pose>
+      </include>
+    </model>
+    <model name="PhoneVisitor_SalaComun_2">
+      <include>
+        <uri>model://MaleVisitorOnPhone</uri>
+        <static>true</static>
+        <pose>-9.5 -35.5 0 0 0 3.24</pose>
+      </include>
+    </model>
+    <model name="Sitting_Person_Office2">
+      <include>
+        <uri>model://FemaleVisitorSit</uri>
+        <static>true</static>
+        <pose>-1.25321 -15.4505 0 0 0 3.13125</pose>
+      </include>
+    </model>
     <actor name="Walking_actor_reception">
       <skin>
         <filename>walk.dae</filename>

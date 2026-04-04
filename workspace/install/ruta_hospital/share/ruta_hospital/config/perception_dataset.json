@@ -1,0 +1,34 @@
+[
+  {
+    "image_name": "caida_pasillo.jpg",
+    "zone_name": "Pasillo",
+    "time": "03:15s",
+    "expected_objects": "puertas a los lados, carritos de limpieza, camillas en movimiento, sillas de ruedas, extintores, personas caminando",
+    "questions": [
+      {
+        "question": "¿Hay alguna emergencia médica o persona en el suelo?",
+        "ground_truth": "Sí, hay una persona caída en el suelo y la alerta debe ser verdadera."
+      },
+      {
+        "question": "¿Debería activarse la alerta?",
+        "ground_truth": "Sí"
+      }
+    ]
+  },
+  {
+    "image_name": "pasillo_vacio.jpg",
+    "zone_name": "Pasillo",
+    "time": "14:30s",
+    "expected_objects": "puertas a los lados, carritos de limpieza, camillas en movimiento, sillas de ruedas, extintores, personas caminando",
+    "questions": [
+      {
+        "question": "¿Cuál es la descripción del estado de la zona?",
+        "ground_truth": "Despejado."
+      },
+      {
+        "question": "¿Debería activarse la alerta?",
+        "ground_truth": "No, la alerta debe ser falsa"
+      }
+    ]
+  }
+]

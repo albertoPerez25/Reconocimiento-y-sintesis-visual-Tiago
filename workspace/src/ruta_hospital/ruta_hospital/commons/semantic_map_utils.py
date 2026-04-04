@@ -24,7 +24,7 @@ def get_nearest_room(position, semantic_map):
     x, y = position[0], position[1]
     
     if not semantic_map:
-        return nearest_room, min_dist
+        return nearest_room
 
     for room_name, coords in semantic_map.items():
         cx = (coords["esquina1"][0] + coords["esquina2"][0]) / 2.0
@@ -34,7 +34,7 @@ def get_nearest_room(position, semantic_map):
             min_dist = dist
             nearest_room = room_name
             
-    return nearest_room, min_dist
+    return nearest_room
 
 def get_zone_name(position, hospital_zones, reception_zone=None):
     ''' Obtiene el nombre de las coordenadas x,y '''

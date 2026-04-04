@@ -22,14 +22,16 @@ class HybridPerceptionNode(BasePerceptionNode):
         
         self.get_logger().info("Nodo percepcion con YOLO y VLM iniciado")
 
-    def process_image(self, image_path: str, zone_name="Desconocida", time_str="Desconocida", expected_objects="No especificados") -> str:
+    def process_image(self, image_path, context):
         '''Combina los reportes de YOLO y VLM'''
+
         self.get_logger().info(f"Procesamiento híbrido iniciado para: {image_path}")
+        self.get_logger().debug(f"zone_name:{context.zone_name} | time_str:{context.time_str} | expected_activities:{context.expected_activities} | zone_type:{context.zone_type}")
 
         # Posiciones y conteo exacto
-        yolo_json_str = self.yolo_logic.process_image(image_path, zone_name, time_str, expected_objects)
+        yolo_json_str = self.yolo_logic.process_image(image_path, None)
         # Contexto, peligros y descripción
-        vlm_json_str = self.vlm_logic.process_image(image_path, zone_name, time_str, expected_objects)
+        vlm_json_str = self.vlm_logic.process_image(image_path, context)
 
         try:
             yolo_data = json.loads(yolo_json_str)
@@ -41,12 +43,12 @@ class HybridPerceptionNode(BasePerceptionNode):
         except json.JSONDecodeError:
             vlm_data = {"descripcion_vlm": "Error de formato VLM", "alerta": False}
 
-        yolo_desc = yolo_data.get("descripcion_vlm", "")
-        yolo_alert = yolo_data.get("alerta", False)
+        yolo_desc = str(yolo_data.get("descripcion_vlm", "")) 
+        yolo_alert = bool(yolo_data.get("alerta", False))
         yolo = model_atr(yolo_desc,yolo_alert)
 
-        vlm_desc = vlm_data.get("descripcion_vlm", "")
-        vlm_alert = vlm_data.get("alerta", False)
+        vlm_desc = str(vlm_data.get("descripcion_vlm", "")) # Convierto a str o bool para evitar que crashe si el vlm alucina pero devuelve un formato json "valido"
+        vlm_alert = bool(vlm_data.get("alerta", False))
         vlm = model_atr(vlm_desc,vlm_alert)
 
         final_desc,final_alert = self.get_combined_json(yolo,vlm)
@@ -55,6 +57,7 @@ class HybridPerceptionNode(BasePerceptionNode):
             "descripcion_vlm": final_desc,
             "alerta": final_alert
         }
+        self.get_logger().debug(f"{json_response}")
         return json.dumps(json_response, ensure_ascii=False)
     
     def get_combined_json(self, yolo, vlm):
