@@ -21,8 +21,7 @@ class VLMPerceptionNode(BasePerceptionNode):
 
     def process_image(self, image_path, context):
         '''Interactua con el modelo y devuelve el reporte en forma de string'''
-        payload = self.get_payload(image_path, context.zone_name, context.time_str, context.expected_activities, context.zone_type)
-
+        payload = self.get_payload(image_path, context)
         try:
             vlm_text = call_ollama_api(self.ollama_url, payload).strip()
             
@@ -49,15 +48,28 @@ class VLMPerceptionNode(BasePerceptionNode):
             }
             return json.dumps(error_json, ensure_ascii=False)
         
-    def get_payload(self, image_path, zone_name, time_str, expected_activities, zone_type):
+    def get_payload(self, image_path, context):
         '''Crea el prompt y devuelve el payload completo para enviarle al modelo'''
-        #               Contexto:        Ubicación: {zone_name}.  - Hora: {time_str}(Puede que veas estos objetos en la zona: {expected_objects}. Ignóralos a menos que una persona esté interactuando con ellos).
+        tracking_hist = getattr(context, 'tracking_history', '')
         prompt = f"""
-        Estás en {zone_name} dentro de un hospital. Es una zona de tipo {zone_type}. 
-        En esta zona puede que veas gente {expected_activities}.
-        Describe BREVEMENTE QUÉ HACEN las personas de la imagen. 
-        Si no ves personas responde única y exactamente con "Despejado."
+        Estás en {context.zone_name} dentro de un hospital. Es una zona de tipo {context.zone_type}. 
+        En esta zona puede que veas gente {context.expected_activities}.
         """
+        
+        if tracking_hist:
+            prompt += f"""
+            [MEMORIA A CORTO PLAZO]:
+            {tracking_hist}
+            
+            Instrucciones críticas:
+            Fíjate en las cajas de colores dibujadas en la imagen para identificar a los sujetos. 
+            Describe BREVEMENTE QUÉ HACEN y cómo interactúan, basándote en la memoria reciente.
+            """
+        else:
+            prompt += """
+            Describe BREVEMENTE QUÉ HACEN las personas de la imagen. 
+            Si no ves personas responde única y exactamente con "Despejado."
+            """
         
     
         self.get_logger().debug(f"PROMPT AL VLM: {prompt}")

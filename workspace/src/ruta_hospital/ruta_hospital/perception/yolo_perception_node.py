@@ -30,23 +30,32 @@ class YoloPerceptionNode(BasePerceptionNode):
         if image is None:
             return json.dumps({"descripcion_vlm": "Error: No se pudo leer la imagen con OpenCV", "alerta": False}, ensure_ascii=False)
 
-        results = self.model(image, verbose=False)
+        results = self.model.track(image, persist=True, verbose=False)
         result = results[0]
 
         if len(result.boxes) == 0:
             return json.dumps({"descripcion_vlm": "Despejado", "alerta": False}, ensure_ascii=False)
 
         descriptions = []
+        detections = []
         global_alert = False
 
-        for i, (box, keypoints) in enumerate(zip(result.boxes, result.keypoints)):
+        ids = result.boxes.id.int().cpu().tolist() if result.boxes.id is not None else [i+1 for i in range(len(result.boxes))]
+
+        for box, keypoints, track_id in zip(result.boxes, result.keypoints, ids):
             x1, y1, x2, y2 = box.xyxy[0].tolist()
             width, height = x2 - x1, y2 - y1 
             pts = keypoints.xy[0].tolist()
             confs = keypoints.conf[0].tolist()
             
             posture = self.calculate_posture(width, height, pts, confs)
-            descriptions.append(f"Persona {i+1}: {posture}")
+            descriptions.append(f"Persona {track_id}: {posture}")
+
+            detections.append({
+                "id": track_id,
+                "bbox": [int(x1), int(y1), int(x2), int(y2)],
+                "posture": posture
+            })
 
             if "ATENCIÓN" in posture:
                 global_alert = True
@@ -56,7 +65,8 @@ class YoloPerceptionNode(BasePerceptionNode):
 
         json_response = {
             "descripcion_vlm": final_description,
-            "alerta": global_alert
+            "alerta": global_alert,
+            "detecciones": detections
         }
 
         return json.dumps(json_response, ensure_ascii=False) # evita que se rompan los acentos
