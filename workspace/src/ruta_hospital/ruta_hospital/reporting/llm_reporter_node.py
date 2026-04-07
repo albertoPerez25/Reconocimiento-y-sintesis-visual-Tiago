@@ -111,9 +111,10 @@ class LLMReporterNode(BaseReporterNode):
 
         zone_data = {
             #"limites": self.get_zone_limits(zona),
-            "rango_temporal": f"{min_time}s - {max_time}s",
+            "nombre_zona": zone,
             "tipo_zona": zone_info.get("tipo_zona", "Desconocida"),
             #"reglas_horarias": zona_info.get("reglas_horarias", "No hay reglas específicas."),
+            "rango_temporal": f"{min_time}s - {max_time}s",
             "eventos_recientes": []
         }
         
