@@ -8,6 +8,9 @@ from .yolo_perception_node import YoloPerceptionNode
 from .vlm_perception_node import VLMPerceptionNode
 from dataclasses import dataclass
 
+DEFAULT_ANNOTATED_IMG_PATH = "/tmp/annotated_vlm_frame.jpg"
+DEFAULT_DELETE_ANNOTATED_IMG = True
+
 @dataclass
 class model_atr:
     desc: str
@@ -23,6 +26,13 @@ class HybridPerceptionNode(BasePerceptionNode):
 
         # Memoria a corto plazo
         self.tracking_memory = {}
+
+        # Parametros
+        self.declare_parameter('annotated_image_path', DEFAULT_ANNOTATED_IMG_PATH)
+        self.declare_parameter('delete_annotated_image', DEFAULT_DELETE_ANNOTATED_IMG)
+
+        self.annotated_image_path = self.get_parameter('annotated_image_path').get_parameter_value().string_value
+        self.delete_annotated_image = self.get_parameter('delete_annotated_image').get_parameter_value().bool_value
         
         self.get_logger().info("Nodo percepcion con YOLO y VLM iniciado")
 
@@ -48,7 +58,7 @@ class HybridPerceptionNode(BasePerceptionNode):
         vlm_json_str = self.vlm_logic.process_image(image_to_vlm, context)
 
         # Limpiaer frame temporal
-        if image_to_vlm == "/tmp/annotated_vlm_frame.jpg" and os.path.exists(image_to_vlm):
+        if self.delete_annotated_image and image_to_vlm == self.annotated_image_path and os.path.exists(image_to_vlm):
             os.remove(image_to_vlm)
 
         try:
@@ -62,7 +72,7 @@ class HybridPerceptionNode(BasePerceptionNode):
     
     def get_image_with_tracking_data(self, detections, image_path, context):
         '''Devuelve la imagen con un recuadrado señalando el trackeo hecho por YOLO'''
-        final_image = image_path
+        final_image_path = image_path
         img_cv = cv2.imread(image_path)
         if img_cv is not None:
             history_str = ""
@@ -92,10 +102,10 @@ class HybridPerceptionNode(BasePerceptionNode):
                 cv2.rectangle(img_cv, (bbox[0], bbox[1]), (bbox[2], bbox[3]), color_bgr, 3)
             
             context.tracking_history = history_str
-            final_image = "/tmp/annotated_vlm_frame.jpg"
-            cv2.imwrite(final_image, img_cv)
+            final_image_path = self.annotated_image_path
+            cv2.imwrite(final_image_path, img_cv)
 
-            return final_image
+            return final_image_path
     
     def get_combined_json(self, yolo, vlm):
         '''Devuelve la descripcion y alertas finales teniendo en cuenta los json de yolo y del vlm'''
