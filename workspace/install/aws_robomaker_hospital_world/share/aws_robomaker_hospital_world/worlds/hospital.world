@@ -1309,12 +1309,12 @@
     </model>
     <actor name="Walking_actor_reception">
       <skin>
-        <filename>walk.dae</filename>
-        <scale>1.0</scale>
+        <filename>model://actor_Kate/walking.dae</filename>
+        <scale>0.01</scale>
       </skin>
       <animation name="walking">
-        <filename>walk.dae</filename>
-        <scale>1.0</scale>
+        <filename>model://actor_Kate/walking.dae</filename>
+        <scale>0.01</scale>
         <interpolate_x>true</interpolate_x>
       </animation>
       <script>
@@ -1347,12 +1347,12 @@
     </actor>
     <actor name="Walking_actor_hallway">
       <skin>
-        <filename>walk.dae</filename>
-        <scale>1.0</scale>
+        <filename>model://actor_Joe/walking.dae</filename>
+        <scale>0.01</scale>
       </skin>
-      <animation name="walking">
-        <filename>walk.dae</filename>
-        <scale>1.0</scale>
+      <animation name="running">
+        <filename>model://actor_Joe/walking.dae</filename>
+        <scale>0.01</scale>
         <interpolate_x>true</interpolate_x>
       </animation>
       <script>
@@ -1430,12 +1430,12 @@
     </actor>
     <actor name="Running_actor_hallway">
       <skin>
-        <filename>run.dae</filename>
-        <scale>1.0</scale>
+        <filename>model://actor_doctor/running.dae</filename>
+        <scale>0.01</scale>
       </skin>
       <animation name="running">
-        <filename>run.dae</filename>
-        <scale>1.0</scale>
+        <filename>model://actor_doctor/running.dae</filename>
+        <scale>0.01</scale>
         <interpolate_x>true</interpolate_x>
       </animation>
       <script>
@@ -1534,12 +1534,12 @@
     </actor>
     <actor name="Walking_actor_reception_2">
       <skin>
-        <filename>walk.dae</filename>
-        <scale>1.0</scale>
+        <filename>model://actor_theboss/walking.dae</filename>
+        <scale>0.01</scale>
       </skin>
       <animation name="walking">
-        <filename>walk.dae</filename>
-        <scale>1.0</scale>
+        <filename>model://actor_theboss/walking.dae</filename>
+        <scale>0.01</scale>
         <interpolate_x>true</interpolate_x>
       </animation>
       <script>
