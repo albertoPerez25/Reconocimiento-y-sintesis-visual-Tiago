@@ -1,0 +1,86 @@
+[
+  {
+    "question": "¿Cuántas personas hay exactamente en la zona de Recepción en este momento?",
+    "ground_truth": "Hay seis personas"
+  },
+  {
+    "question": "¿Hay alguna persona presente en la Habitación Individual 1 o se encuentra vacía?",
+    "ground_truth": "No hay nadie en la Habitación Individual 1"
+  },
+  {
+    "question": "¿El pasillo está completamente vacío o hay personas transitando por él?",
+    "ground_truth": "Hay varias personas, una caminando, otra corriendo y una trabajadora del hospital llevando a un paciente en silla de ruedas"
+  },
+  {
+    "question": "¿Cuántas personas en total se detectan dentro de la Habitación Compartida 2?",
+    "ground_truth": "No hay nadie en la Habitacion Compartida 2"
+  },
+  {
+    "question": "¿Hay alguien presente dentro del Quirófano 2?",
+    "ground_truth": "Sí, se está realizando una intervención a un paciente que está tumbado en la cama. Hay tres trabajadores del hospital realizandolo"
+  },
+  {
+    "question": "¿Se está haciendo alguna actividad en el Quirófano 2?",
+    "ground_truth": "Sí, se está realizando una intervención quirúrgica a un paciente que está tumbado en la cama. Hay tres trabajadores del hospital realizandolo"
+  },
+  {
+    "question": "¿Se detecta a alguna persona caída en el suelo en alguna zona del hospital?",
+    "ground_truth": "Sí, hay una trabajadora en el suelo en la Habitación Compartida 2"
+  },
+  {
+    "question": "En la Habitación Compartida 4, ¿las personas detectadas están acostadas en las camas o hay alguien de pie/sentado?",
+    "ground_truth": "Hay dos pacientes en las camas y una trabajadora de pie al lado de uno de los pacientes"
+  },
+  {
+    "question": "¿Cuántas personas hay actualmente en la Sala Común?",
+    "ground_truth": "En la sala común hay dos personas de pie con el móvil, frente a frente"
+  },
+  {
+    "question": "¿Hay alguien que requiera asistencia en el interior de algún Baño?",
+    "ground_truth": "No, no hay nadie en ningún baño"
+  },
+  {
+    "question": "¿Hay cajas o paquetes en los almacenes?",
+    "ground_truth": "Sí, hay una montaña de cajas en ambos almacenes"
+  },
+  {
+    "question": "¿Qué actividad está realizando la persona en la Oficina 2 (ej. trabajando en el ordenador, leyendo, hablando)?",
+    "ground_truth": "Hay una empleada sentada detrás del escritorio. No parece estar haciendo nada"
+  },
+  {
+    "question": "En la zona de Recepción, ¿hay alguien interactuando directamente con el mostrador o están únicamente esperando?",
+    "ground_truth": "Hay tres personas de pie esperando/hablando, un hombre con el móvil, una mujer con un bolso y un hombre caminando. En las sillas se ven a varias sentadas, algunas con el móvil y un niño leyendo un libro"
+  },
+  {
+    "question": "¿Se observa a alguien manipulando objetos, estanterías o cajas dentro del Almacén 1?",
+    "ground_truth": "No hay nadie en el Almacén 1"
+  },
+  {
+    "question": "¿La cama de la Habitación Individual 4 se encuentra ocupada por un paciente en este momento?",
+    "ground_truth": "Sí, hay una mujer sentada en la cama"
+  },
+  {
+    "question": "¿Se detecta a alguien interactuando con equipamiento médico en el Quirófano 2?",
+    "ground_truth": "Sí, hay tres trabajadores de pie interactuando con equipo médico y un paciente en la cama"
+  },
+  {
+    "question": "¿Se detecta a alguna persona presente en la sala compartida 2?",
+    "ground_truth": "Sí, hay una mujer tirada en el suelo. Se recomienda enviar ayuda"
+  },
+  {
+    "question": "¿Hay más de una persona simultáneamente detrás del mostrador de la Recepción atendiendo a los visitantes?",
+    "ground_truth": "Solo hay una empleada atendiendo a los visitantes"
+  },
+  {
+    "question": "En la Habitación Compartida 5, ¿hay algún trabajador (persona de pie) acompañando a los pacientes acostados?",
+    "ground_truth": "Sí, hay un trabajador de pie cerca a una cama con un paciente"
+  },
+  {
+    "question": "¿Hay alguien deambulando por el pasillo?",
+    "ground_truth": "Hay dos personas deambulando por el pasillo"
+  },
+  {
+    "question": "¿Se ha detectado la presencia de alguna persona obstaculizando el paso o sentada en los peldaños de las Escaleras 2?",
+    "ground_truth": "No hay nadie en las escaleras 2."
+  }
+]

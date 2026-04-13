@@ -11,6 +11,14 @@ module hospital_interfaces {
       @verbatim (language="comment", text=
         "Request: ruta absoluta de la imagen a analizar")
       string image_path;
+
+      string zone_name;
+
+      string time;
+
+      string expected_activities;
+
+      string zone_type;
     };
     struct AnalyzeActivity_Response {
       @verbatim (language="comment", text=

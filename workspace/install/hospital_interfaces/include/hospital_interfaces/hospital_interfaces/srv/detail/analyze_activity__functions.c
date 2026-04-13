@@ -12,6 +12,10 @@
 
 // Include directives for member types
 // Member `image_path`
+// Member `zone_name`
+// Member `time`
+// Member `expected_activities`
+// Member `zone_type`
 #include "rosidl_runtime_c/string_functions.h"
 
 bool
@@ -22,6 +26,26 @@ hospital_interfaces__srv__AnalyzeActivity_Request__init(hospital_interfaces__srv
   }
   // image_path
   if (!rosidl_runtime_c__String__init(&msg->image_path)) {
+    hospital_interfaces__srv__AnalyzeActivity_Request__fini(msg);
+    return false;
+  }
+  // zone_name
+  if (!rosidl_runtime_c__String__init(&msg->zone_name)) {
+    hospital_interfaces__srv__AnalyzeActivity_Request__fini(msg);
+    return false;
+  }
+  // time
+  if (!rosidl_runtime_c__String__init(&msg->time)) {
+    hospital_interfaces__srv__AnalyzeActivity_Request__fini(msg);
+    return false;
+  }
+  // expected_activities
+  if (!rosidl_runtime_c__String__init(&msg->expected_activities)) {
+    hospital_interfaces__srv__AnalyzeActivity_Request__fini(msg);
+    return false;
+  }
+  // zone_type
+  if (!rosidl_runtime_c__String__init(&msg->zone_type)) {
     hospital_interfaces__srv__AnalyzeActivity_Request__fini(msg);
     return false;
   }
@@ -36,6 +60,14 @@ hospital_interfaces__srv__AnalyzeActivity_Request__fini(hospital_interfaces__srv
   }
   // image_path
   rosidl_runtime_c__String__fini(&msg->image_path);
+  // zone_name
+  rosidl_runtime_c__String__fini(&msg->zone_name);
+  // time
+  rosidl_runtime_c__String__fini(&msg->time);
+  // expected_activities
+  rosidl_runtime_c__String__fini(&msg->expected_activities);
+  // zone_type
+  rosidl_runtime_c__String__fini(&msg->zone_type);
 }
 
 bool
@@ -47,6 +79,30 @@ hospital_interfaces__srv__AnalyzeActivity_Request__are_equal(const hospital_inte
   // image_path
   if (!rosidl_runtime_c__String__are_equal(
       &(lhs->image_path), &(rhs->image_path)))
+  {
+    return false;
+  }
+  // zone_name
+  if (!rosidl_runtime_c__String__are_equal(
+      &(lhs->zone_name), &(rhs->zone_name)))
+  {
+    return false;
+  }
+  // time
+  if (!rosidl_runtime_c__String__are_equal(
+      &(lhs->time), &(rhs->time)))
+  {
+    return false;
+  }
+  // expected_activities
+  if (!rosidl_runtime_c__String__are_equal(
+      &(lhs->expected_activities), &(rhs->expected_activities)))
+  {
+    return false;
+  }
+  // zone_type
+  if (!rosidl_runtime_c__String__are_equal(
+      &(lhs->zone_type), &(rhs->zone_type)))
   {
     return false;
   }
@@ -64,6 +120,30 @@ hospital_interfaces__srv__AnalyzeActivity_Request__copy(
   // image_path
   if (!rosidl_runtime_c__String__copy(
       &(input->image_path), &(output->image_path)))
+  {
+    return false;
+  }
+  // zone_name
+  if (!rosidl_runtime_c__String__copy(
+      &(input->zone_name), &(output->zone_name)))
+  {
+    return false;
+  }
+  // time
+  if (!rosidl_runtime_c__String__copy(
+      &(input->time), &(output->time)))
+  {
+    return false;
+  }
+  // expected_activities
+  if (!rosidl_runtime_c__String__copy(
+      &(input->expected_activities), &(output->expected_activities)))
+  {
+    return false;
+  }
+  // zone_type
+  if (!rosidl_runtime_c__String__copy(
+      &(input->zone_type), &(output->zone_type)))
   {
     return false;
   }

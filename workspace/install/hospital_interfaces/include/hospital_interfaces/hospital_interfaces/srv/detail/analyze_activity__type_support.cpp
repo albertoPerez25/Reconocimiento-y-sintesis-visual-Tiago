@@ -37,7 +37,7 @@ void AnalyzeActivity_Request_fini_function(void * message_memory)
   typed_message->~AnalyzeActivity_Request();
 }
 
-static const ::rosidl_typesupport_introspection_cpp::MessageMember AnalyzeActivity_Request_message_member_array[1] = {
+static const ::rosidl_typesupport_introspection_cpp::MessageMember AnalyzeActivity_Request_message_member_array[5] = {
   {
     "image_path",  // name
     ::rosidl_typesupport_introspection_cpp::ROS_TYPE_STRING,  // type
@@ -54,13 +54,81 @@ static const ::rosidl_typesupport_introspection_cpp::MessageMember AnalyzeActivi
     nullptr,  // fetch(index, &value) function pointer
     nullptr,  // assign(index, value) function pointer
     nullptr  // resize(index) function pointer
+  },
+  {
+    "zone_name",  // name
+    ::rosidl_typesupport_introspection_cpp::ROS_TYPE_STRING,  // type
+    0,  // upper bound of string
+    nullptr,  // members of sub message
+    false,  // is array
+    0,  // array size
+    false,  // is upper bound
+    offsetof(hospital_interfaces::srv::AnalyzeActivity_Request, zone_name),  // bytes offset in struct
+    nullptr,  // default value
+    nullptr,  // size() function pointer
+    nullptr,  // get_const(index) function pointer
+    nullptr,  // get(index) function pointer
+    nullptr,  // fetch(index, &value) function pointer
+    nullptr,  // assign(index, value) function pointer
+    nullptr  // resize(index) function pointer
+  },
+  {
+    "time",  // name
+    ::rosidl_typesupport_introspection_cpp::ROS_TYPE_STRING,  // type
+    0,  // upper bound of string
+    nullptr,  // members of sub message
+    false,  // is array
+    0,  // array size
+    false,  // is upper bound
+    offsetof(hospital_interfaces::srv::AnalyzeActivity_Request, time),  // bytes offset in struct
+    nullptr,  // default value
+    nullptr,  // size() function pointer
+    nullptr,  // get_const(index) function pointer
+    nullptr,  // get(index) function pointer
+    nullptr,  // fetch(index, &value) function pointer
+    nullptr,  // assign(index, value) function pointer
+    nullptr  // resize(index) function pointer
+  },
+  {
+    "expected_activities",  // name
+    ::rosidl_typesupport_introspection_cpp::ROS_TYPE_STRING,  // type
+    0,  // upper bound of string
+    nullptr,  // members of sub message
+    false,  // is array
+    0,  // array size
+    false,  // is upper bound
+    offsetof(hospital_interfaces::srv::AnalyzeActivity_Request, expected_activities),  // bytes offset in struct
+    nullptr,  // default value
+    nullptr,  // size() function pointer
+    nullptr,  // get_const(index) function pointer
+    nullptr,  // get(index) function pointer
+    nullptr,  // fetch(index, &value) function pointer
+    nullptr,  // assign(index, value) function pointer
+    nullptr  // resize(index) function pointer
+  },
+  {
+    "zone_type",  // name
+    ::rosidl_typesupport_introspection_cpp::ROS_TYPE_STRING,  // type
+    0,  // upper bound of string
+    nullptr,  // members of sub message
+    false,  // is array
+    0,  // array size
+    false,  // is upper bound
+    offsetof(hospital_interfaces::srv::AnalyzeActivity_Request, zone_type),  // bytes offset in struct
+    nullptr,  // default value
+    nullptr,  // size() function pointer
+    nullptr,  // get_const(index) function pointer
+    nullptr,  // get(index) function pointer
+    nullptr,  // fetch(index, &value) function pointer
+    nullptr,  // assign(index, value) function pointer
+    nullptr  // resize(index) function pointer
   }
 };
 
 static const ::rosidl_typesupport_introspection_cpp::MessageMembers AnalyzeActivity_Request_message_members = {
   "hospital_interfaces::srv",  // message namespace
   "AnalyzeActivity_Request",  // message name
-  1,  // number of fields
+  5,  // number of fields
   sizeof(hospital_interfaces::srv::AnalyzeActivity_Request),
   AnalyzeActivity_Request_message_member_array,  // message members
   AnalyzeActivity_Request_init_function,  // function to initialize message memory (memory has to be allocated)

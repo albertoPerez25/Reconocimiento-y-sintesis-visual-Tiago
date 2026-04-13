@@ -2,7 +2,7 @@ import os
 import shutil
 
 def delete_folder(path, logger):
-    '''Borra una carpeta de forma segura'''
+    '''Borra una carpeta'''
     try:
         if os.path.exists(path):
             shutil.rmtree(path)

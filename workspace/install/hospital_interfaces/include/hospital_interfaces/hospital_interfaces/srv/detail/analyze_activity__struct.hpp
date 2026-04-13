@@ -40,16 +40,28 @@ struct AnalyzeActivity_Request_
       rosidl_runtime_cpp::MessageInitialization::ZERO == _init)
     {
       this->image_path = "";
+      this->zone_name = "";
+      this->time = "";
+      this->expected_activities = "";
+      this->zone_type = "";
     }
   }
 
   explicit AnalyzeActivity_Request_(const ContainerAllocator & _alloc, rosidl_runtime_cpp::MessageInitialization _init = rosidl_runtime_cpp::MessageInitialization::ALL)
-  : image_path(_alloc)
+  : image_path(_alloc),
+    zone_name(_alloc),
+    time(_alloc),
+    expected_activities(_alloc),
+    zone_type(_alloc)
   {
     if (rosidl_runtime_cpp::MessageInitialization::ALL == _init ||
       rosidl_runtime_cpp::MessageInitialization::ZERO == _init)
     {
       this->image_path = "";
+      this->zone_name = "";
+      this->time = "";
+      this->expected_activities = "";
+      this->zone_type = "";
     }
   }
 
@@ -57,12 +69,48 @@ struct AnalyzeActivity_Request_
   using _image_path_type =
     std::basic_string<char, std::char_traits<char>, typename std::allocator_traits<ContainerAllocator>::template rebind_alloc<char>>;
   _image_path_type image_path;
+  using _zone_name_type =
+    std::basic_string<char, std::char_traits<char>, typename std::allocator_traits<ContainerAllocator>::template rebind_alloc<char>>;
+  _zone_name_type zone_name;
+  using _time_type =
+    std::basic_string<char, std::char_traits<char>, typename std::allocator_traits<ContainerAllocator>::template rebind_alloc<char>>;
+  _time_type time;
+  using _expected_activities_type =
+    std::basic_string<char, std::char_traits<char>, typename std::allocator_traits<ContainerAllocator>::template rebind_alloc<char>>;
+  _expected_activities_type expected_activities;
+  using _zone_type_type =
+    std::basic_string<char, std::char_traits<char>, typename std::allocator_traits<ContainerAllocator>::template rebind_alloc<char>>;
+  _zone_type_type zone_type;
 
   // setters for named parameter idiom
   Type & set__image_path(
     const std::basic_string<char, std::char_traits<char>, typename std::allocator_traits<ContainerAllocator>::template rebind_alloc<char>> & _arg)
   {
     this->image_path = _arg;
+    return *this;
+  }
+  Type & set__zone_name(
+    const std::basic_string<char, std::char_traits<char>, typename std::allocator_traits<ContainerAllocator>::template rebind_alloc<char>> & _arg)
+  {
+    this->zone_name = _arg;
+    return *this;
+  }
+  Type & set__time(
+    const std::basic_string<char, std::char_traits<char>, typename std::allocator_traits<ContainerAllocator>::template rebind_alloc<char>> & _arg)
+  {
+    this->time = _arg;
+    return *this;
+  }
+  Type & set__expected_activities(
+    const std::basic_string<char, std::char_traits<char>, typename std::allocator_traits<ContainerAllocator>::template rebind_alloc<char>> & _arg)
+  {
+    this->expected_activities = _arg;
+    return *this;
+  }
+  Type & set__zone_type(
+    const std::basic_string<char, std::char_traits<char>, typename std::allocator_traits<ContainerAllocator>::template rebind_alloc<char>> & _arg)
+  {
+    this->zone_type = _arg;
     return *this;
   }
 
@@ -109,6 +157,18 @@ struct AnalyzeActivity_Request_
   bool operator==(const AnalyzeActivity_Request_ & other) const
   {
     if (this->image_path != other.image_path) {
+      return false;
+    }
+    if (this->zone_name != other.zone_name) {
+      return false;
+    }
+    if (this->time != other.time) {
+      return false;
+    }
+    if (this->expected_activities != other.expected_activities) {
+      return false;
+    }
+    if (this->zone_type != other.zone_type) {
       return false;
     }
     return true;
