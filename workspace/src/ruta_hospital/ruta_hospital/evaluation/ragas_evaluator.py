@@ -4,7 +4,7 @@ import re
 import pandas as pd
 from datasets import Dataset
 from ragas import evaluate
-from ragas.metrics import answer_correctness, answer_relevancy, faithfulness
+from ragas.metrics import answer_correctness, answer_relevancy, faithfulness, summarization_score
 from langchain_ollama import ChatOllama, OllamaEmbeddings
 from ragas.run_config import RunConfig
 from ruta_hospital.commons.api_utils import call_ollama_api 
@@ -42,7 +42,7 @@ class RagasEvaluator:
         
         result = evaluate(
             dataset=dataset,
-            metrics=[answer_correctness, answer_relevancy, faithfulness],
+            metrics=[answer_correctness, answer_relevancy, faithfulness, summarization_score],
             llm=self.evaluator_llm,
             embeddings=self.evaluator_embeddings,
             run_config=RunConfig(max_workers=self.run_params.perceptors_workers, 
@@ -99,7 +99,7 @@ class RagasEvaluator:
         
         result = evaluate(
             dataset=dataset,
-            metrics=[answer_correctness, answer_relevancy],
+            metrics=[answer_correctness, faithfulness, answer_relevancy],
             llm=self.evaluator_llm,
             embeddings=self.evaluator_embeddings,
             run_config=RunConfig(max_workers=self.run_params.perceptors_workers, 
@@ -114,17 +114,18 @@ class RagasEvaluator:
 
     def generate_perception_answers(self, perception_data):
         '''Usa el LLM para responder basándose en el output de una sola imagen'''
-        eval_data = {"question": [], "answer": [], "ground_truth": []}
+        eval_data = {"question": [], "answer": [], "ground_truth": [], "contexts": []}
 
         for item in perception_data:
-            context = item["context"]
+            rag_context = item["rag_context"]
+            perceptor_output = item["perceptor_output"]
             question = item["question"]
             ground_truth = item["ground_truth"]
             
             prompt = f"""
             Eres un sistema analizador de actividades humanas en un hospital. 
             Basándote ÚNICAMENTE en este JSON generado por un modelo de visión artificial para una imagen:
-            {context}
+            {perceptor_output}
             
             Responde de forma breve y concisa a la siguiente pregunta. 
             Si el JSON dice "Despejado" y se pregunta por actividades, responde que no hay actividades.
@@ -141,6 +142,7 @@ class RagasEvaluator:
             eval_data["question"].append(question)
             eval_data["answer"].append(llm_answer.strip())
             eval_data["ground_truth"].append(ground_truth)
+            eval_data["contexts"].append([rag_context]) # debe evaluar la fidelidad solo contra los datos inyectados del RAG
 
         return eval_data
 

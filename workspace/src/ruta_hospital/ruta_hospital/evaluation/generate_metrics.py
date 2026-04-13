@@ -51,23 +51,25 @@ def load_ragas_data(ragas_dir):
 
         try:
             df = pd.read_csv(file_path)
-            if 'answer_correctness' in df.columns and 'answer_relevancy' in df.columns:
-                mean_correctness = df['answer_correctness'].mean()
-                mean_relevancy = df['answer_relevancy'].mean()
 
-                if FINAL_SCORE_WITH_FAITHFULNESS and 'faithfulness' in df.columns:
-                    mean_faithfulness = df['faithfulness'].mean()
-                    final_score = (mean_correctness + mean_relevancy + mean_faithfulness) / 3.0
-                else:# archivos csv legacy
-                    final_score = (mean_correctness + mean_relevancy) / 2.0 
-                
-                summary_list.append({
-                    'Configuracion': config_name,
-                    'Correctness': round(mean_correctness, 3),
-                    'Relevancy': round(mean_relevancy, 3),
-                    'Faithfulness': round(mean_faithfulness, 3),
-                    'Final_Score': round(final_score, 3)
-                })
+            mean_correctness = df['answer_correctness'].mean() if 'answer_correctness' in df.columns else 0.0
+            mean_relevancy = df['answer_relevancy'].mean() if 'answer_relevancy' in df.columns else 0.0
+            mean_summ = df['summarization_score'].mean() if 'summarization_score' in df.columns else 0.0
+            mean_faithfulness = df['faithfulness'].mean() if 'faithfulness' in df.columns else 0.0
+
+            if FINAL_SCORE_WITH_FAITHFULNESS:
+                final_score = (mean_correctness + mean_relevancy + mean_summ + mean_faithfulness) / 3.0
+            else:# archivos csv legacy
+                final_score = (mean_correctness + mean_relevancy + mean_summ) / 2.0 
+            
+            summary_list.append({
+                'Configuracion': config_name,
+                'Correctness': round(mean_correctness, 3),
+                'Relevancy': round(mean_relevancy, 3),
+                'Summarization': round(mean_summ, 3),
+                'Faithfulness': round(mean_faithfulness, 3),
+                'Final_Score': round(final_score, 3)
+            })
         except Exception as e:
             print(f"Error procesando {filename}: {e}")
 
@@ -184,6 +186,7 @@ def generate_ragas_system_plot(df, output_dir):
     labels = df['Configuracion'].tolist()
     correctness = df['Correctness'].tolist()
     relevancy = df['Relevancy'].tolist()
+    summarization = df['Summarization'].tolist()
     faithfulness = df['Faithfulness'].tolist()
     final_score = df['Final_Score'].tolist()
     
@@ -194,10 +197,11 @@ def generate_ragas_system_plot(df, output_dir):
 
     fig, ax = plt.subplots(figsize=(11, 6))
     
-    rects1 = ax.bar(x_positions - 1.5 * bar_width, correctness, bar_width, label='Correctness (Sistema)', color='#4C72B0')
-    rects2 = ax.bar(x_positions - 0.5 * bar_width, relevancy, bar_width, label='Relevancy', color='#55A868')
-    rects3 = ax.bar(x_positions + 0.5 * bar_width, faithfulness, bar_width, label='Faithfulness (LLM)', color='#E1A95F')
-    rects4 = ax.bar(x_positions + 1.5 * bar_width, final_score, bar_width, label='Final Score', color='#C44E52')
+    rects1 = ax.bar(x_positions - 2.0 * bar_width, correctness, bar_width, label='Correctness (Sistema)', color='#4C72B0')
+    rects2 = ax.bar(x_positions - 1.0 * bar_width, relevancy, bar_width, label='Relevancy', color='#55A868')
+    rects3 = ax.bar(x_positions + 0.0 * bar_width, faithfulness, bar_width, label='Summarization (LLM)', color="#D25FE1")
+    rects4 = ax.bar(x_positions + 1.0 * bar_width, faithfulness, bar_width, label='Faithfulness (LLM)', color='#E1A95F')
+    rects5 = ax.bar(x_positions + 2.0 * bar_width, final_score, bar_width, label='Final Score', color='#C44E52')
 
     ax.set_ylabel('Puntuación (0.0 - 1.0)')
     ax.set_title('Evaluación Ragas: Sistema Completo')
@@ -210,6 +214,7 @@ def generate_ragas_system_plot(df, output_dir):
     ax.bar_label(rects2, padding=3, fmt='%.2f', fontsize=8)
     ax.bar_label(rects3, padding=3, fmt='%.2f', fontsize=8)
     ax.bar_label(rects4, padding=3, fmt='%.2f', fontsize=8)
+    ax.bar_label(rects5, padding=3, fmt='%.2f', fontsize=8)
 
     fig.tight_layout()
     plt.savefig(os.path.join(output_dir, '5_grafica_ragas_sistema.png'), dpi=300)
