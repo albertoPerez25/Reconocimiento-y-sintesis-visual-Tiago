@@ -53,6 +53,8 @@ class HybridPerceptionNode(BasePerceptionNode):
         detections = yolo_data.get("detections", [])
         if detections:
             image_to_vlm = self.get_image_with_tracking_data(detections, image_path, context)
+        else:
+            image_to_vlm = image_path
 
         # Contexto, peligros y descripción
         vlm_json_str = self.vlm_logic.process_image(image_to_vlm, context)

@@ -117,7 +117,7 @@ class PerceptionEvaluatorNode(BaseEvaluatorNode):
 
             # para que el evaluador sepa qué pistas se le dieron al perceptor
             enriched_perceptor_output = (
-                f"[RAG INYECTADO] Zona: {req.zone_name} | Hora: {req.time} | Esperado: {req.expected_objects}\n"
+                f"[RAG INYECTADO] Zona: {req.zone_name} | Hora: {req.time} | Esperado: {req.expected_activities}\n"
                 f"[OUTPUT PERCEPTOR] {perceptor_output}"
             )
 
