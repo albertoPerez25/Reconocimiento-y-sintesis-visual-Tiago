@@ -65,3 +65,6 @@ hospital_photos*
 YOLO_tracking_debug/*
 YOLO_tracking_debug/tracking_*.jpg
 
+diagrams/*/png/*
+diagrams/*/svg/*
+diagrams/*/jpg/*
