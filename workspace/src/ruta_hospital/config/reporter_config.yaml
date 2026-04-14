@@ -1,0 +1,6 @@
+/llm_reporter_node:
+  ros__parameters:
+    csv_path: "/home/alberto/tfg/Reconocimiento-y-sintesis-visual-Tiago/hospital_photos/vuelta_A/metadata.csv"
+    photos_dir: "/home/alberto/tfg/Reconocimiento-y-sintesis-visual-Tiago/hospital_photos/vuelta_A/"
+    semantic_map_path: "/home/alberto/tfg/Reconocimiento-y-sintesis-visual-Tiago/workspace/src/ruta_hospital/config/semantic_map.json"
+    perception_mode: image

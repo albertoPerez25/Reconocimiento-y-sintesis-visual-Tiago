@@ -1,0 +1,5 @@
+user_input,response,reference,answer_correctness,answer_relevancy
+¿Hay alguna emergencia médica o persona en el suelo?,"Sí, hay una emergencia médica o persona en el suelo.","Sí, hay una persona caída en el suelo y la alerta debe ser verdadera.",0.8086217456642588,0.7836566381331358
+¿Debería activarse la alerta?,Sí.,Sí,0.2459724685557253,0.44915027252387457
+¿Cuál es la descripción del estado de la zona?,"La descripción del estado de la zona es ""Despejado"".",Despejado.,,0.5447749723129731
+¿Debería activarse la alerta?,"Según el JSON, la alerta está desactivada (false), por lo que no es necesario activarla.","No, la alerta debe ser falsa",0.6341994472017431,0.880797704501961

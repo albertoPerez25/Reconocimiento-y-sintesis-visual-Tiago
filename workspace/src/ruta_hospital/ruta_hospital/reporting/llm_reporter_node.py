@@ -103,15 +103,25 @@ class LLMReporterNode(BaseReporterNode):
         '''Analiza las imágenes de una zona y devuelve su mini-reporte'''
         self.get_logger().info(f"Procesando zona: {zone} ({len(images)} imágenes)...")
 
+        times = [img['time'] for img in images]
+        min_time = min(times) if times else 0
+        max_time = max(times) if times else 0
+
+        zone_info = self.get_zone_metadata(zone)
+
         zone_data = {
             #"limites": self.get_zone_limits(zona),
+            "nombre_zona": zone,
+            "tipo_zona": zone_info.get("tipo_zona", "Desconocida"),
+            #"reglas_horarias": zona_info.get("reglas_horarias", "No hay reglas específicas."),
+            "rango_temporal": f"{min_time}s - {max_time}s",
             "eventos_recientes": []
         }
         
         if self.perception_mode == 'sequence':
-            has_activity = await self.process_sequence_mode(images, zone_data, goal_handle)
+            has_activity = await self.process_sequence_mode(images, zone, zone_data, goal_handle)
         else:
-            has_activity = await self.process_individual_mode(images, zone_data, goal_handle)
+            has_activity = await self.process_individual_mode(images, zone, zone_data, goal_handle)
 
         if not has_activity:
             self.current_metrics["zonas_despejadas"] += 1
@@ -120,7 +130,7 @@ class LLMReporterNode(BaseReporterNode):
         return zone_data
     
 
-    async def process_sequence_mode(self, images, zone_data, goal_handle):
+    async def process_sequence_mode(self, images, zone, zone_data, goal_handle):
         '''Procesa una zona según la lógica de secuencia'''
         if goal_handle.is_cancel_requested or len(images) == 0:
             return False
@@ -128,6 +138,13 @@ class LLMReporterNode(BaseReporterNode):
         rutas_str = ",".join([img['path'] for img in images])
         req = AnalyzeActivity.Request()
         req.image_path = rutas_str
+
+        req.zone_name = zone
+        req.time = f"{images[0]['time']}s - {images[-1]['time']}s"
+        activities = self.get_zone_metadata(zone).get("actividades_comunes", [])
+        req.expected_activities = ", ".join(activities) if activities else "No especificados"
+        req.zone_type = zone_data["tipo_zona"] # TODO: Cambiar todo para que sea coherente con el nuevo json de metadatos de hospital
+
         result = await self.vision_cli.call_async(req)
         
         try:
@@ -148,7 +165,7 @@ class LLMReporterNode(BaseReporterNode):
         return has_activity
         
     
-    async def process_individual_mode(self, images, zone_data, goal_handle):
+    async def process_individual_mode(self, images, zone, zone_data, goal_handle):
         '''Procesa una zona según para el modo de imágenes sueltas'''
         has_activity = False
         for img in images:
@@ -157,6 +174,13 @@ class LLMReporterNode(BaseReporterNode):
 
             req = AnalyzeActivity.Request()
             req.image_path = img['path']
+
+            req.zone_name = zone
+            req.time = f"{img['time']}s"
+            activities = self.get_zone_metadata(zone).get("actividades_comunes", [])
+            req.expected_activities = ", ".join(activities) if activities else "No especificados"
+            req.zone_type = zone_data["tipo_zona"]
+
             result = await self.vision_cli.call_async(req) 
             
             try:
@@ -181,8 +205,8 @@ class LLMReporterNode(BaseReporterNode):
 
     def generate_global_summary(self, global_context, result):
         '''Toma todos los mini reportes y genera el resumen final unificado'''
-        self.get_logger().info("Generando informe global unificado con Llama-3...")
-        self.get_logger().info(f"CONTEXTO:{global_context}")
+        self.get_logger().info("Generando informe global unificado...")
+        self.get_logger().debug(f"CONTEXTO:{global_context}")
         
         final_prompt = self.get_final_prompt(global_context)
         
@@ -208,17 +232,17 @@ class LLMReporterNode(BaseReporterNode):
         return f"""
             You are the security AI for a hospital patrol robot. 
             Below are the individual mini-reports for each zone of the hospital during the last patrol.
+            Each zone includes temporal data and specific safety rules (RAG context).
 
             Your task is to write a comprehensive and professional GLOBAL SUMMARY for the Floor Manager. 
 
             MINI REPORTES:
             {global_context}
 
-            Focus specifically on anomalies and life-safety risks within the hospital 
-            (e.g., fires, live wires, overturned chairs, objects obstructing hallways/paths). 
-            You must analyze people activities and warn if someone is in need of help (like people who have
-            fallen into the ground, running, yelling, fights...). People who need help and anything related to
-            people (personnel, patients or visitors). Say clearly where each incident has happened.
+            Focus specifically on anomalies, life-safety risks, and PROTOCOL VIOLATIONS based on the rules provided for each zone
+            (e.g., people in restricted areas, activities outside allowed hours, fires, overturned chairs).
+            You must analyze people activities and warn if someone is in need of help (like people who have fallen).
+            Say clearly where and WHEN (using the temporal range) each incident has happened.
 
             Do not hallucinate or invent any data, report only what is explicitly stated in the mini-reports. Give priority to 
             people fallen on the ground.

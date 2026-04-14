@@ -1,0 +1,36 @@
+[
+  {
+    "image_name": "caida_pasillo.jpg",
+    "zone_name": "Pasillo",
+    "time": "03:15s",
+    "zone_type": "Pública y Tránsito",
+    "expected_activities": "Andar, Empujar camillas",
+    "questions": [
+      {
+        "question": "¿Hay alguna emergencia médica o persona en el suelo?",
+        "ground_truth": "Sí, hay una persona caída en el suelo y la alerta debe ser verdadera."
+      },
+      {
+        "question": "¿Debería activarse la alerta?",
+        "ground_truth": "Sí"
+      }
+    ]
+  },
+  {
+    "image_name": "pasillo_vacio.jpg",
+    "zone_name": "Pasillo",
+    "time": "14:30s",
+    "zone_type": "Pública y Tránsito",
+    "expected_activities": "Andar, Empujar camillas",
+    "questions": [
+      {
+        "question": "¿Cuál es la descripción del estado de la zona?",
+        "ground_truth": "Despejado."
+      },
+      {
+        "question": "¿Debería activarse la alerta?",
+        "ground_truth": "No, la alerta debe ser falsa"
+      }
+    ]
+  }
+]

@@ -1,21 +1,20 @@
 #!/usr/bin/env python3
 import time
 import rclpy
-import json
+import os
 
 from nav2_simple_commander.robot_navigator import BasicNavigator, TaskResult
-from geometry_msgs.msg import PoseStamped
-
 from rclpy.action import ActionClient
 from hospital_interfaces.action import GenerateReport
 
-from rcl_interfaces.srv import SetParameters # Para cambiar el dir del photo_capturer
+from rcl_interfaces.srv import SetParameters # Para cambiar el dir del photos_node
 from rcl_interfaces.msg import Parameter, ParameterValue, ParameterType
 
 from ruta_hospital.navigation.utils.route_parser_utils import load_route,list_to_pose
 from ruta_hospital.navigation.utils.file_utils import clean_all_orphan_folders, get_next_available_folder
 from ruta_hospital.commons.file_utils import delete_folder
 from ruta_hospital.commons.terminal_utils import get_key_non_blocking
+from ament_index_python.packages import get_package_share_directory
 
 DEFAULT_PATH_POINTS = [
     [4.83898, 8.27372],
@@ -45,15 +44,18 @@ DEFAULT_PATH_POINTS = [
     [-7.6369, 5.47739],
     [-4.3140, 7.82489],
 ]
-DEFAULT_ROUTE_PATH = "default_route.json"
-DEFAULT_PHOTOS_DIR = "/home/alberto/tfg/Reconocimiento-y-sintesis-visual-Tiago/workspace/hospital_photos/"
+
+PKG_DIR = get_package_share_directory('ruta_hospital')
+
+DEFAULT_WAYPOINTS_PATH = os.path.join(PKG_DIR, 'config', 'route_waypoints.json')
+DEFAULT_PHOTOS_DIR = "/home/alberto/tfg/Reconocimiento-y-sintesis-visual-Tiago/hospital_photos/"
 
 class PatrolNode(rclpy.node.Node):
     def __init__(self):
         super().__init__('patrol_node')
 
         # Cargar JSON con los puntos de ruta
-        self.declare_parameter('route_file_path', DEFAULT_ROUTE_PATH)
+        self.declare_parameter('route_file_path', DEFAULT_WAYPOINTS_PATH)
         self.route_file_path = self.get_parameter('route_file_path').get_parameter_value().string_value
 
         # Directorio raíz para las subcarpetas
@@ -68,11 +70,11 @@ class PatrolNode(rclpy.node.Node):
         self.route_poses = list_to_pose(self.path_points, self.navigator.get_clock())
         
         self.report_action_client = ActionClient(self, GenerateReport, 'generate_patrol_report')     
-        self.param_client = self.create_client(SetParameters, '/photo_capturer/set_parameters')
+        self.param_client = self.create_client(SetParameters, '/photos_node/set_parameters')
         self.current_folder_path = ""
 
     def set_capturer_folder(self, folder_path):
-        '''Avisa al photo_capturer de la nueva carpeta usando SetParameters'''
+        '''Avisa al photos_node de la nueva carpeta usando SetParameters'''
         if not self.param_client.wait_for_service(timeout_sec=2.0):
             self.get_logger().warn("No se pudo conectar con el nodo foto")
             return

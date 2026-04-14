@@ -10,8 +10,6 @@ from nav_msgs.msg import Odometry
 #from cv_bridge import CvBridge
 
 from tf2_ros import Buffer, TransformListener
-from rcl_interfaces.msg import ParameterDescriptor
-from hospital_interfaces.srv import AnalyzeActivity
 from rcl_interfaces.msg import SetParametersResult
 
 
@@ -24,11 +22,11 @@ CAMERA_TOPIC = "/head_front_camera/rgb/image_raw"
 ODOM_TOPIC = "/odom"
 CSV_FILENAME = "metadata.csv"
 
-class PhotoCapturer(rclpy.node.Node):
+class PhotosNode(rclpy.node.Node):
     '''Nodo encargado de guardar fotos en la ruta del robot'''
     
     def __init__(self):
-        super().__init__('photo_capturer')
+        super().__init__('photos_node')
         
         # la distancia como parametro para poder cambiarlo en ejecucion
         self.declare_parameter(TARGET_DISTANCE_METERS, 1.0) # (nombre, valor por defecto)
@@ -264,7 +262,7 @@ class PhotoCapturer(rclpy.node.Node):
 
 def main(args=None):
     rclpy.init(args=args)
-    node = PhotoCapturer()
+    node = PhotosNode()
 
     try:
         rclpy.spin(node)

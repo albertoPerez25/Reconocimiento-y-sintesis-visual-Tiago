@@ -14,6 +14,10 @@
 
 // Include directives for member types
 // Member `image_path`
+// Member `zone_name`
+// Member `time`
+// Member `expected_activities`
+// Member `zone_type`
 #include "rosidl_runtime_c/string_functions.h"
 
 #ifdef __cplusplus
@@ -35,7 +39,7 @@ void hospital_interfaces__srv__AnalyzeActivity_Request__rosidl_typesupport_intro
   hospital_interfaces__srv__AnalyzeActivity_Request__fini(message_memory);
 }
 
-static rosidl_typesupport_introspection_c__MessageMember hospital_interfaces__srv__AnalyzeActivity_Request__rosidl_typesupport_introspection_c__AnalyzeActivity_Request_message_member_array[1] = {
+static rosidl_typesupport_introspection_c__MessageMember hospital_interfaces__srv__AnalyzeActivity_Request__rosidl_typesupport_introspection_c__AnalyzeActivity_Request_message_member_array[5] = {
   {
     "image_path",  // name
     rosidl_typesupport_introspection_c__ROS_TYPE_STRING,  // type
@@ -52,13 +56,81 @@ static rosidl_typesupport_introspection_c__MessageMember hospital_interfaces__sr
     NULL,  // fetch(index, &value) function pointer
     NULL,  // assign(index, value) function pointer
     NULL  // resize(index) function pointer
+  },
+  {
+    "zone_name",  // name
+    rosidl_typesupport_introspection_c__ROS_TYPE_STRING,  // type
+    0,  // upper bound of string
+    NULL,  // members of sub message
+    false,  // is array
+    0,  // array size
+    false,  // is upper bound
+    offsetof(hospital_interfaces__srv__AnalyzeActivity_Request, zone_name),  // bytes offset in struct
+    NULL,  // default value
+    NULL,  // size() function pointer
+    NULL,  // get_const(index) function pointer
+    NULL,  // get(index) function pointer
+    NULL,  // fetch(index, &value) function pointer
+    NULL,  // assign(index, value) function pointer
+    NULL  // resize(index) function pointer
+  },
+  {
+    "time",  // name
+    rosidl_typesupport_introspection_c__ROS_TYPE_STRING,  // type
+    0,  // upper bound of string
+    NULL,  // members of sub message
+    false,  // is array
+    0,  // array size
+    false,  // is upper bound
+    offsetof(hospital_interfaces__srv__AnalyzeActivity_Request, time),  // bytes offset in struct
+    NULL,  // default value
+    NULL,  // size() function pointer
+    NULL,  // get_const(index) function pointer
+    NULL,  // get(index) function pointer
+    NULL,  // fetch(index, &value) function pointer
+    NULL,  // assign(index, value) function pointer
+    NULL  // resize(index) function pointer
+  },
+  {
+    "expected_activities",  // name
+    rosidl_typesupport_introspection_c__ROS_TYPE_STRING,  // type
+    0,  // upper bound of string
+    NULL,  // members of sub message
+    false,  // is array
+    0,  // array size
+    false,  // is upper bound
+    offsetof(hospital_interfaces__srv__AnalyzeActivity_Request, expected_activities),  // bytes offset in struct
+    NULL,  // default value
+    NULL,  // size() function pointer
+    NULL,  // get_const(index) function pointer
+    NULL,  // get(index) function pointer
+    NULL,  // fetch(index, &value) function pointer
+    NULL,  // assign(index, value) function pointer
+    NULL  // resize(index) function pointer
+  },
+  {
+    "zone_type",  // name
+    rosidl_typesupport_introspection_c__ROS_TYPE_STRING,  // type
+    0,  // upper bound of string
+    NULL,  // members of sub message
+    false,  // is array
+    0,  // array size
+    false,  // is upper bound
+    offsetof(hospital_interfaces__srv__AnalyzeActivity_Request, zone_type),  // bytes offset in struct
+    NULL,  // default value
+    NULL,  // size() function pointer
+    NULL,  // get_const(index) function pointer
+    NULL,  // get(index) function pointer
+    NULL,  // fetch(index, &value) function pointer
+    NULL,  // assign(index, value) function pointer
+    NULL  // resize(index) function pointer
   }
 };
 
 static const rosidl_typesupport_introspection_c__MessageMembers hospital_interfaces__srv__AnalyzeActivity_Request__rosidl_typesupport_introspection_c__AnalyzeActivity_Request_message_members = {
   "hospital_interfaces__srv",  // message namespace
   "AnalyzeActivity_Request",  // message name
-  1,  // number of fields
+  5,  // number of fields
   sizeof(hospital_interfaces__srv__AnalyzeActivity_Request),
   hospital_interfaces__srv__AnalyzeActivity_Request__rosidl_typesupport_introspection_c__AnalyzeActivity_Request_message_member_array,  // message members
   hospital_interfaces__srv__AnalyzeActivity_Request__rosidl_typesupport_introspection_c__AnalyzeActivity_Request_init_function,  // function to initialize message memory (memory has to be allocated)

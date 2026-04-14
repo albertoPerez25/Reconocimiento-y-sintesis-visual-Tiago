@@ -20,6 +20,10 @@ extern "C"
 
 // Include directives for member types
 // Member 'image_path'
+// Member 'zone_name'
+// Member 'time'
+// Member 'expected_activities'
+// Member 'zone_type'
 #include "rosidl_runtime_c/string.h"
 
 /// Struct defined in srv/AnalyzeActivity in the package hospital_interfaces.
@@ -27,6 +31,10 @@ typedef struct hospital_interfaces__srv__AnalyzeActivity_Request
 {
   /// Request: ruta absoluta de la imagen a analizar
   rosidl_runtime_c__String image_path;
+  rosidl_runtime_c__String zone_name;
+  rosidl_runtime_c__String time;
+  rosidl_runtime_c__String expected_activities;
+  rosidl_runtime_c__String zone_type;
 } hospital_interfaces__srv__AnalyzeActivity_Request;
 
 // Struct for a sequence of hospital_interfaces__srv__AnalyzeActivity_Request.
