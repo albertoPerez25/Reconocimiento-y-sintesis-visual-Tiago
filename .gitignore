@@ -57,3 +57,11 @@ workspace/hospital_photos__/*
 workspace/hospital_photos_/*
 workspace/hospital_photos*
 
+hospital_photos/*
+hospital_photos__/*
+hospital_photos_/*
+hospital_photos*
+
+YOLO_tracking_debug/*
+YOLO_tracking_debug/tracking_*.jpg
+

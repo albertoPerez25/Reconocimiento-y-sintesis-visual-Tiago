@@ -46,7 +46,14 @@ class RagasEvaluator:
             llm=self.evaluator_llm,
             embeddings=self.evaluator_embeddings,
             run_config=RunConfig(max_workers=self.run_params.perceptors_workers, 
-                                 timeout=self.run_params.perceptors_timeout)
+                                 timeout=self.run_params.perceptors_timeout),
+            column_map={
+                "question": "question",
+                "answer": "answer",
+                "contexts": "contexts",
+                "ground_truth": "ground_truth",
+                "reference_contexts": "reference_contexts" # Necesario para esta columna, si no se pasa column_map no la encuentra (por algún motivo)
+            }
         )
         
         output_path = os.path.join(self.metrics_dir, 'ragas_system_evaluation.csv')
@@ -59,7 +66,7 @@ class RagasEvaluator:
         with open(self.quest_path, 'r', encoding='utf-8') as f:
             questions_data = json.load(f)
 
-        eval_data = {"question": [], "answer": [], "ground_truth": [], "contexts": []}
+        eval_data = {"question": [], "answer": [], "ground_truth": [], "contexts": [], "reference_contexts": []}
 
         for item in questions_data:
             question = item["question"]
@@ -87,7 +94,8 @@ class RagasEvaluator:
             natural_language_context = self.format_context_for_ragas(global_context_json)
             relevant_contexts = self.get_relevant_context(natural_language_context, question.lower())
                 
-            eval_data["contexts"].append(relevant_contexts)
+            eval_data["contexts"].append(relevant_contexts) # para faithfulness. 
+            eval_data["reference_contexts"].append(relevant_contexts) # para summarization_score. Texto original contra el que juzgar el resumen generado
 
         return eval_data
     

@@ -33,6 +33,7 @@ class HybridPerceptionNode(BasePerceptionNode):
 
         self.annotated_image_path = self.get_parameter('annotated_image_path').get_parameter_value().string_value
         self.delete_annotated_image = self.get_parameter('delete_annotated_image').get_parameter_value().bool_value
+        self.saved_image_counter = 0
         
         self.get_logger().info("Nodo percepcion con YOLO y VLM iniciado")
 
@@ -50,8 +51,9 @@ class HybridPerceptionNode(BasePerceptionNode):
         except json.JSONDecodeError:
             yolo_data = {"descripcion_vlm": "Error de formato YOLO", "alerta": False}
 
-        detections = yolo_data.get("detections", [])
+        detections = yolo_data.get("detecciones", [])
         if detections:
+            self.get_logger().debug("Se han detectado personas por YOLO")
             image_to_vlm = self.get_image_with_tracking_data(detections, image_path, context)
         else:
             image_to_vlm = image_path
@@ -104,10 +106,21 @@ class HybridPerceptionNode(BasePerceptionNode):
                 cv2.rectangle(img_cv, (bbox[0], bbox[1]), (bbox[2], bbox[3]), color_bgr, 3)
             
             context.tracking_history = history_str
-            final_image_path = self.annotated_image_path
+
+            if not self.delete_annotated_image:
+                base, ext = os.path.splitext(self.annotated_image_path) # Separar ruta y extensión (/tmp/foto , .jpg)
+                final_image_path = f"{base}_{self.saved_image_counter}{ext}"
+                self.saved_image_counter += 1
+                self.get_logger().debug(f"Imagen con tracking: {final_image_path}")
+            else:
+                final_image_path = self.annotated_image_path
+
             cv2.imwrite(final_image_path, img_cv)
 
             return final_image_path
+        else:
+            self.get_logger().error(f"img_cv es None. Path: {image_path}")
+            return None
     
     def get_combined_json(self, yolo, vlm):
         '''Devuelve la descripcion y alertas finales teniendo en cuenta los json de yolo y del vlm'''
@@ -131,8 +144,8 @@ class HybridPerceptionNode(BasePerceptionNode):
     def get_json_response(self, yolo_data, vlm_data):
         '''Devuelve la respuesta final a la petición en formato json'''
         yolo_desc = str(yolo_data.get("descripcion_vlm", "")) 
-        yolo_alert = bool(yolo_data.get("alerta", False))
-        yolo = model_atr(yolo_desc,yolo_alert)
+        yolo_alert = bool(yolo_data.get("alerta", False)) # TODO: cambiar nombre a algo más descriptivo (atención)
+        yolo = model_atr(yolo_desc,yolo_alert) # TODO: La falta de una persona puede ser información relevante
 
         vlm_desc = str(vlm_data.get("descripcion_vlm", "")) # Convierto a str o bool para evitar que crashe si el vlm alucina pero devuelve un formato json "valido"
         vlm_alert = bool(vlm_data.get("alerta", False))
