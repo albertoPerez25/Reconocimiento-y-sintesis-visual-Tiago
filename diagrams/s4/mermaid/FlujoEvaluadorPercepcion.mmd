@@ -1,0 +1,49 @@
+---
+config:
+  look: classic
+---
+sequenceDiagram
+    participant Terminal as Terminal / Usuario
+    participant E as PerceptionEvaluatorNode
+    participant V as Nodo: PerceptionNode
+    participant Ragas as RagasEvaluator
+    participant O@{ "type": "entity" } as Ollama API
+    participant Disco@{ "type": "database" } as Disco Local
+
+    Note over Terminal, Disco: Fase Inicial: El usuario inicia el nodo perceptor y el evaluador
+    
+    Terminal->>E: Service Call: /evaluate_perception_model (Trigger)
+    
+    rect rgb(240, 248, 255)
+        Note right of E: Fase 1: Extracción Directa de Contexto Visual
+        E->>Disco: Lee perception_dataset.json (Imágenes, RAG y Q&A)
+        
+        loop Por cada imagen en el dataset
+            E->>V: Llama /analyze_image(path, Contexto RAG)
+            V->>O: Inferencia visual (Moondream / YOLO)
+            O-->>V: Respuesta
+            V-->>E: Retorna reporte de percepción
+            E->>E: Inyecta etiqueta [RAG INYECTADO] al output
+        end
+    end
+    
+    rect rgb(255, 245, 238)
+        Note right of E: Fase 2: Evaluación Ragas (Sin Faithfulness)
+        E->>Ragas: evaluate_perception(perception_data_for_ragas, model_name)
+        
+        Ragas->>Ragas: generate_perception_answers()
+        
+        loop Por cada pregunta asociada a la imagen
+            Ragas->>O: Prompt + pregunta y contexto
+            O-->>Ragas: Respuesta generada por Llama-3
+        end
+        
+        Ragas->>O: ragas.evaluate() (HuggingFace Dataset)
+        Note over Ragas, O: Utiliza ChatOllama y OllamaEmbeddings internamente
+        O-->>Ragas: Retorna métricas (answer_correctness, answer_relevancy)
+        
+        Ragas->>Disco: Guarda ragas_eval_<model_name>.csv
+        Ragas-->>E: Retorna DataFrame con resultados
+    end
+    
+    E-->>Terminal: Devuelve Trigger Response (Success, Message: Completado)

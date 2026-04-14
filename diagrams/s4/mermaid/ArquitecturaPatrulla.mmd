@@ -1,0 +1,40 @@
+---
+config:
+  layout: elk
+  theme: redux
+---
+flowchart TB
+ subgraph Sensores["Sensores"]
+        Cam[/"Topic: /head_front_camera/rgb/image_raw"/]
+        Odom[/"Topic: /odom"/]
+  end
+ subgraph Sistema_ROS2_Hospital["Sistema_ROS2_Hospital"]
+        Photo["Nodo: photo_capturer"]
+        Patrol["Nodo: patrol_node"]
+        Reporter["Nodo: llm_reporter_node"]
+        Perceptor["Nodo: hybrid_perception_node"]
+  end
+    Cam --> Photo
+    Odom --> Photo
+    
+    Patrol -- "Service: SetParameters (current_save_dir)" --> Photo
+    Photo -- "Guarda fotos y CSV en subcarpetas (vuelta_X) si distancia > 1.0m y MSE > umbral" --> Disco[("Disco Local<br>Imágenes, CSVs y Config")]
+    Usuario(("Usuario")) -. Inicia el sistema normalmente .-> Patrol
+
+    Patrol -- Action: /generate_patrol_report --> Reporter
+    Patrol -- "Crea y borra carpetas dinámicamente (búfer circular)" --> Disco
+    
+    Reporter -- "Lee datos de vuelta_X y hospital_metadata.json (RAG)" --> Disco
+    Reporter -- "Service: /analyze_image<br>+ Contexto RAG (Zona, Hora, Actividades)" --> Perceptor
+    Reporter -- Genera Síntesis Final (Llama3) --> Ollama(("Ollama API Local<br>http://localhost:11434"))
+    
+    Perceptor -- "Lógica interna (YOLO26n-pose)" --> Perceptor
+    Perceptor -- Analiza contexto visual (Moondream) --> Ollama
+
+     Photo:::ros
+     Patrol:::ros
+     Reporter:::ros
+     Perceptor:::ros
+     Ollama:::api
+    classDef ros fill:#e1f5fe,stroke:#01579b,stroke-width:2px
+    classDef api fill:#fff3e0,stroke:#e65100,stroke-width:2px

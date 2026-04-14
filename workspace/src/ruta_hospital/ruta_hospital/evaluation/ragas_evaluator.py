@@ -4,7 +4,7 @@ import re
 import pandas as pd
 from datasets import Dataset
 from ragas import evaluate
-from ragas.metrics import answer_correctness, answer_relevancy, faithfulness
+from ragas.metrics import answer_correctness, answer_relevancy, faithfulness, summarization_score
 from langchain_ollama import ChatOllama, OllamaEmbeddings
 from ragas.run_config import RunConfig
 from ruta_hospital.commons.api_utils import call_ollama_api 
@@ -42,11 +42,18 @@ class RagasEvaluator:
         
         result = evaluate(
             dataset=dataset,
-            metrics=[answer_correctness, answer_relevancy, faithfulness],
+            metrics=[answer_correctness, answer_relevancy, faithfulness, summarization_score],
             llm=self.evaluator_llm,
             embeddings=self.evaluator_embeddings,
             run_config=RunConfig(max_workers=self.run_params.perceptors_workers, 
-                                 timeout=self.run_params.perceptors_timeout)
+                                 timeout=self.run_params.perceptors_timeout),
+            column_map={
+                "question": "question",
+                "answer": "answer",
+                "contexts": "contexts",
+                "ground_truth": "ground_truth",
+                "reference_contexts": "reference_contexts" # Necesario para esta columna, si no se pasa column_map no la encuentra (por algún motivo)
+            }
         )
         
         output_path = os.path.join(self.metrics_dir, 'ragas_system_evaluation.csv')
@@ -59,7 +66,7 @@ class RagasEvaluator:
         with open(self.quest_path, 'r', encoding='utf-8') as f:
             questions_data = json.load(f)
 
-        eval_data = {"question": [], "answer": [], "ground_truth": [], "contexts": []}
+        eval_data = {"question": [], "answer": [], "ground_truth": [], "contexts": [], "reference_contexts": []}
 
         for item in questions_data:
             question = item["question"]
@@ -87,7 +94,8 @@ class RagasEvaluator:
             natural_language_context = self.format_context_for_ragas(global_context_json)
             relevant_contexts = self.get_relevant_context(natural_language_context, question.lower())
                 
-            eval_data["contexts"].append(relevant_contexts)
+            eval_data["contexts"].append(relevant_contexts) # para faithfulness. 
+            eval_data["reference_contexts"].append(relevant_contexts) # para summarization_score. Texto original contra el que juzgar el resumen generado
 
         return eval_data
     
@@ -99,7 +107,7 @@ class RagasEvaluator:
         
         result = evaluate(
             dataset=dataset,
-            metrics=[answer_correctness, answer_relevancy],
+            metrics=[answer_correctness, faithfulness, answer_relevancy],
             llm=self.evaluator_llm,
             embeddings=self.evaluator_embeddings,
             run_config=RunConfig(max_workers=self.run_params.perceptors_workers, 
@@ -114,17 +122,18 @@ class RagasEvaluator:
 
     def generate_perception_answers(self, perception_data):
         '''Usa el LLM para responder basándose en el output de una sola imagen'''
-        eval_data = {"question": [], "answer": [], "ground_truth": []}
+        eval_data = {"question": [], "answer": [], "ground_truth": [], "contexts": []}
 
         for item in perception_data:
-            context = item["context"]
+            rag_context = item["rag_context"]
+            perceptor_output = item["perceptor_output"]
             question = item["question"]
             ground_truth = item["ground_truth"]
             
             prompt = f"""
             Eres un sistema analizador de actividades humanas en un hospital. 
             Basándote ÚNICAMENTE en este JSON generado por un modelo de visión artificial para una imagen:
-            {context}
+            {perceptor_output}
             
             Responde de forma breve y concisa a la siguiente pregunta. 
             Si el JSON dice "Despejado" y se pregunta por actividades, responde que no hay actividades.
@@ -141,6 +150,7 @@ class RagasEvaluator:
             eval_data["question"].append(question)
             eval_data["answer"].append(llm_answer.strip())
             eval_data["ground_truth"].append(ground_truth)
+            eval_data["contexts"].append([rag_context]) # debe evaluar la fidelidad solo contra los datos inyectados del RAG
 
         return eval_data
 

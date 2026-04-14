@@ -65,6 +65,7 @@ class VLMPerceptionNode(BasePerceptionNode):
             Fíjate en las cajas de colores dibujadas en la imagen para identificar a los sujetos. 
             Describe BREVEMENTE QUÉ HACEN y cómo interactúan, basándote en la memoria reciente.
             """
+            #TODO: Pasarle también el número de personas detectadas por YOLO, id, posicion...
         else:
             prompt += """
             Describe BREVEMENTE QUÉ HACEN las personas de la imagen. 

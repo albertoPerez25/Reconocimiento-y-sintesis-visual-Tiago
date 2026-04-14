@@ -179,7 +179,7 @@ class LLMReporterNode(BaseReporterNode):
             req.time = f"{img['time']}s"
             activities = self.get_zone_metadata(zone).get("actividades_comunes", [])
             req.expected_activities = ", ".join(activities) if activities else "No especificados"
-            req.zone_type = zone_data["tipo_zona"] # TODO: Cambiar todo para que sea coherente con el nuevo json de metadatos de hospital
+            req.zone_type = zone_data["tipo_zona"]
 
             result = await self.vision_cli.call_async(req) 
             

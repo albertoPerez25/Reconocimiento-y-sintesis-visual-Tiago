@@ -116,15 +116,14 @@ class PerceptionEvaluatorNode(BaseEvaluatorNode):
                 continue
 
             # para que el evaluador sepa qué pistas se le dieron al perceptor
-            enriched_perceptor_output = (
-                f"[RAG INYECTADO] Zona: {req.zone_name} | Hora: {req.time} | Esperado: {req.expected_objects}\n"
-                f"[OUTPUT PERCEPTOR] {perceptor_output}"
-            )
+            rag_context = f"[RAG INYECTADO] Zona: {req.zone_name} | Tiempo: {req.time} | Posibles actividades: {req.expected_activities} (entre otras)"
+            perceptor_output = f"[OUTPUT PERCEPTOR] {perceptor_output}"
 
             # Empaquetar las preguntas de la imagen y el output del modelo
             for q in questions:
                 perception_data_for_ragas.append({
-                    "context": enriched_perceptor_output,
+                    "perceptor_output": perceptor_output,
+                    "rag_context": rag_context,
                     "question": q["question"],
                     "ground_truth": q["ground_truth"]
                 })

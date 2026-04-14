@@ -1,7 +1,7 @@
 flowchart LR
     subgraph "Entradas de Datos (Generados por los nodos)"
         M1[(comparativa_modelos.json Latencias y Verbosidad)]
-        M2[(ragas_*.csv Correctness y Relevancy)]
+        M2[(ragas_*.csv Correctness, Relevancy y Faithfulness)]
     end
 
     subgraph "generate_metrics.py (Procesamiento)"
@@ -17,8 +17,10 @@ flowchart LR
     subgraph "Salidas"
         C1[tabla_resumen_rendimiento.csv]
         C2[tabla_resumen_ragas.csv]
-        G1{{"Gráficos de Barras y Boxplots (Seaborn, Matplotlib)"}}
+        G1{{"Gráfica Sistema (con Faithfulness)"}}
+        G2{{"Gráfica Perceptores Aislados"}}
+        G3{{"Gráficos de Barras y Boxplots de Rendimiento"}}
         
         P3 --> C1 & C2
-        P3 --> G1
+        P3 --> G1 & G2 & G3
     end
