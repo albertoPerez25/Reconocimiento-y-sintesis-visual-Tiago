@@ -39,7 +39,13 @@ class SystemEvaluatorNode(BaseEvaluatorNode):
         self.eval_folder_path = self.get_parameter('eval_folder_path').get_parameter_value().string_value
         
         self.metrics_dir = self.reporter_logic.metrics_dir # el mismo path de métricas
-        self.ragas_evaluator = RagasEvaluator(quest_path, self.metrics_dir, self.ollama_params, self.run_params)
+        self.ragas_evaluator = RagasEvaluator(
+            quest_path, 
+            self.metrics_dir, 
+            self.ollama_params, 
+            self.run_params, 
+            self.get_logger()
+        )
         
         # Servicio distinto para la evaluación
         self.eval_srv = self.create_service(
@@ -72,8 +78,10 @@ class SystemEvaluatorNode(BaseEvaluatorNode):
             
         self.get_logger().info("Generando respuestas...")
         try:
-            self.ragas_evaluator.evaluate_system(global_context_json)
-            
+            self.ragas_evaluator.evaluate_system(
+                global_context_json,
+                reporter_prompt_func=self.reporter_logic.get_final_prompt # para poder reconstruir exactamente el mismo prompt
+            )            
             response.success = True
             response.message = f"Evaluación Ragas completada con éxito. Guardado en: {self.metrics_dir}"
         except Exception as e:

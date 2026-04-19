@@ -249,7 +249,7 @@ class LLMReporterNode(BaseReporterNode):
 
             Answer in spanish.
             
-            RESUMEN DE SEGURIDAD GLOBAL:
+            RESUMEN DE ACTIVIDADES EN EL HOSPITAL:
         """
     
 

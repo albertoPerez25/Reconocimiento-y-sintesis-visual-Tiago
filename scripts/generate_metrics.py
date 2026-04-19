@@ -17,6 +17,11 @@ OUTPUT_DIR = "/home/alberto/tfg/Reconocimiento-y-sintesis-visual-Tiago/autogener
 
 FINAL_SCORE_WITH_FAITHFULNESS = False
 
+GLOBAL_EVAL_WEIGHTS = {
+    'short_eval': 0.50,
+    'summary_eval': 0.50
+}
+
 def load_performance_data(json_path):
     """Carga el JSON de rendimientos y calcula métricas a partir de él"""
     if not os.path.exists(json_path):
@@ -35,7 +40,7 @@ def load_performance_data(json_path):
         )
     return df
 
-def load_ragas_data(ragas_dir):
+def load_ragas_data(ragas_dir): # TODO
     """Carga los resultados de RAGAS y calcula varias metricas"""
     csv_files = glob.glob(os.path.join(ragas_dir, '*.csv'))
     
@@ -52,24 +57,12 @@ def load_ragas_data(ragas_dir):
         try:
             df = pd.read_csv(file_path)
 
-            mean_correctness = df['answer_correctness'].mean() if 'answer_correctness' in df.columns else 0.0
-            mean_relevancy = df['answer_relevancy'].mean() if 'answer_relevancy' in df.columns else 0.0
-            mean_summ = df['summarization_score'].mean() if 'summarization_score' in df.columns else 0.0
-            mean_faithfulness = df['faithfulness'].mean() if 'faithfulness' in df.columns else 0.0
-
-            if FINAL_SCORE_WITH_FAITHFULNESS:
-                final_score = (mean_correctness + mean_relevancy + mean_summ + mean_faithfulness) / 3.0
-            else:# archivos csv legacy
-                final_score = (mean_correctness + mean_relevancy + mean_summ) / 2.0 
-            
-            summary_list.append({
-                'Configuracion': config_name,
-                'Correctness': round(mean_correctness, 3),
-                'Relevancy': round(mean_relevancy, 3),
-                'Summarization': round(mean_summ, 3),
-                'Faithfulness': round(mean_faithfulness, 3),
-                'Final_Score': round(final_score, 3)
-            })
+            if "system" in config_name.lower() and 'eval_type' in df.columns:
+                metrics_dict = calculate_system_metrics(df, config_name)
+            else:
+                metrics_dict = calculate_legacy_metrics(df, config_name)
+                
+            summary_list.append(metrics_dict)
         except Exception as e:
             print(f"Error procesando {filename}: {e}")
 
@@ -77,7 +70,70 @@ def load_ragas_data(ragas_dir):
         return None
 
     df_summary = pd.DataFrame(summary_list).sort_values(by='Final_Score', ascending=False)
+    # Ordenar por la nota que corresponda
+    if 'Final_Global' in df_summary.columns:
+        df_summary = df_summary.sort_values(by='Final_Global', ascending=False)
+    elif 'Final_Score' in df_summary.columns:
+        df_summary = df_summary.sort_values(by='Final_Score', ascending=False)
     return df_summary
+
+def calculate_system_metrics(df, config_name):
+    """Extrae la lógica de cálculo de métricas para el evaluador del sistema"""
+    df_short = df[df['eval_type'] == 'short']
+    df_summ = df[df['eval_type'] == 'summary']
+
+    # Preguntas Cortas
+    short_correctness_score = df_short['answer_correctness'].mean() if not df_short.empty and 'answer_correctness' in df_short.columns else 0.0
+    short_relevancy_score = df_short['answer_relevancy'].mean() if not df_short.empty and 'answer_relevancy' in df_short.columns else 0.0
+    short_faithfulness_score = df_short['faithfulness'].mean() if not df_short.empty and 'faithfulness' in df_short.columns else 0.0
+
+    short_metrics_for_final = [short_correctness_score, short_relevancy_score]
+    final_short = sum(short_metrics_for_final) / float(len(short_metrics_for_final)) if not df_short.empty else 0.0
+
+    # Resumen
+    summary_correctness_score = df_summ['answer_correctness'].mean() if not df_summ.empty and 'answer_correctness' in df_summ.columns else 0.0
+    summary_faithfulness_score = df_summ['faithfulness'].mean() if not df_summ.empty and 'faithfulness' in df_summ.columns else 0.0
+    summary_summarization_score = df_summ['summarization_score'].mean() if not df_summ.empty and 'summarization_score' in df_summ.columns else 0.0
+
+    summary_metrics_for_final = [summary_correctness_score, summary_summarization_score]
+    final_summ = sum(summary_metrics_for_final) / float(len(summary_metrics_for_final)) if not df_summ.empty else 0.0
+
+    # Global de métricas puras
+    global_corr = df['answer_correctness'].mean(skipna=True) if 'answer_correctness' in df.columns else 0.0
+    global_rel = df['answer_relevancy'].mean(skipna=True) if 'answer_relevancy' in df.columns else 0.0
+    global_faith = df['faithfulness'].mean(skipna=True) if 'faithfulness' in df.columns else 0.0
+    global_summ = df['summarization_score'].mean(skipna=True) if 'summarization_score' in df.columns else 0.0
+    
+    final_global = (final_short * GLOBAL_EVAL_WEIGHTS['short_eval']) + (final_summ * GLOBAL_EVAL_WEIGHTS['summary_eval'])
+
+    return {
+        'Configuracion': config_name,
+        'Sh_Corr': round(short_correctness_score, 3), 'Sh_Rel': round(short_relevancy_score, 3), 'Sh_Faith': round(short_faithfulness_score, 3), 'Final_Short': round(final_short, 3),
+        'Su_Faith': round(summary_faithfulness_score, 3), 'Su_Summ': round(summary_summarization_score, 3), 'Su_Corr': round(summary_correctness_score, 3), 'Final_Summ': round(final_summ, 3),
+        'G_Corr': round(global_corr, 3), 'G_Rel': round(global_rel, 3), 'G_Faith': round(global_faith, 3), 'G_Summ': round(global_summ, 3),
+        'Final_Global': round(final_global, 3)
+    }
+
+def calculate_legacy_metrics(df, config_name):
+    """Extrae la lógica de cálculo de métricas para perceptores aislados o CSVs antiguos"""
+    mean_correctness = df['answer_correctness'].mean() if 'answer_correctness' in df.columns else 0.0
+    mean_relevancy = df['answer_relevancy'].mean() if 'answer_relevancy' in df.columns else 0.0
+    mean_summ = df['summarization_score'].mean() if 'summarization_score' in df.columns else 0.0
+    mean_faithfulness = df['faithfulness'].mean() if 'faithfulness' in df.columns else 0.0
+
+    if FINAL_SCORE_WITH_FAITHFULNESS:
+        final_score = (mean_correctness + mean_relevancy + mean_summ + mean_faithfulness) / 3.0
+    else: # archivos csv legacy
+        final_score = (mean_correctness + mean_relevancy + mean_summ) / 2.0 
+    
+    return {
+        'Configuracion': config_name,
+        'Correctness': round(mean_correctness, 3),
+        'Relevancy': round(mean_relevancy, 3),
+        'Summarization': round(mean_summ, 3),
+        'Faithfulness': round(mean_faithfulness, 3),
+        'Final_Score': round(final_score, 3)
+    }
 
 def get_dynamic_rotation(labels):
     """Devuelve la rotacion de etiqueta óptima según el número y logitud de estas"""
@@ -181,44 +237,75 @@ def generate_performance_plots(df, output_dir):
     plt.savefig(os.path.join(output_dir, "4_estabilidad_tiempos.png"), dpi=300)
     plt.close()
 
-def generate_ragas_system_plot(df, output_dir):
-    """Genera la gráfica con Faithfulness solo para el sistema completo"""
+def generate_ragas_system_plots(df, output_dir): # TODO
+    """Genera 4 gráficas distintas para la evaluación del sistema"""
     labels = df['Configuracion'].tolist()
-    correctness = df['Correctness'].tolist()
-    relevancy = df['Relevancy'].tolist()
-    summarization = df['Summarization'].tolist()
-    faithfulness = df['Faithfulness'].tolist()
-    final_score = df['Final_Score'].tolist()
-    
     rot, align = get_dynamic_rotation(labels)
+    x = np.arange(len(labels))
 
-    x_positions = np.arange(len(labels))
-    bar_width = 0.2 
-
+    # 5a Preguntas Cortas (Chatbot)
     fig, ax = plt.subplots(figsize=(11, 6))
+    w = 0.2
+    rects1 = ax.bar(x - 1.5*w, df['Sh_Corr'], w, label='Correctness', color='#4C72B0')
+    rects2 = ax.bar(x - 0.5*w, df['Sh_Rel'], w, label='Relevancy', color='#55A868')
+    rects3 = ax.bar(x + 0.5*w, df['Sh_Faith'], w, label='Faithfulness', color='#E1A95F')
+    rects4 = ax.bar(x + 1.5*w, df['Final_Short'], w, label='Final Cortas', color='#C44E52')
     
-    rects1 = ax.bar(x_positions - 2.0 * bar_width, correctness, bar_width, label='Correctness (Sistema)', color='#4C72B0')
-    rects2 = ax.bar(x_positions - 1.0 * bar_width, relevancy, bar_width, label='Relevancy', color='#55A868')
-    rects3 = ax.bar(x_positions + 0.0 * bar_width, faithfulness, bar_width, label='Summarization (LLM)', color="#D25FE1")
-    rects4 = ax.bar(x_positions + 1.0 * bar_width, faithfulness, bar_width, label='Faithfulness (LLM)', color='#E1A95F')
-    rects5 = ax.bar(x_positions + 2.0 * bar_width, final_score, bar_width, label='Final Score', color='#C44E52')
-
     ax.set_ylabel('Puntuación (0.0 - 1.0)')
-    ax.set_title('Evaluación Ragas: Sistema Completo')
-    ax.set_xticks(x_positions)
-    ax.set_xticklabels(labels, rotation=rot, ha=align)
-    ax.set_ylim(0, 1.15) 
+    ax.set_title('Ragas Sistema: Preguntas Cortas (Chatbot)')
+    ax.set_xticks(x); ax.set_xticklabels(labels, rotation=rot, ha=align); ax.set_ylim(0, 1.15)
     ax.legend(loc='upper right', ncol=2)
+    for r in [rects1, rects2, rects3, rects4]: ax.bar_label(r, padding=3, fmt='%.2f', fontsize=8)
+    fig.tight_layout(); plt.savefig(os.path.join(output_dir, '5a_ragas_sistema_cortas.png'), dpi=300); plt.close()
 
-    ax.bar_label(rects1, padding=3, fmt='%.2f', fontsize=8)
-    ax.bar_label(rects2, padding=3, fmt='%.2f', fontsize=8)
-    ax.bar_label(rects3, padding=3, fmt='%.2f', fontsize=8)
-    ax.bar_label(rects4, padding=3, fmt='%.2f', fontsize=8)
-    ax.bar_label(rects5, padding=3, fmt='%.2f', fontsize=8)
+    # 5b Resumen (Reportero) 
+    fig, ax = plt.subplots(figsize=(10, 6))
+    w = 0.2
+    rects1 = ax.bar(x - 1.5*w, df['Su_Faith'], w, label='Faithfulness', color='#E1A95F')
+    rects2 = ax.bar(x - 0.5*w, df['Su_Summ'], w, label='Summarization', color='#D25FE1')
+    rects3 = ax.bar(x + 0.5*w, df['Su_Corr'], w, label='Correctness', color='#4C72B0')
+    rects4 = ax.bar(x + 1.5*w, df['Final_Summ'], w, label='Final Resumen', color='#C44E52')
+    
+    ax.set_ylabel('Puntuación (0.0 - 1.0)')
+    ax.set_title('Ragas Sistema: Calidad del Resumen')
+    ax.set_xticks(x); ax.set_xticklabels(labels, rotation=rot, ha=align); ax.set_ylim(0, 1.15)
+    ax.legend(loc='upper right', ncol=4)
+    for r in [rects1, rects2, rects3, rects4]: ax.bar_label(r, padding=3, fmt='%.2f', fontsize=8)
+    fig.tight_layout(); plt.savefig(os.path.join(output_dir, '5b_ragas_sistema_resumen.png'), dpi=300); plt.close()
 
-    fig.tight_layout()
-    plt.savefig(os.path.join(output_dir, '5_grafica_ragas_sistema.png'), dpi=300)
-    plt.close()
+    # 5c Puntuaciones Finales (Cortas vs Resumen vs Ponderado Global)
+    fig, ax = plt.subplots(figsize=(9, 6))
+    w = 0.25
+    rects1 = ax.bar(x - w, df['Final_Short'], w, label='Final Cortas', color='#8172B3')
+    rects2 = ax.bar(x, df['Final_Summ'], w, label='Final Resumen', color='#64B5CD')
+    
+    # Relación de pesos en la leyenda
+    peso_corta = int(GLOBAL_EVAL_WEIGHTS['short_eval'] * 100)
+    peso_resum = int(GLOBAL_EVAL_WEIGHTS['summary_eval'] * 100)
+    rects3 = ax.bar(x + w, df['Final_Global'], w, label=f'Global ({peso_corta}/{peso_resum})', color='#C44E52')
+    
+    ax.set_ylabel('Puntuación (0.0 - 1.0)')
+    ax.set_title('Ragas Sistema: Comparativa de Puntuaciones Finales')
+    ax.set_xticks(x); ax.set_xticklabels(labels, rotation=rot, ha=align); ax.set_ylim(0, 1.15)
+    ax.legend(loc='upper right', ncol=3)
+    for r in [rects1, rects2, rects3]: ax.bar_label(r, padding=3, fmt='%.2f', fontsize=8)
+    fig.tight_layout(); plt.savefig(os.path.join(output_dir, '5c_ragas_sistema_totales.png'), dpi=300); plt.close()
+
+    # 5d Todo Combinado 
+    fig, ax = plt.subplots(figsize=(12, 6))
+    w = 0.15
+    rects1 = ax.bar(x - 2*w, df['G_Corr'], w, label='Corr. Global', color='#4C72B0')
+    rects2 = ax.bar(x - w, df['G_Rel'], w, label='Rel. Global', color='#55A868')
+    rects3 = ax.bar(x, df['G_Faith'], w, label='Faith. Global', color='#E1A95F')
+    rects4 = ax.bar(x + w, df['G_Summ'], w, label='Summ. Global', color='#D25FE1')
+    rects5 = ax.bar(x + 2*w, df['Final_Global'], w, label='Final Global', color='#C44E52')
+    
+    ax.set_ylabel('Puntuación (0.0 - 1.0)')
+    ax.set_title('Ragas Sistema: Todas las Métricas Globales')
+    ax.set_xticks(x); ax.set_xticklabels(labels, rotation=rot, ha=align); ax.set_ylim(0, 1.15)
+    ax.legend(loc='upper right', ncol=5)
+    for r in [rects1, rects2, rects3, rects4, rects5]: ax.bar_label(r, padding=3, fmt='%.2f', fontsize=7)
+    fig.tight_layout(); plt.savefig(os.path.join(output_dir, '5d_ragas_sistema_completo.png'), dpi=300); plt.close()
 
 def generate_ragas_perception_plot(df, output_dir):
     """Genera la gráfica clásica de 3 barras para los perceptores aislados"""
@@ -273,7 +360,7 @@ def main():
         df_percept = df_ragas[~df_ragas['Configuracion'].str.contains('system')].copy()
         
         if not df_system.empty:
-            generate_ragas_system_plot(df_system, OUTPUT_DIR)
+            generate_ragas_system_plots(df_system, OUTPUT_DIR)
         
         if not df_percept.empty:
             generate_ragas_perception_plot(df_percept, OUTPUT_DIR)

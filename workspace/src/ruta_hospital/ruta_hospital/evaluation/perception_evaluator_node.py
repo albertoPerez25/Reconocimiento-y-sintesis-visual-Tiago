@@ -34,7 +34,13 @@ class PerceptionEvaluatorNode(BaseEvaluatorNode):
         self.tested_model_name = self.get_parameter('tested_model_name').get_parameter_value().string_value
 
         # Evaluador RAGAS
-        self.ragas_evaluator = RagasEvaluator(quest_path="", metrics_dir=self.metrics_dir, ollama_params=self.ollama_params, run_params=self.run_params)
+        self.ragas_evaluator = RagasEvaluator(
+            quest_path="", 
+            metrics_dir=self.metrics_dir, 
+            ollama_params=self.ollama_params, 
+            run_params=self.run_params, 
+            logger = self.get_logger()
+        )
         
         self.cb_group = ReentrantCallbackGroup() # Evitar Deadlocks. El de sistema usa el grupo del reportero, pero este no así que hay que crear otro grupo
 
