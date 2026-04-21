@@ -14,6 +14,7 @@ class OllamaParams:
         self.ollama_url=ollama_url
         self.evaluator_llm_model = evaluator_llm_model
         self.evaluator_embed_model = evaluator_embed_model
+        self.reporter_llm_model = None # TODO
 
 class EvaluatorRunParams:
     def __init__(self, system_workers = 4, system_timeout = 420, perceptor_workers = 4, perceptors_timeout = 420):
@@ -26,6 +27,7 @@ class RagasEvaluator:
     def __init__(self, quest_path, metrics_dir, ollama_params, run_params, logger = None):
         self.quest_path = quest_path
         self.metrics_dir = metrics_dir
+        self.ollama_params = ollama_params
         self.run_params = run_params
         self.logger = logger
         
@@ -36,58 +38,77 @@ class RagasEvaluator:
                                         format="json")
         self.evaluator_embeddings = OllamaEmbeddings(model=ollama_params.evaluator_embed_model, base_url=ollama_params.ollama_url)
 
-    def evaluate_system(self, global_context_json, reporter_prompt_func=None):
+    def evaluate_system(self, global_context_json, pregenerated_summary=None, reduced_context=None, config_name=""):
         '''Genera respuestas y ejecuta Ragas'''
-        short_dict, summary_dict = self.generate_answers(global_context_json, reporter_prompt_func)
+        short_dict, summary_dict = self.generate_answers(global_context_json, pregenerated_summary, reduced_context)
         
+        for d in [short_dict, summary_dict]: # nombre de la evaluación
+            if d["question"]:
+                d["evaluation_name"] = [config_name] * len(d["question"])
+
         results_dfs = []
         
-        # preguntas cortas 
-        if short_dict["question"]:
-            dataset_short = Dataset.from_dict(short_dict)
-            result_short = evaluate(
-                dataset=dataset_short,
-                metrics=[answer_correctness, answer_relevancy, faithfulness],
-                llm=self.evaluator_llm,
-                embeddings=self.evaluator_embeddings,
-                run_config=RunConfig(max_workers=self.run_params.perceptors_workers, 
-                                     timeout=self.run_params.perceptors_timeout)
-            )
-            df_short = result_short.to_pandas()
-            df_short['eval_type'] = 'short'
+        # Evaluar preguntas cortas
+        df_short = self.run_evaluation_subset(
+            data_dict=short_dict,
+            metrics=[answer_correctness, answer_relevancy, faithfulness],
+            eval_type_name='short'
+        )
+        if df_short is not None:
             results_dfs.append(df_short)
 
-        # resumen 
-        if summary_dict["question"]:
-            dataset_summary = Dataset.from_dict(summary_dict)
-            result_summary = evaluate(
-                dataset=dataset_summary,
-                metrics=[answer_correctness, faithfulness, summarization_score],
-                llm=self.evaluator_llm,
-                embeddings=self.evaluator_embeddings,
-                run_config=RunConfig(max_workers=self.run_params.perceptors_workers, 
-                                     timeout=self.run_params.perceptors_timeout),
-                column_map={
-                    "question": "question",
-                    "answer": "answer",
-                    "contexts": "contexts",
-                    "ground_truth": "ground_truth",
-                    "reference_contexts": "reference_contexts" # Necesario para esta columna, si no se pasa column_map no la encuentra (por algún motivo)
-                }
-            )
-            df_summary = result_summary.to_pandas()
-            df_summary['eval_type'] = 'summary'
+        # Evaluar resumen
+        df_summary = self.run_evaluation_subset(
+            data_dict=summary_dict,
+            metrics=[answer_correctness, faithfulness, summarization_score],
+            eval_type_name='summary',
+            column_map={
+                "question": "question",
+                "answer": "answer",
+                "contexts": "contexts",
+                "ground_truth": "ground_truth",
+                "reference_contexts": "reference_contexts"
+            }
+        )
+        if df_summary is not None:
             results_dfs.append(df_summary)
 
         if results_dfs:
             df_final = pd.concat(results_dfs, ignore_index=True)
-            output_path = os.path.join(self.metrics_dir, 'ragas_system_evaluation.csv')
+            output_path = os.path.join(self.metrics_dir, f"{config_name}_system_evaluation.csv")
             df_final.to_csv(output_path, index=False)
             return df_final
         else:
             return pd.DataFrame()
+        
+    def run_evaluation_subset(self, data_dict, metrics, eval_type_name, column_map=None):
+        '''Convierte un diccionario a Dataset, ejecuta RAGAS y devuelve un DataFrame etiquetado'''
+        if not data_dict.get("question"):
+            return None
+            
+        dataset = Dataset.from_dict(data_dict)
+        
+        # Preparar argumentos base
+        kwargs = {
+            "dataset": dataset,
+            "metrics": metrics,
+            "llm": self.evaluator_llm,
+            "embeddings": self.evaluator_embeddings,
+            "run_config": RunConfig(max_workers=self.run_params.system_workers, 
+                                    timeout=self.run_params.system_timeout)
+        }
+        
+        # column_map solo si se proporciona (resumen)
+        if column_map:
+            kwargs["column_map"] = column_map
+            
+        result = evaluate(**kwargs)
+        df = result.to_pandas()
+        df['eval_type'] = eval_type_name
+        
+        return df
 
-    def generate_answers(self, global_context_json, reporter_prompt_func=None):
+    def generate_answers(self, global_context_json, pregenerated_summary=None, reduced_context=None):
         '''Usa el LLM para responder a las preguntas basándose solo en la patrulla'''
         with open(self.quest_path, 'r', encoding='utf-8') as f:
             questions_data = json.load(f)
@@ -101,59 +122,86 @@ class RagasEvaluator:
             question_type = item.get("type", "short") # asume short para retrocompatibilidad con archivos legacy
             
             if question_type == "summary" and (not question or str(question).strip() == ""):
-                # Si la pregunta está vacía misma logica que el reportero
-                if reporter_prompt_func:
-                    prompt = reporter_prompt_func(global_context_json)
-                else:
-                    # Fallback
-                    prompt = f"Genera un reporte de actividades humanas detectadas con estos datos: {global_context_json}"
-                
-                # Para RAGAS, es necesario que la columna "question" sea algo
-                question_for_ragas = "Redacta el informe de seguridad global de la patrulla del hospital."
-            
+                llm_answer, question_for_ragas = self.generate_summary_answer(global_context_json, pregenerated_summary)
             else:
-                prompt = f"""
-                Eres un sistema analizador de actividades humanas en un hospital. 
-                Basándote ÚNICAMENTE en este registro visual de tu patrulla:
-                {global_context_json}
-                
-                Responde de forma breve y concisa a la siguiente pregunta.
-                
-                Pregunta: {question}
-                """
-                question_for_ragas = str(question)
-
-            llm_answer = call_ollama_api(
-                "http://localhost:11434/api/generate",
-                {"model": "llama3", "prompt": prompt, "stream": False}
-            )
+                llm_answer, question_for_ragas = self.generate_short_answer(global_context_json, question)
 
             natural_context_full = self.format_context_for_ragas(global_context_json, filter_empty=False) # para poder evaluar correctamente el Faithfulness
             natural_context_filtered = self.format_context_for_ragas(global_context_json, filter_empty=True) # Para que Ragas o el LLM en resumen no se pierda 
 
             if question_type == "summary":
-                summary_eval_data["question"].append(question_for_ragas)
-                summary_eval_data["answer"].append(llm_answer.strip())
-                summary_eval_data["ground_truth"].append(ground_truth)
-                summary_eval_data["contexts"].append(natural_context_filtered) # para faithfulness
-                summary_eval_data["reference_contexts"].append(natural_context_filtered) # para summarization_score. Texto original contra el que juzgar el resumen generado
+                context_to_use = [reduced_context] if reduced_context else natural_context_filtered
                 
-                self.logger.debug(f"Resumen generado: {llm_answer.strip()}")
-                self.logger.debug(f"Contexto original: {global_context_json}")
+                self.add_record_to_dataset(summary_eval_data, {
+                    "question": question_for_ragas,
+                    "answer": llm_answer.strip(),
+                    "ground_truth": ground_truth,
+                    "contexts": context_to_use,
+                    "reference_contexts": context_to_use
+                })
+                
+                if self.logger:
+                    self.logger.debug(f"Resumen generado: {llm_answer.strip()}")
+                    self.logger.debug(f"Contexto pasado a RAGAS: {context_to_use}")
 
             else:
-                relevant_contexts = self.get_relevant_context(natural_context_full, question.lower())
-
-                short_eval_data["question"].append(question_for_ragas)
-                short_eval_data["answer"].append(llm_answer.strip())
-                short_eval_data["ground_truth"].append(ground_truth)
-                short_eval_data["contexts"].append(relevant_contexts)
+                relevant_contexts = self.get_relevant_context(natural_context_full, str(question).lower())
+                
+                self.add_record_to_dataset(short_eval_data, {
+                    "question": question_for_ragas,
+                    "answer": llm_answer.strip(),
+                    "ground_truth": ground_truth,
+                    "contexts": relevant_contexts
+                })
                 
         return short_eval_data, summary_eval_data
     
-    def evaluate_perception(self, perception_data, model_name="perception_model"):
+    def generate_summary_answer(self, global_context_json, pregenerated_summary):
+        '''Genera o recupera el resumen global y la pregunta formateada para RAGAS'''
+        if pregenerated_summary:
+            llm_answer = pregenerated_summary
+        else: # Fallback
+            prompt = f"Genera un reporte de actividades humanas detectadas con estos datos: {global_context_json}"
+            llm_answer = call_ollama_api(
+                f"{self.ollama_params.ollama_url}/api/generate",
+                {"model": "llama3", "prompt": prompt, "stream": False}
+            )
+        
+        question_for_ragas = "Redacta el informe de seguridad global de la patrulla del hospital."
+        return llm_answer, question_for_ragas
+    
+    def generate_short_answer(self, global_context_json, question):
+        '''Genera la respuesta a una pregunta corta usando Ollama'''
+        prompt = f"""
+        Eres un sistema analizador de actividades humanas en un hospital. 
+        Basándote ÚNICAMENTE en este registro visual de tu patrulla:
+        {global_context_json}
+        
+        Responde de forma breve y concisa a la siguiente pregunta.
+        
+        Pregunta: {question}
+        """
+        question_for_ragas = str(question)
+
+        llm_answer = call_ollama_api(
+            f"{self.ollama_params.ollama_url}/api/generate",
+            {"model": "llama3", "prompt": prompt, "stream": False}
+        )
+        return llm_answer, question_for_ragas
+
+    def add_record_to_dataset(self, dataset, record):
+        '''Añade una nueva fila de datos al diccionario columnar de RAGAS'''
+        for key, value in record.items():
+            if key in dataset:
+                dataset[key].append(value)
+    
+    def evaluate_perception(self, perception_data, config_name="", model_name="perception_model"):
         '''Genera respuestas imagen por imagen y ejecuta Ragas para el perceptor'''
         eval_dict = self.generate_perception_answers(perception_data)
+        config_name = model_name if config_name == "" or config_name == "generic_evaluation" else config_name
+
+        if eval_dict["question"]: # nombre de la evaluación
+            eval_dict["evaluation_name"] = [config_name] * len(eval_dict["question"])
         
         dataset = Dataset.from_dict(eval_dict)
         
@@ -167,7 +215,7 @@ class RagasEvaluator:
         )
         
         # CSV con el nombre del modelo que evaluado
-        output_path = os.path.join(self.metrics_dir, f'ragas_eval_{model_name}.csv')
+        output_path = os.path.join(self.metrics_dir, f"{config_name}_perception_evaluation.csv")
         df_results = result.to_pandas()
         df_results.to_csv(output_path, index=False)
         return df_results

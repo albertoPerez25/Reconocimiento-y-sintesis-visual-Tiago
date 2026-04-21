@@ -6,7 +6,7 @@ from std_srvs.srv import Trigger
 from ament_index_python.packages import get_package_share_directory
 
 from ruta_hospital.reporting.llm_reporter_node import LLMReporterNode
-from ruta_hospital.evaluation.ragas_evaluator import RagasEvaluator
+from ruta_hospital.evaluation.utils.ragas_evaluator import RagasEvaluator
 from ruta_hospital.evaluation.base_evaluator import BaseEvaluatorNode
 
 from hospital_interfaces.action import GenerateReport
@@ -59,13 +59,13 @@ class SystemEvaluatorNode(BaseEvaluatorNode):
     async def evaluate_callback(self, request, response):
         self.get_logger().info("Iniciada Evaluación Ragas")
 
-        mock_result = GenerateReport.Result() 
+        mock_result = GenerateReport.Result()
         mock_goal_handle = MockGoalHandle()
         
         zone_groups = self.reporter_logic.validate_data(self.eval_folder_path, mock_result)
         if not zone_groups:
             response.success = False
-            response.message = mock_result.final_report # Captura el error
+            response.message = "Fallo validando los datos del directorio" # Captura el error
             return response
             
         self.get_logger().info("Extrayendo contexto de perceptores")
@@ -75,12 +75,25 @@ class SystemEvaluatorNode(BaseEvaluatorNode):
             response.success = False
             response.message = "Fallo en el procesamiento de imágenes en el perceptor"
             return response
+        
+        self.get_logger().info("Generando resumen global...")
+        mock_result = self.reporter_logic.generate_global_summary(global_context_json, mock_result)
+        
+        if not mock_result.success:
+            response.success = False
+            response.message = "Fallo al generar el resumen global por lotes"
+            return response
             
+        pregenerated_summary = mock_result.final_report.replace("Informe generado:\n", "").strip() # quitarlo para evitar errores de ragas
+        reduced_context = getattr(self.reporter_logic, 'last_reduced_context', None)
         self.get_logger().info("Generando respuestas...")
+
         try:
             self.ragas_evaluator.evaluate_system(
                 global_context_json,
-                reporter_prompt_func=self.reporter_logic.get_final_prompt # para poder reconstruir exactamente el mismo prompt
+                pregenerated_summary=pregenerated_summary, # para poder reconstruir exactamente el mismo prompt
+                reduced_context=reduced_context,
+                config_name=self.evaluation_name
             )            
             response.success = True
             response.message = f"Evaluación Ragas completada con éxito. Guardado en: {self.metrics_dir}"

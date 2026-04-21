@@ -21,6 +21,8 @@ PKG_DIR = get_package_share_directory('ruta_hospital')
 SEMANTIC_PATH_MAP = os.path.join(PKG_DIR, 'config', 'semantic_map.json')
 METRICS_DIR = "/home/alberto/tfg/Reconocimiento-y-sintesis-visual-Tiago/autogenerate_metrics/"
 METADATA_PATH = os.path.join(PKG_DIR, 'config', 'hospital_metadata.json')
+DEFAULT_MODEL = "llama3"
+DEFAULT_OLLAMA_URL = "http://localhost:11434/api/generate"
 
 class BaseReporterNode(Node, ABC):
     '''Clase abstracta para los nodos generadores de informes'''
@@ -32,10 +34,14 @@ class BaseReporterNode(Node, ABC):
         self.declare_parameter('semantic_map_path', SEMANTIC_PATH_MAP)
         self.declare_parameter('metrics_dir', METRICS_DIR)
         self.declare_parameter('metadata_path', METADATA_PATH)
+        self.declare_parameter('llm_model', DEFAULT_MODEL)
+        self.declare_parameter('ollama_url', DEFAULT_OLLAMA_URL)
 
         self.semantic_map_path = self.get_parameter('semantic_map_path').get_parameter_value().string_value
         self.metrics_dir = self.get_parameter('metrics_dir').get_parameter_value().string_value
         self.metadata_path = self.get_parameter('metadata_path').get_parameter_value().string_value
+        self.llm_model = self.get_parameter('llm_model').get_parameter_value().string_value
+        self.ollama_url = self.get_parameter('ollama_url').get_parameter_value().string_value
 
         self.hospital_zones, self.reception_zone = load_semantic_map(self.semantic_map_path, self.get_logger())
         self.hospital_metadata = self.load_hospital_metadata()

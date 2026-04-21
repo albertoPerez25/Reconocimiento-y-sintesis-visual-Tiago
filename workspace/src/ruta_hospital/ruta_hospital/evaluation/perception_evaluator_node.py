@@ -8,7 +8,7 @@ from rclpy.callback_groups import ReentrantCallbackGroup
 from ament_index_python.packages import get_package_share_directory
 
 from hospital_interfaces.srv import AnalyzeActivity
-from ruta_hospital.evaluation.ragas_evaluator import RagasEvaluator
+from ruta_hospital.evaluation.utils.ragas_evaluator import RagasEvaluator
 from ruta_hospital.evaluation.base_evaluator import BaseEvaluatorNode
 
 PKG_DIR = get_package_share_directory('ruta_hospital')
@@ -141,9 +141,13 @@ class PerceptionEvaluatorNode(BaseEvaluatorNode):
         self.get_logger().info("Inferencia completada. Pasando resultados a RAGAS para su puntuación...")
         
         try:
-            self.ragas_evaluator.evaluate_perception(perception_data_for_ragas, model_name=self.tested_model_name)
+            self.ragas_evaluator.evaluate_perception(
+                perception_data_for_ragas,
+                config_name=self.evaluation_name, 
+                model_name=self.tested_model_name
+            )
             response.success = True
-            response.message = f"Evaluación VQA completada. CSV guardado como 'ragas_eval_{self.tested_model_name}.csv' en {self.metrics_dir}"
+            response.message = f"Evaluación completada. CSV guardado como 'ragas_{self.tested_model_name}_perception_evaluation.csv' en {self.metrics_dir}"
         except Exception as e:
             self.get_logger().error(f"Error durante Ragas: {e}")
             response.success = False

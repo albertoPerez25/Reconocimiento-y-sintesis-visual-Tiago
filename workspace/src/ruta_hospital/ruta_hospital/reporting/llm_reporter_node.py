@@ -6,13 +6,13 @@ from rclpy.executors import MultiThreadedExecutor
 from hospital_interfaces.srv import AnalyzeActivity
 from hospital_interfaces.action import GenerateReport
 from ruta_hospital.reporting.base_reporter import BaseReporterNode
-from ruta_hospital.commons.api_utils import call_ollama_api
+from ruta_hospital.reporting.utils.recursive_summarizer import RecursiveSummarizer
 
 class LLMReporterNode(BaseReporterNode):
     def __init__(self):
         super().__init__('llm_reporter_node')
         self.declare_parameter('perception_mode', 'image') # 'sequence' para VLM temporal, 'image' para YOLO foto a foto
-        self.perception_mode = self.get_parameter('perception_mode').get_parameter_value().string_value
+        self.perception_mode = self.get_parameter('perception_mode').get_parameter_value().string_value     
         self.vision_cli = self.create_client(AnalyzeActivity, 'analyze_image', callback_group=self.cb_group)
         
         if self.perception_mode == "sequence":
@@ -185,7 +185,7 @@ class LLMReporterNode(BaseReporterNode):
             
             try:
                 vlm_dict = json.loads(result.report) # si no carga el formato estaba mal
-            except:
+            except json.JSONDecodeError:
                 vlm_dict = {
                     "descripcion_vlm": result.report.strip(), 
                     "alerta": ("ATENCIÓN" in result.report.upper() or "PELIGRO" in result.report.upper())
@@ -205,28 +205,57 @@ class LLMReporterNode(BaseReporterNode):
 
     def generate_global_summary(self, global_context, result):
         '''Toma todos los mini reportes y genera el resumen final unificado'''
-        self.get_logger().info("Generando informe global unificado...")
+        self.get_logger().info("Iniciando generación del resumen...")
         self.get_logger().debug(f"CONTEXTO:{global_context}")
-        
-        final_prompt = self.get_final_prompt(global_context)
-        
+
         try:
-            final_report = call_ollama_api(
-                "http://localhost:11434/api/generate", 
-                {"model": "llama3", "prompt": final_prompt, "stream": False}
-            )
+            hospital_data = json.loads(global_context)
+        except json.JSONDecodeError:
+            result.success = False
+            result.final_report = "Error: El contexto global no es un JSON válido."
+            return result
+        
+        zone_texts = self.json_preprocessing(hospital_data)
+
+        summarizer = RecursiveSummarizer(
+            ollama_url=self.ollama_url,
+            model_name=self.llm_model,
+            logger=self.get_logger(),
+            max_words=300  # Límite para el map reduce iterativo
+        )
+
+        try:
+            final_report = summarizer.recursive_summarize(zone_texts, self.get_final_prompt)
+            self.last_reduced_context = summarizer.final_context
+            
             self.get_logger().info(f"\n\n\tINFORME FINAL\n{final_report}\n")
             self.current_metrics["caracteres_informe_final"] = len(final_report)
             
             result.success = True
             result.final_report = f"Informe generado:\n{final_report}"
         except Exception as e:
-            self.get_logger().error(f"Error conectando con Ollama: {e}")
+            self.get_logger().error(f"Error en resumen recursivo: {e}")
             result.success = False
             result.final_report = str(e)
 
-        return result 
+        return result
     
+
+    def json_preprocessing(self, hospital_data):
+        '''Convierte el diccionario de datos del hospital en una lista de strings formateados por zona'''
+        zone_texts = []
+        for zone, info in hospital_data.items():
+            if info.get("eventos_recientes"):
+                zone_texts.append(f"ZONA: {zone}\n{json.dumps(info, ensure_ascii=False)}")
+            else:
+                zone_texts.append(f"ZONA: {zone}\n{json.dumps(info, ensure_ascii=False)}") # TODO
+        
+        if not zone_texts:
+            zone_texts = ["Todas las zonas patrulladas se encuentran despejadas, sin incidentes ni personas detectadas"]
+        
+        return zone_texts
+    
+
     def get_final_prompt(self, global_context):
         '''Devuelve el prompt final del llm'''
         return f"""

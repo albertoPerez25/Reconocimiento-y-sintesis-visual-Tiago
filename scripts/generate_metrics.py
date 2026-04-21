@@ -40,42 +40,47 @@ def load_performance_data(json_path):
         )
     return df
 
-def load_ragas_data(ragas_dir): # TODO
-    """Carga los resultados de RAGAS y calcula varias metricas"""
-    csv_files = glob.glob(os.path.join(ragas_dir, '*.csv'))
+def load_ragas_data(ragas_dir):
+    csv_files = glob.glob(os.path.join(ragas_dir, 'ragas_*.csv'))
+    data_with_scores = []
     
-    if not csv_files:
-        print(f"Warning: Archivo CSV de Ragas no encontrado en {ragas_dir}")
-        return None
+    for file in csv_files:
+        df = pd.read_csv(file)
+        base_name = os.path.basename(file)
+        
+        if base_name.endswith('_perception_evaluation.csv'):
+            eval_category = 'perception'
+        elif 'system' in base_name.lower():
+            eval_category = 'system'
+        else:
+            continue 
+            
+        display_name = base_name.replace('.csv', '') # Fallback por defecto
+        display_name = display_name.replace('ragas_', '')
+        
+        if 'evaluation_name' in df.columns and not df['evaluation_name'].isnull().all():
+            val = str(df['evaluation_name'].iloc[0]).strip()
+            if val and val.lower() != 'nan':
+                display_name = val
 
-    summary_list = []
-    
-    for file_path in csv_files:
-        filename = os.path.basename(file_path)
-        config_name = os.path.splitext(filename)[0]
+        # Configuracion es lo que usa matplotlib
+        df['Configuracion'] = display_name
+        df['Eval_Category'] = eval_category 
 
-        try:
-            df = pd.read_csv(file_path)
-
-            if "system" in config_name.lower() and 'eval_type' in df.columns:
-                metrics_dict = calculate_system_metrics(df, config_name)
-            else:
-                metrics_dict = calculate_legacy_metrics(df, config_name)
-                
-            summary_list.append(metrics_dict)
-        except Exception as e:
-            print(f"Error procesando {filename}: {e}")
-
-    if not summary_list:
-        return None
-
-    df_summary = pd.DataFrame(summary_list).sort_values(by='Final_Score', ascending=False)
-    # Ordenar por la nota que corresponda
-    if 'Final_Global' in df_summary.columns:
-        df_summary = df_summary.sort_values(by='Final_Global', ascending=False)
-    elif 'Final_Score' in df_summary.columns:
-        df_summary = df_summary.sort_values(by='Final_Score', ascending=False)
-    return df_summary
+        metric_cols = [col for col in ['answer_correctness', 'answer_relevancy', 'faithfulness', 'summary_score'] if col in df.columns]
+        
+        # nota media general del archivo
+        sort_score = df[metric_cols].mean().mean() if metric_cols else 0.0
+        
+        # (nota, dataframe)
+        data_with_scores.append((sort_score, df))
+        
+    # Mayor a Menor nota 
+    data_with_scores.sort(key=lambda x: x[0], reverse=True)
+        
+    all_data = [item[1] for item in data_with_scores]
+        
+    return pd.concat(all_data, ignore_index=True) if all_data else pd.DataFrame()
 
 def calculate_system_metrics(df, config_name):
     """Extrae la lógica de cálculo de métricas para el evaluador del sistema"""
@@ -93,7 +98,7 @@ def calculate_system_metrics(df, config_name):
     # Resumen
     summary_correctness_score = df_summ['answer_correctness'].mean() if not df_summ.empty and 'answer_correctness' in df_summ.columns else 0.0
     summary_faithfulness_score = df_summ['faithfulness'].mean() if not df_summ.empty and 'faithfulness' in df_summ.columns else 0.0
-    summary_summarization_score = df_summ['summarization_score'].mean() if not df_summ.empty and 'summarization_score' in df_summ.columns else 0.0
+    summary_summarization_score = df_summ['summary_score'].mean() if not df_summ.empty and 'summary_score' in df_summ.columns else 0.0
 
     summary_metrics_for_final = [summary_correctness_score, summary_summarization_score]
     final_summ = sum(summary_metrics_for_final) / float(len(summary_metrics_for_final)) if not df_summ.empty else 0.0
@@ -102,7 +107,7 @@ def calculate_system_metrics(df, config_name):
     global_corr = df['answer_correctness'].mean(skipna=True) if 'answer_correctness' in df.columns else 0.0
     global_rel = df['answer_relevancy'].mean(skipna=True) if 'answer_relevancy' in df.columns else 0.0
     global_faith = df['faithfulness'].mean(skipna=True) if 'faithfulness' in df.columns else 0.0
-    global_summ = df['summarization_score'].mean(skipna=True) if 'summarization_score' in df.columns else 0.0
+    global_summ = df['summary_score'].mean(skipna=True) if 'summary_score' in df.columns else 0.0
     
     final_global = (final_short * GLOBAL_EVAL_WEIGHTS['short_eval']) + (final_summ * GLOBAL_EVAL_WEIGHTS['summary_eval'])
 
@@ -114,12 +119,20 @@ def calculate_system_metrics(df, config_name):
         'Final_Global': round(final_global, 3)
     }
 
+def get_safe_mean(df, col_name):
+    """Extraer medias de forma segura frente a NaNs"""
+    if col_name in df.columns:
+        val = df[col_name].mean()
+        return 0.0 if pd.isna(val) else val
+    return 0.0
+
 def calculate_legacy_metrics(df, config_name):
     """Extrae la lógica de cálculo de métricas para perceptores aislados o CSVs antiguos"""
-    mean_correctness = df['answer_correctness'].mean() if 'answer_correctness' in df.columns else 0.0
-    mean_relevancy = df['answer_relevancy'].mean() if 'answer_relevancy' in df.columns else 0.0
-    mean_summ = df['summarization_score'].mean() if 'summarization_score' in df.columns else 0.0
-    mean_faithfulness = df['faithfulness'].mean() if 'faithfulness' in df.columns else 0.0
+
+    mean_correctness = get_safe_mean(df,'answer_correctness')
+    mean_relevancy = get_safe_mean(df,'answer_relevancy')
+    mean_summ = get_safe_mean(df,'summary_score')
+    mean_faithfulness = get_safe_mean(df,'faithfulness')
 
     if FINAL_SCORE_WITH_FAITHFULNESS:
         final_score = (mean_correctness + mean_relevancy + mean_summ + mean_faithfulness) / 3.0
@@ -252,7 +265,7 @@ def generate_ragas_system_plots(df, output_dir): # TODO
     rects4 = ax.bar(x + 1.5*w, df['Final_Short'], w, label='Final Cortas', color='#C44E52')
     
     ax.set_ylabel('Puntuación (0.0 - 1.0)')
-    ax.set_title('Ragas Sistema: Preguntas Cortas (Chatbot)')
+    ax.set_title('Ragas Sistema: Preguntas Cortas')
     ax.set_xticks(x); ax.set_xticklabels(labels, rotation=rot, ha=align); ax.set_ylim(0, 1.15)
     ax.legend(loc='upper right', ncol=2)
     for r in [rects1, rects2, rects3, rects4]: ax.bar_label(r, padding=3, fmt='%.2f', fontsize=8)
@@ -340,6 +353,17 @@ def generate_ragas_perception_plot(df, output_dir):
     plt.savefig(os.path.join(output_dir, '6_grafica_ragas_percepcion.png'), dpi=300)
     plt.close()
 
+def aggregate_metrics(df, calc_function):
+    """
+    Agrupa un DataFrame de RAGAS por 'Configuracion' y aplica 
+    la función de cálculo de métricas especificada.
+    """
+    metrics_list = []
+    for config_name, group_df in df.groupby('Configuracion'):
+        metrics_list.append(calc_function(group_df, config_name))
+        
+    return pd.DataFrame(metrics_list)
+
 def main():
     os.makedirs(OUTPUT_DIR, exist_ok=True)
     
@@ -356,14 +380,18 @@ def main():
         generate_ragas_summary(df_ragas, OUTPUT_DIR)
 
         # Si el nombre del CSV incluye "system", va a la gráfica A. Si no a la B.
-        df_system = df_ragas[df_ragas['Configuracion'].str.contains('system')].copy()
-        df_percept = df_ragas[~df_ragas['Configuracion'].str.contains('system')].copy()
+        df_system = df_ragas[df_ragas['Eval_Category'] == 'system'].copy()
+        df_perception = df_ragas[df_ragas['Eval_Category'] == 'perception'].copy()
         
+        # Procesar y dibujar métricas de sistema
         if not df_system.empty:
-            generate_ragas_system_plots(df_system, OUTPUT_DIR)
+            df_system_agg = aggregate_metrics(df_system, calculate_system_metrics)
+            generate_ragas_system_plots(df_system_agg, OUTPUT_DIR)
         
-        if not df_percept.empty:
-            generate_ragas_perception_plot(df_percept, OUTPUT_DIR)
+        # Procesar y dibujar métricas de percepción
+        if not df_perception.empty:
+            df_perception_agg = aggregate_metrics(df_perception, calculate_legacy_metrics)
+            generate_ragas_perception_plot(df_perception_agg, OUTPUT_DIR)
 
         print("- Gráficos de evaluación Ragas generados (5 y 6).")
 
