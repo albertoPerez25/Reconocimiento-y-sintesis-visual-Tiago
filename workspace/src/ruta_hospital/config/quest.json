@@ -1,4 +1,9 @@
 [
+    {
+    "question": "",
+    "ground_truth": "Se detecta una emergencia crítica en la Habitación Compartida 2, donde una trabajadora se encuentra tirada en el suelo. Se requiere enviar asistencia médica de forma inmediata a esta ubicación para socorrerla. Por otro lado, se reporta una infracción de seguridad en el pasillo, ya que el sistema ha detectado a una persona corriendo cerca de otra trabajadora que traslada a un paciente en silla de ruedas, lo que supone un riesgo de colisión. Además, se observa una gran acumulación de cajas en ambos almacenes que podría obstaculizar el paso, y se registra a una empleada inactiva en la Oficina 2. El resto de las instalaciones del hospital funciona con normalidad y bajo los protocolos establecidos. En el Quirófano 2 se está llevando a cabo una intervención quirúrgica con el personal médico necesario, la zona de Recepción opera de forma habitual con varios visitantes y una sola persona al mostrador, y las habitaciones ocupadas tienen a sus pacientes seguros y atendidos. Zonas como los baños, las escaleras 2 y la habitación individual 1 se encuentran completamente vacías y despejadas.",
+    "type": "summary"
+  },
   {
     "question": "¿Cuántas personas hay exactamente en la zona de Recepción en este momento?",
     "ground_truth": "Hay seis personas"

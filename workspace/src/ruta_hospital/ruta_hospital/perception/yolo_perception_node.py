@@ -38,7 +38,7 @@ class YoloPerceptionNode(BasePerceptionNode):
 
         descriptions = []
         detections = []
-        global_alert = False
+        global_humans_detected = False
 
         ids = result.boxes.id.int().cpu().tolist() if result.boxes.id is not None else [i+1 for i in range(len(result.boxes))]
 
@@ -57,15 +57,15 @@ class YoloPerceptionNode(BasePerceptionNode):
                 "posture": posture
             })
 
-            if "ATENCIÓN" in posture:
-                global_alert = True
+            #if "ATENCIÓN" in posture:
+            global_humans_detected = True
 
         # Conteo de personas con la lista de posturas
         final_description = f"Estado: Se han detectado {len(result.boxes)} persona(s). " + " ".join(descriptions)
 
         json_response = {
             "descripcion_vlm": final_description,
-            "alerta": global_alert,
+            "alerta": global_humans_detected,
             "detecciones": detections
         }
 
@@ -88,19 +88,19 @@ class YoloPerceptionNode(BasePerceptionNode):
 
         if hip_c > self.min_confidence and knee_c > self.min_confidence:
             if abs(hip_y - knee_y) < (height * 0.2) or (width > height * 0.6 and width < height * 1.2):
-                return "(ignorar) Todo correcto. Persona sentada"
+                return "Persona sentada"
             
         if nose_c > self.min_confidence and ankle_c > self.min_confidence:
             if abs(ankle_y - nose_y) < (width * 0.6): 
-                return "ATENCIÓN Caída detectada (cabeza y pies a altura similar), ENVIAR AYUDA URGENTEMENTE."
+                return "ATENCIÓN Caída detectada, ENVIAR AYUDA URGENTEMENTE." # (cabeza y pies a altura similar)
             
             elif height > (width * 1.5): 
                 return "(ignorar) Todo correcto. Persona de pie o caminando"
         
         if height > (width * 1.3): 
-            return "(ignorar) Todo correcto. Persona de pie (piernas parcialmente ocultas o predicción con poca confianza)"
+            return "Persona de pie (predicción con poca confianza)" # piernas parcialmente ocultas 
         
-        return "(ignorar) Todo correcto. Persona sentada o torso visible (piernas parcialmente ocultas o predicción con poca confianza)"
+        return "Persona sentada o torso visible (predicción con poca confianza)" # piernas parcialmente ocultas 
     
     def check_path(self, path):
         '''Metodo para comprobar que el path es de una imagen que exista'''

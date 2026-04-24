@@ -49,6 +49,7 @@ PKG_DIR = get_package_share_directory('ruta_hospital')
 
 DEFAULT_WAYPOINTS_PATH = os.path.join(PKG_DIR, 'config', 'route_waypoints.json')
 DEFAULT_PHOTOS_DIR = "/home/alberto/tfg/Reconocimiento-y-sintesis-visual-Tiago/hospital_photos/"
+DEFAULT_KEEP_TEMP_FOLDERS = False
 
 class PatrolNode(rclpy.node.Node):
     def __init__(self):
@@ -61,6 +62,9 @@ class PatrolNode(rclpy.node.Node):
         # Directorio raíz para las subcarpetas
         self.declare_parameter('base_photos_dir', DEFAULT_PHOTOS_DIR)
         self.base_photos_dir = self.get_parameter('base_photos_dir').get_parameter_value().string_value
+
+        self.declare_parameter('keep_temp_folders', DEFAULT_KEEP_TEMP_FOLDERS)
+        self.keep_temp_folders = self.get_parameter('keep_temp_folders').get_parameter_value().bool_value
 
         self.path_points = load_route(self.route_file_path, DEFAULT_PATH_POINTS, self.get_logger())
 
@@ -94,7 +98,8 @@ class PatrolNode(rclpy.node.Node):
         # 3 segundos de espera para ver si el nodo reportero está encendido
         if not self.report_action_client.wait_for_server(timeout_sec=3.0):
             self.get_logger().warn("El servidor de acción '/generate_patrol_report' no está activo.")
-            delete_folder(self.current_folder_path, self.get_logger()) 
+            if not self.keep_temp_folders:
+                delete_folder(self.current_folder_path, self.get_logger())
             return
 
         goal_msg = GenerateReport.Goal()
@@ -108,7 +113,8 @@ class PatrolNode(rclpy.node.Node):
         goal_handle = future.result()
         if not goal_handle.accepted:
             self.get_logger().warn('La meta fue rechazada por el reportero, no se generará informe')
-            delete_folder(folder_to_clean, self.get_logger())
+            if not self.keep_temp_folders:
+                delete_folder(folder_to_clean, self.get_logger())
             return
 
         self.get_logger().info('Generando informe...')
@@ -116,7 +122,7 @@ class PatrolNode(rclpy.node.Node):
 
         # Callback para cuando la meta termine definitivamente
         self._get_result_future = goal_handle.get_result_async()
-        self._get_result_future.add_done_callback(self.get_result_callback)
+        self._get_result_future.add_done_callback(lambda fut: self.get_result_callback(fut, folder_to_clean))
 
     def report_feedback_callback(self, feedback_msg):
         '''Recibe y muestra el progreso temporal del reportero'''
@@ -134,8 +140,11 @@ class PatrolNode(rclpy.node.Node):
         else:
             self.get_logger().error("ERROR generando el informe en el reportero: {result.final_report}")
             
-        self.get_logger().info(f"Limpiando datos de sesión: {folder_to_clean}")
-        delete_folder(folder_to_clean, self.get_logger())
+        if not self.keep_temp_folders:
+            self.get_logger().info(f"Limpiando datos de sesión: {folder_to_clean}")
+            delete_folder(folder_to_clean, self.get_logger())
+        else:
+            self.get_logger().debug(f"Modo keep_temp_folders ON. Se conserva: {folder_to_clean}")
         self.active_goal_handle = None # Limpiar referencia
 
     def state_check(self, result, index, iteration): 
@@ -215,7 +224,11 @@ class PatrolNode(rclpy.node.Node):
         '''Bucle infinito de iteraciones de patrullas al hospital'''
         self.get_logger().info(f"Ruta cargada con {len(self.route_poses)} puntos")
         iteration = 1
-        clean_all_orphan_folders(self.base_photos_dir, self.get_logger())
+        if not self.keep_temp_folders:
+            clean_all_orphan_folders(self.base_photos_dir, self.get_logger())
+        else:
+            self.get_logger().warn(f"Modo keep_temp_folders ON. Las carpetas de capturas NO se borrarán")
+            
         while rclpy.ok():
             self.get_logger().info(f"\nVUELTA Nº {iteration}")
 

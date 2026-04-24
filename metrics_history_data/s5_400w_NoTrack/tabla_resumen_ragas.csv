@@ -1,0 +1,5 @@
+Configuracion,Correctness,Relevancy,Summarization,Faithfulness,Final_Score,Sh_Corr,Sh_Rel,Sh_Faith,Final_Short,Su_Faith,Su_Summ,Su_Corr,Final_Summ,G_Corr,G_Rel,G_Faith,G_Summ,Final_Global
+ragas_system_evaluation,,,,,,0.596,0.603,0.405,0.599,,0.0,0.432,0.216,0.588,0.603,0.405,0.0,0.408
+ragas_eval_yolo26n,0.563,0.665,0.0,0.0,0.614,,,,,,,,,,,,,
+tabla_resumen_rendimiento,0.0,0.0,0.0,0.0,0.0,,,,,,,,,,,,,
+tabla_resumen_ragas,0.0,0.0,0.0,0.0,0.0,,,,,,,,,,,,,
