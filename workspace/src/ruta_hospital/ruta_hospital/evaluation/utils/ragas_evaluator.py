@@ -41,10 +41,6 @@ class RagasEvaluator:
     def evaluate_system(self, global_context_json, pregenerated_summary=None, reduced_context=None, config_name=""):
         '''Genera respuestas y ejecuta Ragas'''
         short_dict, summary_dict = self.generate_answers(global_context_json, pregenerated_summary, reduced_context)
-        
-        for d in [short_dict, summary_dict]: # nombre de la evaluación
-            if d["question"]:
-                d["evaluation_name"] = [config_name] * len(d["question"])
 
         results_dfs = []
         
@@ -52,7 +48,8 @@ class RagasEvaluator:
         df_short = self.run_evaluation_subset(
             data_dict=short_dict,
             metrics=[answer_correctness, answer_relevancy, faithfulness],
-            eval_type_name='short'
+            eval_type_name='short',
+            config_name=config_name
         )
         if df_short is not None:
             results_dfs.append(df_short)
@@ -62,6 +59,7 @@ class RagasEvaluator:
             data_dict=summary_dict,
             metrics=[answer_correctness, faithfulness, summarization_score],
             eval_type_name='summary',
+            config_name=config_name,
             column_map={
                 "question": "question",
                 "answer": "answer",
@@ -75,13 +73,13 @@ class RagasEvaluator:
 
         if results_dfs:
             df_final = pd.concat(results_dfs, ignore_index=True)
-            output_path = os.path.join(self.metrics_dir, f"{config_name}_system_evaluation.csv")
+            output_path = os.path.join(self.metrics_dir, f"ragas_{config_name}_system_evaluation.csv")
             df_final.to_csv(output_path, index=False)
             return df_final
         else:
             return pd.DataFrame()
         
-    def run_evaluation_subset(self, data_dict, metrics, eval_type_name, column_map=None):
+    def run_evaluation_subset(self, data_dict, metrics, eval_type_name, config_name, column_map=None):
         '''Convierte un diccionario a Dataset, ejecuta RAGAS y devuelve un DataFrame etiquetado'''
         if not data_dict.get("question"):
             return None
@@ -106,6 +104,7 @@ class RagasEvaluator:
         df = result.to_pandas()
         df['eval_type'] = eval_type_name
         
+        df['evaluation_name'] = config_name if config_name else eval_type_name
         return df
 
     def generate_answers(self, global_context_json, pregenerated_summary=None, reduced_context=None):
@@ -198,7 +197,6 @@ class RagasEvaluator:
     def evaluate_perception(self, perception_data, config_name="", model_name="perception_model"):
         '''Genera respuestas imagen por imagen y ejecuta Ragas para el perceptor'''
         eval_dict = self.generate_perception_answers(perception_data)
-        config_name = model_name if config_name == "" or config_name == "generic_evaluation" else config_name
 
         if eval_dict["question"]: # nombre de la evaluación
             eval_dict["evaluation_name"] = [config_name] * len(eval_dict["question"])
@@ -215,8 +213,9 @@ class RagasEvaluator:
         )
         
         # CSV con el nombre del modelo que evaluado
-        output_path = os.path.join(self.metrics_dir, f"{config_name}_perception_evaluation.csv")
+        output_path = os.path.join(self.metrics_dir, f"ragas_{config_name}_perception_evaluation.csv")
         df_results = result.to_pandas()
+        df_results['evaluation_name'] = config_name # hay que insertarlo después de que pandas lo devuelva en df y RAGAS no lo elimine
         df_results.to_csv(output_path, index=False)
         return df_results
 

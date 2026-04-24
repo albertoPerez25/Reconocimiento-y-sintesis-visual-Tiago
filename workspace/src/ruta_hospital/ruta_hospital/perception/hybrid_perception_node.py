@@ -52,7 +52,7 @@ class HybridPerceptionNode(BasePerceptionNode):
             yolo_data = {"descripcion_vlm": "Error de formato YOLO", "alerta": False}
 
         detections = yolo_data.get("detecciones", [])
-        if detections and False:
+        if detections:
             self.get_logger().debug("Se han detectado personas por YOLO")
             image_to_vlm = self.get_image_with_tracking_data(detections, image_path, context)
             self.get_logger().debug(f"Las detecciones se le pasarán al VLM así: {context.tracking_history}")

@@ -221,7 +221,7 @@ class LLMReporterNode(BaseReporterNode):
             ollama_url=self.ollama_url,
             model_name=self.llm_model,
             logger=self.get_logger(),
-            max_words=300  # Límite para el map reduce iterativo
+            max_words=self.max_words  # Límite para el map reduce iterativo
         )
 
         try:
