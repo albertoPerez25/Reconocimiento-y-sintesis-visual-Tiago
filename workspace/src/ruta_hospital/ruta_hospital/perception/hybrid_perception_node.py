@@ -55,6 +55,7 @@ class HybridPerceptionNode(BasePerceptionNode):
         if detections:
             self.get_logger().debug("Se han detectado personas por YOLO")
             image_to_vlm = self.get_image_with_tracking_data(detections, image_path, context)
+            self.get_logger().debug(f"Las detecciones se le pasarán al VLM así: {context.tracking_history}")
         else:
             image_to_vlm = image_path
 
@@ -133,11 +134,11 @@ class HybridPerceptionNode(BasePerceptionNode):
             
             # confianza en base a lo que detecto cada modelo
             if yolo.alert and vlm.alert:
-                combined_desc += " ALTA FIABILIDAD: Incidencia confirmada por ambos modelos."
+                combined_desc += " ALTA FIABILIDAD: Presencia humana confirmada por ambos modelos."
             elif yolo.alert and not vlm.alert:
-                combined_desc += " FIABLE: Peligro posicional detectado por YOLO (posible falso negativo del VLM)."
+                combined_desc += " FIABLE: Presencia humana detectada por YOLO (posible falso negativo del VLM)."
             elif vlm.alert and not yolo.alert:
-                combined_desc += " PRECAUCIÓN: Alerta exclusiva del VLM (posible falso positivo)."
+                combined_desc += " PRECAUCIÓN: Detección exclusiva del VLM (posible falso positivo)."
 
         return combined_desc,final_alert
     

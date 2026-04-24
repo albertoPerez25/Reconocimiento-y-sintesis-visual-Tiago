@@ -1,0 +1,6 @@
+modelo_reportero,Tiempo Total (s),Latencia Visión (s/img),Contexto Generado (Caract.),Tiempo Redacción LLM (s)
+hybrid_(yolo+moonlight),400.23,1.36,4227.0,18.09
+llm_reporter_node,124.06,1.52,2098.2,26.56
+sequence_moonlight,68.03,0.2,2958.0,11.88
+vlm_moonlight,335.92,1.13,2891.0,19.35
+yolo,68.42,0.18,3114.0,18.38

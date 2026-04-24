@@ -70,7 +70,7 @@ class VLMDirectReporterNode(BaseReporterNode):
         self.get_logger().info("Generando informe global unificado con Llama-3...")
         
         final_prompt = f"""
-        You are the security AI for a hospital patrol robot. 
+        You are the AI for a hospital patrol robot. Your job is to analyze human activities.
         Below are the individual visual mini-reports for each zone of the hospital during the last patrol.
 
         Your task is to write a comprehensive and professional GLOBAL SUMMARY for the Floor Manager. 
@@ -82,7 +82,7 @@ class VLMDirectReporterNode(BaseReporterNode):
         fallen on the ground, running, yelling, aggressive movements, fights...). Anything related to
         people (personnel, patients or visitors).
 
-        Use a formal and clear tone. Do not invent data.
+        Use a formal and clear tone. Do not make up data.
 
         MINI-REPORTS:
         {global_context}

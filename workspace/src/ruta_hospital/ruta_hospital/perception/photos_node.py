@@ -29,7 +29,7 @@ class PhotosNode(rclpy.node.Node):
         super().__init__('photos_node')
         
         # la distancia como parametro para poder cambiarlo en ejecucion
-        self.declare_parameter(TARGET_DISTANCE_METERS, 1.0) # (nombre, valor por defecto)
+        self.declare_parameter(TARGET_DISTANCE_METERS, 0.2) # (nombre, valor por defecto)
         self.declare_parameter(SIMILARITY_THRESHOLD, 25.0) # minimo de diferencia con la ultima imagen
 
         # Parámetro dinámico para la carpeta actual
