@@ -10,6 +10,8 @@ from ament_index_python.packages import get_package_share_directory
 from hospital_interfaces.srv import AnalyzeActivity
 from ruta_hospital.evaluation.utils.ragas_evaluator import RagasEvaluator
 from ruta_hospital.evaluation.base_evaluator import BaseEvaluatorNode
+from ruta_hospital.evaluation.base_evaluator import InferencePipelineError
+
 
 PKG_DIR = get_package_share_directory('ruta_hospital')
 DEFAULT_DATASET_PATH = os.path.join(PKG_DIR, 'config', 'perception_dataset.json')
@@ -61,26 +63,40 @@ class PerceptionEvaluatorNode(BaseEvaluatorNode):
 
     async def evaluate_callback(self, request, response):        
         '''Orquestador principal para la evaluación de percepción aislada'''
+        try:
+            if self.evaluation_mode == "evaluate_only":
+                saved_data = self.load_intermediate_answers()
+                if not saved_data or "perception_dict" not in saved_data:
+                    raise InferencePipelineError("Fallo cargando datos persistentes de percepción para evaluar.")
+                
+                perception_dict = saved_data["perception_dict"]
+                return self.run_ragas_evaluation(perception_dict, response)
+            
+            if not self.vision_cli.wait_for_service(timeout_sec=5.0):
+                raise InferencePipelineError("Error: No hay ningún nodo de percepción activo en /analyze_image.")
+
+            dataset = self.load_dataset()
+            if not dataset:
+                raise InferencePipelineError(f"Error leyendo el dataset {self.dataset_path}")
+
+            perception_data_for_ragas = await self.process_images(dataset)
+
+            if not perception_data_for_ragas:
+                raise InferencePipelineError("No se pudo extraer ningún dato válido para evaluar.")
+
+            return self.run_ragas_evaluation(perception_data_for_ragas, response)
         
-        if not self.vision_cli.wait_for_service(timeout_sec=5.0):
+        except InferencePipelineError as e:
+            self.get_logger().error(str(e))
             response.success = False
-            response.message = "Error: No hay ningún nodo de percepción activo en /analyze_image."
-            return response
-
-        dataset = self.load_dataset()
-        if not dataset:
+            response.message = str(e)
+            
+        except Exception as e:
+            self.get_logger().error(f"Error inesperado durante la evaluación de percepción: {e}")
             response.success = False
-            response.message = f"Error leyendo el dataset {self.dataset_path}"
-            return response
-
-        perception_data_for_ragas = await self.process_images(dataset)
-
-        if not perception_data_for_ragas:
-            response.success = False
-            response.message = "No se pudo extraer ningún dato válido para evaluar."
-            return response
-
-        return self.run_ragas_evaluation(perception_data_for_ragas, response)
+            response.message = f"Fallo del sistema: {e}"
+        
+        return response
 
     def load_dataset(self):
         '''Carga el dataset de evaluación desde el archivo JSON'''
@@ -136,13 +152,13 @@ class PerceptionEvaluatorNode(BaseEvaluatorNode):
 
         return perception_data_for_ragas
 
-    def run_ragas_evaluation(self, perception_data_for_ragas, response):
+    def run_ragas_evaluation(self, perception_dict, response):
         '''Ejecuta la evaluación RAGAS y actualiza la respuesta del servicio ROS'''
         self.get_logger().info("Inferencia completada. Pasando resultados a RAGAS para su puntuación...")
         
         try:
             self.ragas_evaluator.evaluate_perception(
-                perception_data_for_ragas,
+                eval_dict=perception_dict,
                 config_name=self.evaluation_name, 
                 model_name=self.tested_model_name
             )

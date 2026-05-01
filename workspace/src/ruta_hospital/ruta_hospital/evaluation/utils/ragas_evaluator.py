@@ -38,10 +38,12 @@ class RagasEvaluator:
                                         format="json")
         self.evaluator_embeddings = OllamaEmbeddings(model=ollama_params.evaluator_embed_model, base_url=ollama_params.ollama_url)
 
-    def evaluate_system(self, global_context_json, pregenerated_summary=None, reduced_context=None, config_name=""):
+    def evaluate_system(self, short_dict, summary_dict, config_name=""):
         '''Genera respuestas y ejecuta Ragas'''
-        short_dict, summary_dict = self.generate_answers(global_context_json, pregenerated_summary, reduced_context)
-
+        # El nombre se inyecta justo antes de evaluar, garantizando que esté fresco
+        for d in [short_dict, summary_dict]: 
+            if d.get("question"):
+                d["evaluation_name"] = [config_name] * len(d["question"])
         results_dfs = []
         
         # Evaluar preguntas cortas
@@ -194,9 +196,9 @@ class RagasEvaluator:
             if key in dataset:
                 dataset[key].append(value)
     
-    def evaluate_perception(self, perception_data, config_name="", model_name="perception_model"):
-        '''Genera respuestas imagen por imagen y ejecuta Ragas para el perceptor'''
-        eval_dict = self.generate_perception_answers(perception_data)
+    def evaluate_perception(self, eval_dict, config_name="", model_name="perception_model"):
+        '''Genera respuestas imagen por imagen y ejecuta Ragas para el perceptor a partir de un diccionario'''
+        config_name = model_name if config_name == "" or config_name == "generic_evaluation" else config_name
 
         if eval_dict["question"]: # nombre de la evaluación
             eval_dict["evaluation_name"] = [config_name] * len(eval_dict["question"])

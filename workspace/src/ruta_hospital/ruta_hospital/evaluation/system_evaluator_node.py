@@ -8,6 +8,7 @@ from ament_index_python.packages import get_package_share_directory
 from ruta_hospital.reporting.llm_reporter_node import LLMReporterNode
 from ruta_hospital.evaluation.utils.ragas_evaluator import RagasEvaluator
 from ruta_hospital.evaluation.base_evaluator import BaseEvaluatorNode
+from ruta_hospital.evaluation.base_evaluator import InferencePipelineError
 
 from hospital_interfaces.action import GenerateReport
 
@@ -59,50 +60,84 @@ class SystemEvaluatorNode(BaseEvaluatorNode):
     async def evaluate_callback(self, request, response):
         self.get_logger().info("Iniciada Evaluación Ragas")
 
+        if self.evaluation_mode == "evaluate_only":
+            short_dict, summary_dict = self.evaluate_only(request, response)
+        else:
+            short_dict, summary_dict = await self.inference_and_evaluate(request, response)
+
+            if self.evaluation_mode == "generate_only":
+                response.success = True
+                response.message = f"Generación completada. Respuestas guardadas en {self.answers_file}"
+                return response
+
+        try:
+            self.ragas_evaluator.evaluate_system(
+                short_dict=short_dict,
+                summary_dict=summary_dict,
+                config_name=self.evaluation_name
+            )           
+            response.success = True
+            response.message = f"Evaluación Ragas completada con éxito. Guardado en: {self.metrics_dir}"
+        
+        except InferencePipelineError as e:
+            self.get_logger().error(str(e))
+            response.success = False
+            response.message = str(e)
+        
+        except Exception as e:
+            self.get_logger().error(f"Error inesperado durante la evaluación: {e}")
+            response.success = False
+            response.message = f"Fallo del sistema: {e}"
+            
+        return response
+    
+    def evaluate_only(self, request, response):
+        saved_data = self.load_intermediate_answers()
+        if not saved_data or "short_dict" not in saved_data or "summary_dict" not in saved_data:
+            response.success = False
+            response.message = "Fallo cargando datos persistentes para evaluar."
+            return response
+        
+        short_dict = saved_data["short_dict"]
+        summary_dict = saved_data["summary_dict"]
+
+        return short_dict,summary_dict
+    
+    async def inference_and_evaluate(self, request, response):
         mock_result = GenerateReport.Result()
         mock_goal_handle = MockGoalHandle()
         
         zone_groups = self.reporter_logic.validate_data(self.eval_folder_path, mock_result)
         if not zone_groups:
-            response.success = False
-            response.message = "Fallo validando los datos del directorio" # Captura el error
-            return response
+            raise InferencePipelineError("Fallo validando los datos del directorio")
             
         self.get_logger().info("Extrayendo contexto de perceptores")
         global_context_json = await self.reporter_logic.process_each_image(zone_groups, mock_goal_handle, mock_result)
         
         if not global_context_json:
-            response.success = False
-            response.message = "Fallo en el procesamiento de imágenes en el perceptor"
-            return response
+            raise InferencePipelineError("Fallo en el procesamiento de imágenes en el perceptor")
         
         self.get_logger().info("Generando resumen global...")
         mock_result = self.reporter_logic.generate_global_summary(global_context_json, mock_result)
         
         if not mock_result.success:
-            response.success = False
-            response.message = "Fallo al generar el resumen global por lotes"
-            return response
+            raise InferencePipelineError("Fallo al generar el resumen global por lotes")
             
         pregenerated_summary = mock_result.final_report.replace("Informe generado:\n", "").strip() # quitarlo para evitar errores de ragas
         reduced_context = getattr(self.reporter_logic, 'last_reduced_context', None)
-        self.get_logger().info("Generando respuestas...")
-
-        try:
-            self.ragas_evaluator.evaluate_system(
-                global_context_json,
-                pregenerated_summary=pregenerated_summary, # para poder reconstruir exactamente el mismo prompt
-                reduced_context=reduced_context,
-                config_name=self.evaluation_name
-            )            
-            response.success = True
-            response.message = f"Evaluación Ragas completada con éxito. Guardado en: {self.metrics_dir}"
-        except Exception as e:
-            self.get_logger().error(f"Error durante Ragas: {e}")
-            response.success = False
-            response.message = f"Fallo en evaluación: {e}"
-            
-        return response
+        
+        self.get_logger().info("Generando respuestas LLM...")
+        short_dict, summary_dict = self.ragas_evaluator.generate_answers(
+            global_context_json,
+            pregenerated_summary=pregenerated_summary,
+            reduced_context=reduced_context
+        )
+        
+        # Guardado intermedio si no es "full"
+        if self.evaluation_mode in ["generate_only", "full"]:
+            self.save_intermediate_answers({"short_dict": short_dict, "summary_dict": summary_dict})
+        
+        return short_dict,summary_dict
 
 def main(args=None):
     rclpy.init(args=args)
