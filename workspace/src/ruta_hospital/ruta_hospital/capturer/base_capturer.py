@@ -1,72 +1,48 @@
-#!/usr/bin/env python3
 import os
 import math
-import cv2
 import csv
 import rclpy
 import numpy as np
+from abc import ABC, abstractmethod
 from sensor_msgs.msg import Image
 from nav_msgs.msg import Odometry
-#from cv_bridge import CvBridge
-
 from tf2_ros import Buffer, TransformListener
 from rcl_interfaces.msg import SetParametersResult
 
+#from cv_bridge import CvBridge
 
-# Variables de configuracion global
-TARGET_DISTANCE_METERS = "target_distance_meters" # en metros
-SIMILARITY_THRESHOLD = "similarity_threshold"
-CURRENT_SAVE_DIR_PARAM = "current_save_dir"
-
+# Variables de configuracion global compartidas
+TARGET_DISTANCE_METERS =  0.2# en metros
+CURRENT_SAVE_DIR_PARAM = ""
 CAMERA_TOPIC = "/head_front_camera/rgb/image_raw"
 ODOM_TOPIC = "/odom"
 CSV_FILENAME = "metadata.csv"
 
-class PhotosNode(rclpy.node.Node):
-    '''Nodo encargado de guardar fotos en la ruta del robot'''
+class BaseCaptureNode(rclpy.node.Node, ABC):
+    '''Clase abstracta encargada de la lógica común para capturar datos visuales (fotos/vídeo) en la ruta'''
     
-    def __init__(self):
-        super().__init__('photos_node')
+    def __init__(self, node_name):
+        super().__init__(node_name)
         
         # la distancia como parametro para poder cambiarlo en ejecucion
-        self.declare_parameter(TARGET_DISTANCE_METERS, 0.2) # (nombre, valor por defecto)
-        self.declare_parameter(SIMILARITY_THRESHOLD, 25.0) # minimo de diferencia con la ultima imagen
+        self.declare_parameter("target_distance_meters", TARGET_DISTANCE_METERS) # (nombre, valor por defecto)
+        self.declare_parameter("current_save_dir", CURRENT_SAVE_DIR_PARAM) # Parámetro dinámico para la carpeta actual
 
-        # Parámetro dinámico para la carpeta actual
-        self.declare_parameter(CURRENT_SAVE_DIR_PARAM, "")
-
-        #self.bridge = CvBridge()
         self.last_image = None
         self.last_pose = None
-        self.last_saved_cv_image = None
         self.accumulated_distance = 0.0
 
         self.current_dir = ""
-        self.photo_count = 1
+        self.capture_count = 1
 
-        # para la posición más precisa
         self.tf_buffer = Buffer()
         self.tf_listener = TransformListener(self.tf_buffer, self)
 
-        """ self.setup_directory()
-        self.photo_count = self.get_starting_photo_count() """
+        self.image_sub = self.create_subscription(Image, CAMERA_TOPIC, self.camera_callback, 10)
+        self.odom_sub = self.create_subscription(Odometry, ODOM_TOPIC, self.odom_callback, 10)
 
-        self.image_sub = self.create_subscription(
-            Image, 
-            CAMERA_TOPIC, 
-            self.camera_callback, 
-            10
-        )
-        
-        self.odom_sub = self.create_subscription(
-            Odometry, 
-            ODOM_TOPIC, 
-            self.odom_callback, 
-            10
-        )
-
-        self.add_on_set_parameters_callback(self.parameters_callback) # para cambiar el directorio dinámicamente
-        self.get_logger().info("Photos Node")
+        self.add_on_set_parameters_callback(self.parameters_callback)
+        self.get_logger().info(f"Base Capture Node [{node_name}] iniciado")
 
     def parameters_callback(self, params):
         '''Callback que se ejecuta cuando cambian los parámetros del nodo'''        
@@ -76,8 +52,8 @@ class PhotosNode(rclpy.node.Node):
                 if new_dir and new_dir != self.current_dir:
                     self.current_dir = new_dir
                     self.setup_directory()
-                    self.photo_count = self.get_starting_photo_count()
-                    self.last_saved_cv_image = None
+                    self.capture_count = self.get_starting_capture_count()
+                    self.reset_state() # Hook para resetear variables del hijo (como la última foto tomada)
                     self.accumulated_distance = 0.0
         
         return SetParametersResult(successful=True)
@@ -100,8 +76,8 @@ class PhotosNode(rclpy.node.Node):
                 writer.writerow(['filename', 'timestamp_sec', 'timestamp_nanosec',\
                                   'x', 'y', 'z', 'qx', 'qy', 'qz', 'qw'])
 
-    def get_starting_photo_count(self):
-        '''Busca la ultima foto registrada en el CSV para continuar la numeracion'''
+    def get_starting_capture_count(self):
+        '''Busca la ultima captura registrada en el CSV para continuar la numeracion'''
         if not self.current_dir: 
             return 1
 
@@ -120,7 +96,6 @@ class PhotosNode(rclpy.node.Node):
                     
                 last_filename = csv_rows[-1][0] 
                 num = int(last_filename.split('.')[0])
-                
                 return num + 1
                 
         except Exception as e:
@@ -136,20 +111,6 @@ class PhotosNode(rclpy.node.Node):
         dx = current_pose.position.x - self.last_pose.position.x
         dy = current_pose.position.y - self.last_pose.position.y
         return math.sqrt(dx**2 + dy**2)
-    
-    def is_image_different(self, current_cv_image):
-        '''Calcula el Error Cuadratico Medio (MSE) para determinar si la imagen es distinta'''
-        if self.last_saved_cv_image is None:
-            return True
-
-        gray_current = cv2.cvtColor(current_cv_image, cv2.COLOR_BGR2GRAY)
-        gray_last = cv2.cvtColor(self.last_saved_cv_image, cv2.COLOR_BGR2GRAY)
-
-        err = np.sum((gray_current.astype("float") - gray_last.astype("float")) ** 2)
-        err /= float(gray_current.shape[0] * gray_current.shape[1])
-
-        threshold = self.get_parameter(SIMILARITY_THRESHOLD).value
-        return err > threshold
 
     def odom_callback(self, msg):
         '''Suma la distancia recorrida y evalua si hay que procesar otra captura'''
@@ -181,26 +142,13 @@ class PhotosNode(rclpy.node.Node):
         if self.last_image is None:
             return
 
-        #cv_image = self.bridge.imgmsg_to_cv2(self.last_image, "bgr8") Incompatible con Numpy 2, que es necesario para los modelos
         cv_image = self.cv_bridge_replacement()
-
-        if not self.is_image_different(cv_image):
-            self.get_logger().info("Foto omitida al no superar el límite de diferencia")
-            return
         
-        self.check_photo_count()
-        
-        image_name, filename = self.save_photo(cv_image)
-        image_exists = os.path.isfile(filename)
+        # Delegamos la responsabilidad de guardar la foto/vídeo al nodo hijo
+        self.process_and_save_capture(cv_image)
 
-        if image_name is None or not image_exists:
-            return
-        
-        self.save_metadata(image_name)
-        self.last_saved_cv_image = cv_image
-
-    def check_photo_count(self):
-        '''Resetea el CSV y el contador si se ha resetado la carpeta de fotos'''
+    def check_capture_count(self):
+        '''Resetea el CSV y el contador si se ha reseteado la carpeta de capturas'''
         csv_path = os.path.join(self.current_dir, CSV_FILENAME)
         csv_exists = os.path.isfile(csv_path)
         if not csv_exists:
@@ -208,27 +156,9 @@ class PhotosNode(rclpy.node.Node):
                 writer = csv.writer(file)
                 writer.writerow(['filename', 'timestamp_sec', 'timestamp_nanosec',\
                                     'x', 'y', 'z', 'qx', 'qy', 'qz', 'qw'])
-            self.photo_count = 1
+            self.capture_count = 1
 
-    def save_photo(self, cv_image):
-        '''Traduce el mensaje de ROS2 a OpenCV y guarda el archivo'''
-        try:
-            image_name = f"{self.photo_count:06d}.jpg"
-            filename = os.path.join(self.current_dir, image_name)
-            
-            cv2.imwrite(filename, cv_image)
-            self.get_logger().info(f"Foto guardada en: {filename}")
-            
-            self.photo_count += 1
-            
-        except Exception as e:
-            self.get_logger().error(f"Error al intentar guardar la foto: {e}")
-            image_name,filename = None, None
-
-        finally:    
-            return image_name,filename
-    
-    def save_metadata(self, image_name):
+    def save_metadata(self, file_name):
         '''Obtiene los metadatos (tiempo y posicion) y los guarda en el CSV'''
         try:
             t_sec = self.last_image.header.stamp.sec
@@ -237,7 +167,7 @@ class PhotosNode(rclpy.node.Node):
             trans = self.tf_buffer.lookup_transform(
                 'map', 
                 'base_footprint', 
-                rclpy.time.Time() # ultima transformacion disponible
+                rclpy.time.Time() 
             )
             
             pos = trans.transform.translation
@@ -246,31 +176,26 @@ class PhotosNode(rclpy.node.Node):
             csv_path = os.path.join(self.current_dir, CSV_FILENAME)
             with open(csv_path, mode='a', newline='') as file:
                 writer = csv.writer(file)
-                writer.writerow([image_name, t_sec, t_nanosec, pos.x, pos.y, pos.z,\
+                writer.writerow([file_name, t_sec, t_nanosec, pos.x, pos.y, pos.z,\
                                   ori.x, ori.y, ori.z, ori.w])
 
-            self.get_logger().info(f"Guardados metadatos de: {image_name}")
+            self.get_logger().info(f"Guardados metadatos de: {file_name}")
 
         except Exception as e:
             self.get_logger().error(f"Error al intentar guardar metadatos: {e}")
 
-    def cv_bridge_replacement(self,):
+    def cv_bridge_replacement(self):
+        '''reemplazo a cv_bridge '''
         img_array = np.frombuffer(self.last_image.data, dtype=np.uint8)
         cv_image = img_array.reshape((self.last_image.height, self.last_image.width, 3))
         #cv_image = cv2.cvtColor(cv_image, cv2.COLOR_RGB2BGR)
         return cv_image
 
-def main(args=None):
-    rclpy.init(args=args)
-    node = PhotosNode()
+    @abstractmethod
+    def process_and_save_capture(self, cv_image):
+        '''Lógica de guardado específica a implementar por fotos o clips de vídeo'''
+        pass
 
-    try:
-        rclpy.spin(node)
-    except KeyboardInterrupt:
-        node.get_logger().info("Saliendo...")
-    finally:
-        node.destroy_node()
-        rclpy.shutdown()
-
-if __name__ == '__main__':
-    main()
+    def reset_state(self):
+        '''Permite al hijo resetear sus variables de memoria cuando cambia el directorio'''
+        pass
