@@ -47,9 +47,10 @@ DEFAULT_PATH_POINTS = [
 
 PKG_DIR = get_package_share_directory('ruta_hospital')
 
-DEFAULT_WAYPOINTS_PATH = os.path.join(PKG_DIR, 'config', 'route_waypoints.json')
+DEFAULT_WAYPOINTS_PATH = os.path.join(PKG_DIR, "config", "route_waypoints.json")
 DEFAULT_PHOTOS_DIR = "/home/alberto/tfg/Reconocimiento-y-sintesis-visual-Tiago/hospital_photos/"
 DEFAULT_KEEP_TEMP_FOLDERS = False
+DEFAULT_CAPTURER_NAME = "photos_node"
 
 class PatrolNode(rclpy.node.Node):
     def __init__(self):
@@ -66,6 +67,9 @@ class PatrolNode(rclpy.node.Node):
         self.declare_parameter('keep_temp_folders', DEFAULT_KEEP_TEMP_FOLDERS)
         self.keep_temp_folders = self.get_parameter('keep_temp_folders').get_parameter_value().bool_value
 
+        self.declare_parameter('capturer_node_name', DEFAULT_CAPTURER_NAME)
+        self.capturer_node_name = self.get_parameter('capturer_node_name').get_parameter_value().string_value
+
         self.path_points = load_route(self.route_file_path, DEFAULT_PATH_POINTS, self.get_logger())
 
         self.navigator = BasicNavigator()
@@ -74,7 +78,7 @@ class PatrolNode(rclpy.node.Node):
         self.route_poses = list_to_pose(self.path_points, self.navigator.get_clock())
         
         self.report_action_client = ActionClient(self, GenerateReport, 'generate_patrol_report')     
-        self.param_client = self.create_client(SetParameters, '/photos_node/set_parameters')
+        self.param_client = self.create_client(SetParameters, f'/{self.capturer_node_name}/set_parameters')
         self.current_folder_path = ""
 
     def set_capturer_folder(self, folder_path):
