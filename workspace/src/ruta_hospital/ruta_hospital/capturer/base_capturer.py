@@ -8,12 +8,15 @@ from sensor_msgs.msg import Image
 from nav_msgs.msg import Odometry
 from tf2_ros import Buffer, TransformListener
 from rcl_interfaces.msg import SetParametersResult
+from rclpy.qos import qos_profile_sensor_data
 
 #from cv_bridge import CvBridge
 
 # Variables de configuracion global compartidas
-TARGET_DISTANCE_METERS =  0.2# en metros
-CURRENT_SAVE_DIR_PARAM = ""
+TARGET_DISTANCE_METERS =  1.0 # en metros
+TARGET_DISTANCE_MET_NAME = "target_distance_meters"
+DEFAULT_SAVE_DIR = ""
+CURRENT_SAVE_DIR_NAME = "current_save_dir"
 CAMERA_TOPIC = "/head_front_camera/rgb/image_raw"
 ODOM_TOPIC = "/odom"
 CSV_FILENAME = "metadata.csv"
@@ -25,8 +28,8 @@ class BaseCaptureNode(rclpy.node.Node, ABC):
         super().__init__(node_name)
         
         # la distancia como parametro para poder cambiarlo en ejecucion
-        self.declare_parameter("target_distance_meters", TARGET_DISTANCE_METERS) # (nombre, valor por defecto)
-        self.declare_parameter("current_save_dir", CURRENT_SAVE_DIR_PARAM) # Parámetro dinámico para la carpeta actual
+        self.declare_parameter(TARGET_DISTANCE_MET_NAME, TARGET_DISTANCE_METERS) # (nombre, valor por defecto)
+        self.declare_parameter(CURRENT_SAVE_DIR_NAME, DEFAULT_SAVE_DIR) # Parámetro dinámico para la carpeta actual
 
         self.last_image = None
         self.last_pose = None
@@ -38,16 +41,25 @@ class BaseCaptureNode(rclpy.node.Node, ABC):
         self.tf_buffer = Buffer()
         self.tf_listener = TransformListener(self.tf_buffer, self)
 
-        self.image_sub = self.create_subscription(Image, CAMERA_TOPIC, self.camera_callback, 10)
-        self.odom_sub = self.create_subscription(Odometry, ODOM_TOPIC, self.odom_callback, 10)
-
+        self.image_sub = self.create_subscription(
+            Image, 
+            CAMERA_TOPIC, 
+            self.camera_callback, 
+            qos_profile_sensor_data
+        )
+        self.odom_sub = self.create_subscription(
+            Odometry, 
+            ODOM_TOPIC, 
+            self.odom_callback, 
+            qos_profile_sensor_data
+        )
         self.add_on_set_parameters_callback(self.parameters_callback)
         self.get_logger().info(f"Base Capture Node [{node_name}] iniciado")
 
     def parameters_callback(self, params):
         '''Callback que se ejecuta cuando cambian los parámetros del nodo'''        
         for param in params:
-            if param.name == CURRENT_SAVE_DIR_PARAM:
+            if param.name == CURRENT_SAVE_DIR_NAME:
                 new_dir = param.value
                 if new_dir and new_dir != self.current_dir:
                     self.current_dir = new_dir
@@ -132,7 +144,7 @@ class BaseCaptureNode(rclpy.node.Node, ABC):
         
     def try_save_data(self):
         '''Evalua si se cumplen los requisitos para guardar foto y metadatos.'''
-        target_distance = self.get_parameter(TARGET_DISTANCE_METERS).value
+        target_distance = self.get_parameter(TARGET_DISTANCE_MET_NAME).value
 
         if self.accumulated_distance < target_distance:
             return
@@ -186,9 +198,9 @@ class BaseCaptureNode(rclpy.node.Node, ABC):
 
     def cv_bridge_replacement(self):
         '''reemplazo a cv_bridge '''
-        img_array = np.frombuffer(self.last_image.data, dtype=np.uint8)
+        img_array = np.frombuffer(self.last_image.data, dtype=np.uint8).copy()
         cv_image = img_array.reshape((self.last_image.height, self.last_image.width, 3))
-        #cv_image = cv2.cvtColor(cv_image, cv2.COLOR_RGB2BGR)
+        #cv_image = cv2.cvtColor(cv_image, cv2.COLOR_RGB2BGR) No hace falta, ya lo devuelve en formato correcto
         return cv_image
 
     @abstractmethod

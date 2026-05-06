@@ -40,7 +40,7 @@ class RagasEvaluator:
 
     def evaluate_system(self, short_dict, summary_dict, config_name=""):
         '''Genera respuestas y ejecuta Ragas'''
-        # El nombre se inyecta justo antes de evaluar, garantizando que esté fresco
+        # El nombre se inyecta justo antes de evaluar garantizando que esté actualizado
         for d in [short_dict, summary_dict]: 
             if d.get("question"):
                 d["evaluation_name"] = [config_name] * len(d["question"])

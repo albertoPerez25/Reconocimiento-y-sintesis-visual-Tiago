@@ -16,12 +16,29 @@ class VideoCapturerNode(BaseCaptureNode):
         self.declare_parameter("fps", DEFAULT_FPS)
         
         self.frame_buffer = []
+
+        # Timer para muestrear frames sin bloquear el callback de la cámara
+        #fps = self.get_parameter("fps").value
+        #timer_period = 1.0 / fps
+        #self.record_timer = self.create_timer(timer_period, self.record_frame)
+
         self.get_logger().info("Video Capturer Node Listo")
 
     def reset_state(self):
         '''Limpia la memoria del buffer al empezar una vuelta nueva'''
         self.frame_buffer.clear()
         
+    """def record_frame(self):
+        '''Añade frames al buffer a la velocidad exacta de los FPS deseados'''
+        if self.current_dir and self.last_image is not None:
+            cv_image = self.cv_bridge_replacement()
+            cv_image_resized = cv2.resize(cv_image, (640, 480)) # el modelo la reducirá igualmente, así se ahorra espacio y memoria
+            self.frame_buffer.append(cv_image_resized)
+            
+            # Evitar desbordamiento de memoria si el robot se detiene mucho tiempo
+            if len(self.frame_buffer) > MAX_FRAMES:
+                self.frame_buffer.pop(0) """
+
     def camera_callback(self, msg):
         '''Sobrescribe el callback del padre para ir guardando frames fluidos'''
         super().camera_callback(msg) # Importante: mantiene actualizados los metadatos base
@@ -44,22 +61,22 @@ class VideoCapturerNode(BaseCaptureNode):
         clip_name, filename = self.save_video()
         
         if clip_name and os.path.isfile(filename):
-            self.save_metadata(clip_name) # Heredado: anota el timestamp y la pose
+            self.save_metadata(clip_name) 
         
-        # Vaciamos el buffer para empezar el siguiente clip de la ruta
+        #Vaciada del buffer para empezar el siguiente clip de la ruta
         self.frame_buffer.clear()
 
     def save_video(self):
-        '''Escribe los frames acumulados en un archivo .mp4'''
+        '''Escribe los frames acumulados en un archivo .avi'''
         try:
-            clip_name = f"{self.capture_count:06d}.mp4"
+            clip_name = f"{self.capture_count:06d}.avi"
             filename = os.path.join(self.current_dir, clip_name)
             
             fps = self.get_parameter("fps").value
             height, width, _ = self.frame_buffer[0].shape
             
-            # Codec MP4 estándar compatible con OpenCV
-            fourcc = cv2.VideoWriter_fourcc(*'mp4v')
+            # Codec XVID estándar compatible con OpenCV
+            fourcc = cv2.VideoWriter_fourcc(*'XVID')
             video = cv2.VideoWriter(filename, fourcc, fps, (width, height))
             
             for frame in self.frame_buffer:
@@ -80,6 +97,13 @@ def main(args=None):
     node = VideoCapturerNode()
     try:
         rclpy.spin(node)
+    except Exception as e:
+        print(f"\n\n{'='*50}")
+        print("[ERROR FATAL DETECTADO EN NODO DE VÍDEO]")
+        print(f"{'='*50}\n")
+        import traceback
+        traceback.print_exc()
+        input("\n[El nodo ha crasheado]. Presiona ENTER para cerrar la terminal de gnome...")
     except KeyboardInterrupt:
         pass
     finally:

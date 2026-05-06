@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 import os
+import time
 import json
 import rclpy
 from rclpy.executors import MultiThreadedExecutor
@@ -12,11 +13,9 @@ from ruta_hospital.evaluation.utils.ragas_evaluator import RagasEvaluator
 from ruta_hospital.evaluation.base_evaluator import BaseEvaluatorNode
 from ruta_hospital.evaluation.base_evaluator import InferencePipelineError
 
-
 PKG_DIR = get_package_share_directory('ruta_hospital')
 DEFAULT_DATASET_PATH = os.path.join(PKG_DIR, 'config', 'perception_dataset.json')
 DEFAULT_IMAGES_DIR = "/home/alberto/tfg/Reconocimiento-y-sintesis-visual-Tiago/test_dataset/"
-DEFAULT_METRICS_DIR = "/home/alberto/tfg/Reconocimiento-y-sintesis-visual-Tiago/autogenerate_metrics/"
 
 class PerceptionEvaluatorNode(BaseEvaluatorNode):
     '''Nodo encargado de evaluar la agudeza visual de los modelos de percepción (YOLO/VLM) de forma aislada'''
@@ -25,14 +24,12 @@ class PerceptionEvaluatorNode(BaseEvaluatorNode):
 
         self.declare_parameter('dataset_path', DEFAULT_DATASET_PATH)
         self.declare_parameter('images_dir', DEFAULT_IMAGES_DIR)
-        self.declare_parameter('metrics_dir', DEFAULT_METRICS_DIR)
         self.declare_parameter('tested_model_name', 'unknown_model') # Para nombrar el CSV resultante
 
         # Extracción de parámetros
 
         self.dataset_path = self.get_parameter('dataset_path').get_parameter_value().string_value
         self.images_dir = self.get_parameter('images_dir').get_parameter_value().string_value
-        self.metrics_dir = self.get_parameter('metrics_dir').get_parameter_value().string_value
         self.tested_model_name = self.get_parameter('tested_model_name').get_parameter_value().string_value
 
         # Evaluador RAGAS
@@ -64,13 +61,25 @@ class PerceptionEvaluatorNode(BaseEvaluatorNode):
     async def evaluate_callback(self, request, response):        
         '''Orquestador principal para la evaluación de percepción aislada'''
         try:
+            total_init_time = time.time()
+
+            inference_time = 0.0
+            ragas_time = 0.0
+
             if self.evaluation_mode == "evaluate_only":
                 saved_data = self.load_intermediate_answers()
                 if not saved_data or "perception_dict" not in saved_data:
                     raise InferencePipelineError("Fallo cargando datos persistentes de percepción para evaluar.")
                 
                 perception_dict = saved_data["perception_dict"]
-                return self.run_ragas_evaluation(perception_dict, response)
+                t_ragas_init = time.time()
+                res = self.run_ragas_evaluation(perception_dict, response)
+                ragas_time = round(time.time() - t_ragas_init, 2)
+                
+                self.current_metrics["tiempo_ragas_evaluacion_segundos"] = ragas_time
+                self.current_metrics["tiempo_total_ejecucion_segundos"] = round(time.time() - total_init_time, 2)
+                self.save_metrics()
+                return res
             
             if not self.vision_cli.wait_for_service(timeout_sec=5.0):
                 raise InferencePipelineError("Error: No hay ningún nodo de percepción activo en /analyze_image.")
@@ -79,13 +88,24 @@ class PerceptionEvaluatorNode(BaseEvaluatorNode):
             if not dataset:
                 raise InferencePipelineError(f"Error leyendo el dataset {self.dataset_path}")
 
+            t_init_inference = time.time()
             perception_data_for_ragas = await self.process_images(dataset)
+            inference_time = round(time.time() - t_init_inference, 2)
 
             if not perception_data_for_ragas:
                 raise InferencePipelineError("No se pudo extraer ningún dato válido para evaluar.")
 
-            return self.run_ragas_evaluation(perception_data_for_ragas, response)
-        
+            t_ragas_init = time.time()
+            res = self.run_ragas_evaluation(perception_data_for_ragas, response)
+            ragas_time = round(time.time() - t_ragas_init, 2)
+            
+            self.current_metrics["tiempo_inferencia_total_segundos"] = inference_time
+            self.current_metrics["tiempo_ragas_evaluacion_segundos"] = ragas_time
+            self.current_metrics["tiempo_total_ejecucion_segundos"] = round(time.time() - total_init_time, 2)
+            
+            self.save_metrics()
+            
+            return res        
         except InferencePipelineError as e:
             self.get_logger().error(str(e))
             response.success = False
@@ -110,6 +130,11 @@ class PerceptionEvaluatorNode(BaseEvaluatorNode):
     async def process_images(self, dataset):
         '''Itera sobre las imágenes, llama al perceptor y formatea los datos para RAGAS'''    
         perception_data_for_ragas = []
+
+        t_init_perception = time.time()
+        self.current_metrics["total_imagenes_procesadas"] = len(dataset)
+
+        visual_char = 0
 
         for image in dataset:
             img_name = image.get("image_name")
@@ -140,6 +165,7 @@ class PerceptionEvaluatorNode(BaseEvaluatorNode):
             # para que el evaluador sepa qué pistas se le dieron al perceptor
             rag_context = f"[RAG INYECTADO] Zona: {req.zone_name} | Tiempo: {req.time} | Posibles actividades: {req.expected_activities} (entre otras)"
             perceptor_output = f"[OUTPUT PERCEPTOR] {perceptor_output}"
+            visual_char += len(perceptor_output)
 
             # Empaquetar las preguntas de la imagen y el output del modelo
             for q in questions:
@@ -150,6 +176,8 @@ class PerceptionEvaluatorNode(BaseEvaluatorNode):
                     "ground_truth": q["ground_truth"]
                 })
 
+        self.current_metrics["tiempo_percepcion_segundos"] = round(time.time() - t_init_perception, 2)
+        self.current_metrics["caracteres_contexto_visual"] = visual_char
         return perception_data_for_ragas
 
     def run_ragas_evaluation(self, perception_dict, response):

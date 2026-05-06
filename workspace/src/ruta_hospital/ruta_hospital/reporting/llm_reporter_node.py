@@ -8,10 +8,12 @@ from hospital_interfaces.action import GenerateReport
 from ruta_hospital.reporting.base_reporter import BaseReporterNode
 from ruta_hospital.reporting.utils.recursive_summarizer import RecursiveSummarizer
 
+DEFAULT_PERCEPTION_MODE = 'image' # 'sequence' para VLM temporal, 'image' para YOLO foto a foto, 'video' para clips de video
+
 class LLMReporterNode(BaseReporterNode):
     def __init__(self):
         super().__init__('llm_reporter_node')
-        self.declare_parameter('perception_mode', 'image') # 'sequence' para VLM temporal, 'image' para YOLO foto a foto
+        self.declare_parameter('perception_mode', DEFAULT_PERCEPTION_MODE) 
         self.perception_mode = self.get_parameter('perception_mode').get_parameter_value().string_value     
         self.vision_cli = self.create_client(AnalyzeActivity, 'analyze_image', callback_group=self.cb_group)
         
@@ -215,7 +217,7 @@ class LLMReporterNode(BaseReporterNode):
                 break
 
             req = AnalyzeActivity.Request()
-            req.image_path = video_file['path'] # El .mp4
+            req.image_path = video_file['path'] # El video
             req.zone_name = zone
             req.time = f"{video_file['time']}s"
             
