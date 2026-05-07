@@ -2,6 +2,7 @@ import os
 import csv
 import json
 import math
+import datetime
 from abc import ABC, abstractmethod
 from rclpy.node import Node
 from rclpy.callback_groups import ReentrantCallbackGroup
@@ -10,6 +11,7 @@ from ament_index_python.packages import get_package_share_directory
 from rclpy.action import ActionServer
 from hospital_interfaces.action import GenerateReport
 from ruta_hospital.commons.semantic_map_utils import load_semantic_map, get_zone_name
+from ruta_hospital.commons.metrics_utils import save_metrics_to_file
 
 # metricas
 import datetime
@@ -122,25 +124,10 @@ class BaseReporterNode(Node, ABC):
         return zone_groups
 
     def save_metrics(self):
-        '''Guarda las métricas en un archivo JSON para comparativas'''
-        metrics_file = os.path.join(self.metrics_dir, 'comparativa_modelos.json')
-        all_metrics = []
-
-        if os.path.isfile(metrics_file): # para añadir las metricas existentes
-            with open(metrics_file, 'r') as f:
-                try:
-                    all_metrics = json.load(f)
-                except json.JSONDecodeError:
-                    pass
+        '''Guarda las métricas usando la utilidad de commons'''
+        save_metrics_to_file(self.metrics_dir, self.current_metrics, self.get_logger())
         
-        all_metrics.append(self.current_metrics)
-        with open(metrics_file, 'w') as f:
-            json.dump(all_metrics, f, indent=4)
-            
-        self.get_logger().info(f" Métricas de la vuelta guardadas en {metrics_file}")
-        
-        # Resetear para la siguiente vuelta
-        self.current_metrics = self.init_metrics_dict()
+        self.current_metrics = self.init_metrics_dict() # para la siguiente vuelta empezar todo a 0
 
     def load_hospital_metadata(self):
         '''Carga las reglas y objetos comunes desde el JSON de metadatos (RAG)'''

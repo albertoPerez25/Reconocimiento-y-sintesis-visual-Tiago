@@ -8,15 +8,19 @@ from hospital_interfaces.action import GenerateReport
 from ruta_hospital.reporting.base_reporter import BaseReporterNode
 from ruta_hospital.reporting.utils.recursive_summarizer import RecursiveSummarizer
 
+DEFAULT_PERCEPTION_MODE = 'image' # 'sequence' para VLM temporal, 'image' para YOLO foto a foto, 'video' para clips de video
+
 class LLMReporterNode(BaseReporterNode):
     def __init__(self):
         super().__init__('llm_reporter_node')
-        self.declare_parameter('perception_mode', 'image') # 'sequence' para VLM temporal, 'image' para YOLO foto a foto
+        self.declare_parameter('perception_mode', DEFAULT_PERCEPTION_MODE) 
         self.perception_mode = self.get_parameter('perception_mode').get_parameter_value().string_value     
         self.vision_cli = self.create_client(AnalyzeActivity, 'analyze_image', callback_group=self.cb_group)
         
         if self.perception_mode == "sequence":
             self.get_logger().info("MODO SECUENCIA DE IMAGENES")
+        elif self.perception_mode == "video":
+            self.get_logger().info("MODO CLIPS DE VIDEO")
         else:
             self.get_logger().info("MODO IMAGENES INDIVIDUALES")
 
@@ -120,6 +124,8 @@ class LLMReporterNode(BaseReporterNode):
         
         if self.perception_mode == 'sequence':
             has_activity = await self.process_sequence_mode(images, zone, zone_data, goal_handle)
+        elif self.perception_mode == 'video':
+            has_activity = await self.process_video_mode(images, zone, zone_data, goal_handle)
         else:
             has_activity = await self.process_individual_mode(images, zone, zone_data, goal_handle)
 
@@ -200,6 +206,46 @@ class LLMReporterNode(BaseReporterNode):
                     "descripcion_vlm": vlm_dict.get("descripcion_vlm", ""),
                     "alerta": vlm_dict.get("alerta", False)
                 })
+        return has_activity
+    
+    async def process_video_mode(self, files, zone, zone_data, goal_handle):
+        '''Procesa una zona para el modo de vídeo (un clip = una llamada al modelo)'''
+        has_activity = False
+        
+        for video_file in files:
+            if goal_handle.is_cancel_requested:
+                break
+
+            req = AnalyzeActivity.Request()
+            req.image_path = video_file['path'] # El video
+            req.zone_name = zone
+            req.time = f"{video_file['time']}s"
+            
+            activities = self.get_zone_metadata(zone).get("actividades_comunes", [])
+            req.expected_activities = ", ".join(activities) if activities else "No especificados"
+            req.zone_type = zone_data["tipo_zona"]
+
+            result = await self.vision_cli.call_async(req) 
+            
+            # Formatear la salida asegurando consistencia con el reportero
+            try:
+                vlm_dict = json.loads(result.report)
+            except json.JSONDecodeError:
+                vlm_dict = {
+                    "descripcion_vlm": result.report.strip(), 
+                    "alerta": ("ATENCIÓN" in result.report.upper() or "PELIGRO" in result.report.upper())
+                }
+            
+            desc = vlm_dict.get("descripcion_vlm", "").lower()
+            
+            if "despejado" not in desc and "(ignorar)" not in desc and "no se han detectado personas" not in desc:
+                has_activity = True
+                zone_data["eventos_recientes"].append({
+                    "tiempo": f"{video_file['time']}s", 
+                    "descripcion_vlm": vlm_dict.get("descripcion_vlm", ""),
+                    "alerta": vlm_dict.get("alerta", False)
+                })
+                
         return has_activity
 
 
