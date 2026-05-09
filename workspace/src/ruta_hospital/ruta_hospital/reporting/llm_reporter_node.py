@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+import os
 import time
 import rclpy
 import json
@@ -9,6 +10,7 @@ from ruta_hospital.reporting.base_reporter import BaseReporterNode
 from ruta_hospital.reporting.utils.recursive_summarizer import RecursiveSummarizer
 
 DEFAULT_PERCEPTION_MODE = 'image' # 'sequence' para VLM temporal, 'image' para YOLO foto a foto, 'video' para clips de video
+# TODO: Refactorizar el modo de ejecucion de percepción para usar la herencia y distintos nodos reporteros en lugar de un parámetro
 
 class LLMReporterNode(BaseReporterNode):
     def __init__(self):
@@ -59,9 +61,25 @@ class LLMReporterNode(BaseReporterNode):
         self.current_metrics["tiempo_total_segundos"] = round(time.time() - t_inicio_total, 2)
         self.save_metrics()
 
+        if self.bool_save_summ:
+            self.save_summary(global_context_json, global_sum)
+
         goal_handle.succeed()
         return global_sum
         
+    def save_summary(self, global_context_json, global_sum):
+        try:
+            chatbot_data = {
+                "global_context": json.loads(global_context_json) if global_context_json else {},
+                "final_summary": global_sum.final_report if global_sum.success else "Error en la generación."
+            }
+            # Reusamos la carpeta de métricas para centralizar los JSON autogenerados
+            chatbot_file = os.path.join(self.metrics_dir, "latest_patrol_context.json")
+            with open(chatbot_file, "w", encoding="utf-8") as f:
+                json.dump(chatbot_data, f, ensure_ascii=False, indent=4)
+            self.get_logger().info(f"Contexto estructurado guardado en {chatbot_file} para el chatbot.")
+        except Exception as e:
+            self.get_logger().error(f"Error guardando contexto para el chatbot: {e}")
 
     def validate_data(self, folder_path, result):
         if not self.vision_cli.wait_for_service(timeout_sec=5.0):
