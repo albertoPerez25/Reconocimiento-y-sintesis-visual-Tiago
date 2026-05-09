@@ -17,11 +17,20 @@ class OllamaParams:
         self.reporter_llm_model = None # TODO
 
 class EvaluatorRunParams:
-    def __init__(self, system_workers = 4, system_timeout = 420, perceptor_workers = 4, perceptors_timeout = 420):
+    def __init__(self, system_workers = 4, system_timeout = 420, perceptor_workers = 4, perceptors_timeout = 420, max_words = 300):
         self.system_workers = system_workers
         self.system_timeout = system_timeout
         self.perceptors_workers = perceptor_workers
         self.perceptors_timeout = perceptors_timeout
+        self.max_words = max_words
+
+class EvalContext:
+    def __init__(self, global_json, natural_full, natural_filtered, pregenerated_summary=None, reduced_context=None):
+        self.global_json = global_json
+        self.natural_full = natural_full
+        self.natural_filtered = natural_filtered
+        self.pregenerated_summary = pregenerated_summary
+        self.reduced_context = reduced_context
 
 class RagasEvaluator:
     def __init__(self, quest_path, metrics_dir, ollama_params, run_params, logger = None):
@@ -117,45 +126,84 @@ class RagasEvaluator:
         short_eval_data = {"question": [], "answer": [], "ground_truth": [], "contexts": []}
         summary_eval_data = {"question": [], "answer": [], "ground_truth": [], "contexts": [], "reference_contexts": []}
 
+        eval_context = EvalContext(
+            global_json=global_context_json,
+            natural_full=self.format_context_for_ragas(global_context_json, filter_empty=False), # para poder evaluar correctamente el Faithfulness
+            natural_filtered=self.format_context_for_ragas(global_context_json, filter_empty=True), # Para que Ragas o el LLM en resumen no se pierda 
+            pregenerated_summary=pregenerated_summary,
+            reduced_context=reduced_context
+        )
+
         for item in questions_data:
-            question = item["question"]
-            ground_truth = item["ground_truth"]
             question_type = item.get("type", "short") # asume short para retrocompatibilidad con archivos legacy
             
-            if question_type == "summary" and (not question or str(question).strip() == ""):
-                llm_answer, question_for_ragas = self.generate_summary_answer(global_context_json, pregenerated_summary)
-            else:
-                llm_answer, question_for_ragas = self.generate_short_answer(global_context_json, question)
-
-            natural_context_full = self.format_context_for_ragas(global_context_json, filter_empty=False) # para poder evaluar correctamente el Faithfulness
-            natural_context_filtered = self.format_context_for_ragas(global_context_json, filter_empty=True) # Para que Ragas o el LLM en resumen no se pierda 
-
             if question_type == "summary":
-                context_to_use = [reduced_context] if reduced_context else natural_context_filtered
-                
-                self.add_record_to_dataset(summary_eval_data, {
-                    "question": question_for_ragas,
-                    "answer": llm_answer.strip(),
-                    "ground_truth": ground_truth,
-                    "contexts": context_to_use,
-                    "reference_contexts": context_to_use
-                })
-                
-                if self.logger:
-                    self.logger.debug(f"Resumen generado: {llm_answer.strip()}")
-                    self.logger.debug(f"Contexto pasado a RAGAS: {context_to_use}")
-
+                self.process_summary_question(item, eval_context, summary_eval_data)
             else:
-                relevant_contexts = self.get_relevant_context(natural_context_full, str(question).lower())
-                
-                self.add_record_to_dataset(short_eval_data, {
-                    "question": question_for_ragas,
-                    "answer": llm_answer.strip(),
-                    "ground_truth": ground_truth,
-                    "contexts": relevant_contexts
-                })
+                self.process_short_question(item, eval_context, short_eval_data)
                 
         return short_eval_data, summary_eval_data
+    
+    def process_summary_question(self, item, eval_context, summary_eval_data):
+        '''Responde y empaqueta preguntas de resumen'''
+        question = item["question"]
+        ground_truth = item["ground_truth"]
+        
+        if not question or str(question).strip() == "":
+            llm_answer, question_for_ragas = self.generate_summary_answer(
+                eval_context.global_json, eval_context.pregenerated_summary
+            )
+        else:
+            context_str = "\n".join(eval_context.natural_filtered)
+            llm_answer, question_for_ragas = self.generate_short_answer(context_str, question)
+
+        context_to_use = [eval_context.reduced_context] if eval_context.reduced_context else eval_context.natural_filtered
+        
+        self.add_record_to_dataset(summary_eval_data, {
+            "question": question_for_ragas,
+            "answer": llm_answer.strip(),
+            "ground_truth": ground_truth,
+            "contexts": context_to_use,
+            "reference_contexts": context_to_use
+        })
+        
+        if self.logger:
+            self.logger.debug(f"Resumen generado: {llm_answer.strip()}")
+            self.logger.debug(f"Contexto pasado a RAGAS: {context_to_use}")
+
+    def process_short_question(self, item, eval_context, short_eval_data):
+        '''Responde y empaqueta preguntas cortas usando RAG y Summary Trees'''
+        question = item["question"]
+        ground_truth = item["ground_truth"]
+        
+        relevant_contexts = self.get_relevant_context(eval_context.natural_full, str(question).lower())
+        context_str = "\n".join(relevant_contexts)
+
+        if len(context_str.split()) > self.run_params.max_words: 
+            try:
+                from ruta_hospital.reporting.utils.recursive_summarizer import RecursiveSummarizer
+                summarizer = RecursiveSummarizer(
+                    ollama_url=self.ollama_params.ollama_url,
+                    model_name=self.ollama_params.evaluator_llm_model,
+                    logger=self.logger,
+                    max_words=self.run_params.max_words
+                )
+                def reduction_prompt(chunk):
+                    return f"Extrae de forma muy concisa los datos sobre actividades, personas o anomalías de este registro:\n{chunk}\nDatos extraídos:"
+                
+                context_str = summarizer.recursive_summarize(relevant_contexts, reduction_prompt)
+                relevant_contexts = [context_str] 
+            except Exception as e:
+                if self.logger: self.logger.error(f"Error en summary trees RAGAS: {e}")
+
+        llm_answer, question_for_ragas = self.generate_short_answer(context_str, question)
+        
+        self.add_record_to_dataset(short_eval_data, {
+            "question": question_for_ragas,
+            "answer": llm_answer.strip(),
+            "ground_truth": ground_truth,
+            "contexts": relevant_contexts
+        })
     
     def generate_summary_answer(self, global_context_json, pregenerated_summary):
         '''Genera o recupera el resumen global y la pregunta formateada para RAGAS'''
@@ -171,12 +219,12 @@ class RagasEvaluator:
         question_for_ragas = "Redacta el informe de seguridad global de la patrulla del hospital."
         return llm_answer, question_for_ragas
     
-    def generate_short_answer(self, global_context_json, question):
+    def generate_short_answer(self, context_str, question):
         '''Genera la respuesta a una pregunta corta usando Ollama'''
         prompt = f"""
         Eres un sistema analizador de actividades humanas en un hospital. 
         Basándote ÚNICAMENTE en este registro visual de tu patrulla:
-        {global_context_json}
+        {context_str}
         
         Responde de forma breve y concisa a la siguiente pregunta.
         
@@ -255,7 +303,8 @@ class RagasEvaluator:
 
         return eval_data
 
-    def format_context_for_ragas(self, json_context, filter_empty=False):
+    @staticmethod
+    def format_context_for_ragas(json_context, filter_empty=False):
         '''Convierte el JSON de los perceptores en lenguaje natural para que RAGAS lo entienda'''
         try:
             data = json.loads(json_context)
@@ -281,8 +330,9 @@ class RagasEvaluator:
         except Exception:
             # texto plano encapsulado en una lista (lo que espera RAGAS)
             return [str(json_context).strip()]
-        
-    def get_relevant_context(self, natural_language_context, question_lower):
+    
+    @staticmethod
+    def get_relevant_context(natural_language_context, question_lower):
         '''Filtra el contexto y devuelve solo la zona relevante para facilitar el trabajo a RAGAS'''
         relevant_contexts = []
         for chunk in natural_language_context:

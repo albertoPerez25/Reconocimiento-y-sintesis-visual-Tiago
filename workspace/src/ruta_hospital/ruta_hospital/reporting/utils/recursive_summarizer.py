@@ -1,4 +1,3 @@
-import json
 from ruta_hospital.commons.api_utils import call_ollama_api
 
 class RecursiveSummarizer:
