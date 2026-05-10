@@ -6,6 +6,7 @@ import json
 from rclpy.executors import MultiThreadedExecutor
 from hospital_interfaces.srv import AnalyzeActivity
 from hospital_interfaces.action import GenerateReport
+from hospital_interfaces.srv import GetPatrolContext
 from ruta_hospital.reporting.base_reporter import BaseReporterNode
 from ruta_hospital.reporting.utils.recursive_summarizer import RecursiveSummarizer
 
@@ -18,6 +19,12 @@ class LLMReporterNode(BaseReporterNode):
         self.declare_parameter('perception_mode', DEFAULT_PERCEPTION_MODE) 
         self.perception_mode = self.get_parameter('perception_mode').get_parameter_value().string_value     
         self.vision_cli = self.create_client(AnalyzeActivity, 'analyze_image', callback_group=self.cb_group)
+
+        self.context_srv = self.create_service(
+            GetPatrolContext, 
+            'get_patrol_context', 
+            self.get_context_callback
+        )
         
         if self.perception_mode == "sequence":
             self.get_logger().info("MODO SECUENCIA DE IMAGENES")
@@ -25,6 +32,12 @@ class LLMReporterNode(BaseReporterNode):
             self.get_logger().info("MODO CLIPS DE VIDEO")
         else:
             self.get_logger().info("MODO IMAGENES INDIVIDUALES")
+
+    def get_context_callback(self, request, response):
+        response.global_context = self.latest_global_context
+        response.final_summary = self.latest_final_summary
+        response.success = (self.latest_global_context != "")
+        return response
 
 
     async def execute_report_callback(self, goal_handle):
@@ -60,6 +73,9 @@ class LLMReporterNode(BaseReporterNode):
         self.current_metrics["tiempo_llm_segundos"] = round(time.time() - t_init_llm, 2)
         self.current_metrics["tiempo_total_segundos"] = round(time.time() - t_inicio_total, 2)
         self.save_metrics()
+
+        self.latest_global_context = global_context_json
+        self.latest_final_summary = global_sum.final_report if global_sum.success else ""
 
         if self.bool_save_summ:
             self.save_summary(global_context_json, global_sum)

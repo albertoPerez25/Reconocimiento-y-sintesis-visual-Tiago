@@ -3,10 +3,11 @@ import os
 import json
 import rclpy
 from rclpy.node import Node
-from ruta_hospital.commons.api_utils import call_ollama_api
+from workspace.src.ruta_hospital.ruta_hospital.utils.commons.api_utils import call_ollama_api
+from hospital_interfaces.srv import GetPatrolContext
 #from ament_index_python.packages import get_package_share_directory
 
-from ruta_hospital.evaluation.utils.ragas_evaluator import RagasEvaluator
+from ruta_hospital.utils.shared.rag_utils import format_context_for_ragas, get_relevant_context
 from ruta_hospital.reporting.utils.recursive_summarizer import RecursiveSummarizer
 
 #PKG_DIR = get_package_share_directory('ruta_hospital')
@@ -29,7 +30,30 @@ class PatrolChatbotNode(Node):
         self.context_file = self.get_parameter('context_file').get_parameter_value().string_value
         self.max_words = self.declare_parameter('max_words', DEFAULT_WORD_LIMIT)
 
+        self.context_data = self.get_context_hybrid()
+
         self.context_data = self.load_context()
+
+    def get_context_hybrid(self):
+        '''Intenta obtener contexto por servicio o por archivo'''
+        client = self.create_client(GetPatrolContext, 'get_patrol_context')
+        
+        self.get_logger().info("Intentando conectar con el Reportero...")
+        if client.wait_for_service(timeout_sec=2.0):
+            req = GetPatrolContext.Request()
+            future = client.call_async(req)
+            # Terminal bloqueante, esperar el resultado
+            rclpy.spin_until_future_complete(self, future, timeout_sec=2.0)
+            res = future.result()
+            if res and res.success:
+                self.get_logger().info("Contexto recibido vía SERVICIO.")
+                return {
+                    "global_context": json.loads(res.global_context),
+                    "final_summary": res.final_summary
+                }
+        
+        self.get_logger().warn("Reportero no responde. Intentando carga desde ARCHIVO...")
+        return self.load_context()
 
     def load_context(self):
         '''Carga el archivo JSON con los datos y el resumen de la última patrulla'''
@@ -80,11 +104,11 @@ class PatrolChatbotNode(Node):
         
         global_context_dict = self.context_data.get("global_context", {})
         global_context_json = json.dumps(global_context_dict, ensure_ascii=False)
-        return RagasEvaluator.format_context_for_ragas(global_context_json, filter_empty=False)
+        return format_context_for_ragas(global_context_json, filter_empty=False)
 
     def get_relevant_context_str(self, user_input, natural_context_full):
         '''Filtra y resume el contexto basándose en la entrada del usuario'''
-        relevant_contexts = RagasEvaluator.get_relevant_context(natural_context_full, user_input.lower())
+        relevant_contexts = get_relevant_context(natural_context_full, user_input.lower())
         context_str = "\n".join(relevant_contexts)
 
         if len(context_str.split()) > self.max_words:

@@ -10,8 +10,8 @@ from ament_index_python.packages import get_package_share_directory
 
 from rclpy.action import ActionServer
 from hospital_interfaces.action import GenerateReport
-from ruta_hospital.commons.semantic_map_utils import load_semantic_map, get_zone_name
-from ruta_hospital.commons.metrics_utils import save_metrics_to_file
+from workspace.src.ruta_hospital.ruta_hospital.utils.shared.semantic_map_utils import load_semantic_map, get_zone_name
+from workspace.src.ruta_hospital.ruta_hospital.utils.commons.metrics_utils import save_metrics_to_file
 
 # metricas
 import datetime
@@ -53,6 +53,8 @@ class BaseReporterNode(Node, ABC):
 
         self.hospital_zones, self.reception_zone = load_semantic_map(self.semantic_map_path, self.get_logger())
         self.hospital_metadata = self.load_hospital_metadata()
+        self.latest_global_context = "" # para que el chatbot pueda obtener siempre el último contexto
+        self.latest_final_summary = ""
 
         self.cb_group = ReentrantCallbackGroup()
         

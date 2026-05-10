@@ -3,7 +3,7 @@ import rclpy
 import os
 import cv2
 import base64
-from ruta_hospital.commons.api_utils import call_ollama_api
+from workspace.src.ruta_hospital.ruta_hospital.utils.commons.api_utils import call_ollama_api
 from ruta_hospital.perception.base_perception import BasePerceptionNode
 
 # modelo con capacidades nativas de vídeo 

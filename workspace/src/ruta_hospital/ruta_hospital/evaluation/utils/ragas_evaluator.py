@@ -7,7 +7,8 @@ from ragas import evaluate
 from ragas.metrics import answer_correctness, answer_relevancy, faithfulness, summarization_score
 from langchain_ollama import ChatOllama, OllamaEmbeddings
 from ragas.run_config import RunConfig
-from ruta_hospital.commons.api_utils import call_ollama_api 
+from workspace.src.ruta_hospital.ruta_hospital.utils.commons.api_utils import call_ollama_api 
+from ruta_hospital.utils.shared.rag_utils import format_context_for_ragas, get_relevant_context
 
 class OllamaParams:
     def __init__(self, ollama_url = "http://localhost:11434", evaluator_llm_model = "llama3", evaluator_embed_model = "nomic-embed-text"):
@@ -128,8 +129,8 @@ class RagasEvaluator:
 
         eval_context = EvalContext(
             global_json=global_context_json,
-            natural_full=self.format_context_for_ragas(global_context_json, filter_empty=False), # para poder evaluar correctamente el Faithfulness
-            natural_filtered=self.format_context_for_ragas(global_context_json, filter_empty=True), # Para que Ragas o el LLM en resumen no se pierda 
+            natural_full=format_context_for_ragas(global_context_json, filter_empty=False), # para poder evaluar correctamente el Faithfulness
+            natural_filtered=format_context_for_ragas(global_context_json, filter_empty=True), # Para que Ragas o el LLM en resumen no se pierda 
             pregenerated_summary=pregenerated_summary,
             reduced_context=reduced_context
         )
@@ -176,7 +177,7 @@ class RagasEvaluator:
         question = item["question"]
         ground_truth = item["ground_truth"]
         
-        relevant_contexts = self.get_relevant_context(eval_context.natural_full, str(question).lower())
+        relevant_contexts = get_relevant_context(eval_context.natural_full, str(question).lower())
         context_str = "\n".join(relevant_contexts)
 
         if len(context_str.split()) > self.run_params.max_words: 
@@ -302,50 +303,3 @@ class RagasEvaluator:
             eval_data["contexts"].append([rag_context]) # debe evaluar la fidelidad solo contra los datos inyectados del RAG
 
         return eval_data
-
-    @staticmethod
-    def format_context_for_ragas(json_context, filter_empty=False):
-        '''Convierte el JSON de los perceptores en lenguaje natural para que RAGAS lo entienda'''
-        try:
-            data = json.loads(json_context)
-            formatted_contexts = []
-            
-            if isinstance(data, dict) and any(isinstance(v, dict) for v in data.values()): #el json esta dividido en zonas
-                for zone, info in data.items():
-                    events = info.get("eventos_recientes", [])
-                    if not events:
-                        if not filter_empty:
-                            formatted_contexts.append(f"La zona '{zone}' está despejada, sin eventos ni personas.")
-                    else:
-                        for ev in events:
-                            desc = ev.get("descripcion_vlm", "sin descripción")
-                            detection = "Se ha detectado actividad humana" if ev.get("alerta") else "No hay alertas ni peligros" # TODO
-                            formatted_contexts.append(f"En la zona '{zone}': {desc}. {detection}.")
-            
-
-            if not formatted_contexts:
-                return ["El entorno está completamente despejado y sin incidencias."]
-                
-            return formatted_contexts
-        except Exception:
-            # texto plano encapsulado en una lista (lo que espera RAGAS)
-            return [str(json_context).strip()]
-    
-    @staticmethod
-    def get_relevant_context(natural_language_context, question_lower):
-        '''Filtra el contexto y devuelve solo la zona relevante para facilitar el trabajo a RAGAS'''
-        relevant_contexts = []
-        for chunk in natural_language_context:
-            match = re.search(r"'(.*?)'", chunk)
-            if match:
-                complete_zone = match.group(1).lower()
-                # Cosas como "Recepción (cerca de X)"
-                base_zone = complete_zone.split(" (")[0] 
-                
-                if base_zone in question_lower or complete_zone in question_lower:
-                    relevant_contexts.append(chunk)
-        
-        if not relevant_contexts:
-            relevant_contexts = natural_language_context
-
-        return relevant_contexts
