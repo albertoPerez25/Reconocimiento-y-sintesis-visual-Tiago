@@ -10,6 +10,12 @@ from hospital_interfaces.srv import GetPatrolContext
 from ruta_hospital.reporting.base_reporter import BaseReporterNode
 from ruta_hospital.reporting.utils.recursive_summarizer import RecursiveSummarizer
 
+from ruta_hospital.reporting.utils.perception_strategies import (
+    SequencePerceptionStrategy, 
+    ImagePerceptionStrategy, 
+    VideoPerceptionStrategy
+)
+
 DEFAULT_PERCEPTION_MODE = 'image' # 'sequence' para VLM temporal, 'image' para YOLO foto a foto, 'video' para clips de video
 # TODO: Refactorizar el modo de ejecucion de percepción para usar la herencia y distintos nodos reporteros en lugar de un parámetro
 
@@ -26,12 +32,16 @@ class LLMReporterNode(BaseReporterNode):
             self.get_context_callback
         )
         
+        # Estrategia como composición
         if self.perception_mode == "sequence":
             self.get_logger().info("MODO SECUENCIA DE IMAGENES")
+            self.perception_strategy = SequencePerceptionStrategy(self.vision_cli, self)
         elif self.perception_mode == "video":
             self.get_logger().info("MODO CLIPS DE VIDEO")
+            self.perception_strategy = VideoPerceptionStrategy(self.vision_cli, self)
         else:
             self.get_logger().info("MODO IMAGENES INDIVIDUALES")
+            self.perception_strategy = ImagePerceptionStrategy(self.vision_cli, self)
 
     def get_context_callback(self, request, response):
         response.global_context = self.latest_global_context
@@ -156,12 +166,7 @@ class LLMReporterNode(BaseReporterNode):
             "eventos_recientes": []
         }
         
-        if self.perception_mode == 'sequence':
-            has_activity = await self.process_sequence_mode(images, zone, zone_data, goal_handle)
-        elif self.perception_mode == 'video':
-            has_activity = await self.process_video_mode(images, zone, zone_data, goal_handle)
-        else:
-            has_activity = await self.process_individual_mode(images, zone, zone_data, goal_handle)
+        has_activity = await self.perception_strategy.process(images, zone, zone_data, goal_handle)
 
         if not has_activity:
             self.current_metrics["zonas_despejadas"] += 1
