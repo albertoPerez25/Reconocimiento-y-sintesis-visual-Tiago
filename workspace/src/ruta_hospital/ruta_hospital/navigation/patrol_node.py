@@ -2,6 +2,7 @@
 import time
 import rclpy
 import os
+import subprocess # para lanzar el proceso del chatbot
 
 from nav2_simple_commander.robot_navigator import BasicNavigator, TaskResult
 from rclpy.action import ActionClient
@@ -12,8 +13,8 @@ from rcl_interfaces.msg import Parameter, ParameterValue, ParameterType
 
 from ruta_hospital.navigation.utils.route_parser_utils import load_route,list_to_pose
 from ruta_hospital.navigation.utils.file_utils import clean_all_orphan_folders, get_next_available_folder
-from ruta_hospital.commons.file_utils import delete_folder
-from ruta_hospital.commons.terminal_utils import get_key_non_blocking
+from workspace.src.ruta_hospital.ruta_hospital.utils.commons.file_utils import delete_folder
+from workspace.src.ruta_hospital.ruta_hospital.utils.commons.terminal_utils import get_key_non_blocking
 from ament_index_python.packages import get_package_share_directory
 
 DEFAULT_PATH_POINTS = [
@@ -47,9 +48,10 @@ DEFAULT_PATH_POINTS = [
 
 PKG_DIR = get_package_share_directory('ruta_hospital')
 
-DEFAULT_WAYPOINTS_PATH = os.path.join(PKG_DIR, 'config', 'route_waypoints.json')
+DEFAULT_WAYPOINTS_PATH = os.path.join(PKG_DIR, "config", "route_waypoints.json")
 DEFAULT_PHOTOS_DIR = "/home/alberto/tfg/Reconocimiento-y-sintesis-visual-Tiago/hospital_photos/"
 DEFAULT_KEEP_TEMP_FOLDERS = False
+DEFAULT_CAPTURER_NAME = "photos_node"
 
 class PatrolNode(rclpy.node.Node):
     def __init__(self):
@@ -66,15 +68,19 @@ class PatrolNode(rclpy.node.Node):
         self.declare_parameter('keep_temp_folders', DEFAULT_KEEP_TEMP_FOLDERS)
         self.keep_temp_folders = self.get_parameter('keep_temp_folders').get_parameter_value().bool_value
 
+        self.declare_parameter('capturer_node_name', DEFAULT_CAPTURER_NAME)
+        self.capturer_node_name = self.get_parameter('capturer_node_name').get_parameter_value().string_value
+
         self.path_points = load_route(self.route_file_path, DEFAULT_PATH_POINTS, self.get_logger())
 
         self.navigator = BasicNavigator()
         self.navigator.waitUntilNav2Active()
         self.get_logger().info("Nodo patrulla iniciado")
         self.route_poses = list_to_pose(self.path_points, self.navigator.get_clock())
-        
+
+        self.report_completed = False        
         self.report_action_client = ActionClient(self, GenerateReport, 'generate_patrol_report')     
-        self.param_client = self.create_client(SetParameters, '/photos_node/set_parameters')
+        self.param_client = self.create_client(SetParameters, f'/{self.capturer_node_name}/set_parameters')
         self.current_folder_path = ""
 
     def set_capturer_folder(self, folder_path):
@@ -137,11 +143,12 @@ class PatrolNode(rclpy.node.Node):
         # Estado 4 (SUCCEEDED) en rclpy.action significa éxito
         if status == 4 and result.success:
             self.get_logger().info(f"\nINFORME COMPLETADO \n{result.final_report}\n")
+            self.report_completed = True
         else:
             self.get_logger().error("ERROR generando el informe en el reportero: {result.final_report}")
             
         if not self.keep_temp_folders:
-            self.get_logger().info(f"Limpiando datos de sesión: {folder_to_clean}")
+            self.get_logger().debug(f"Limpiando datos de sesión: {folder_to_clean}")
             delete_folder(folder_to_clean, self.get_logger())
         else:
             self.get_logger().debug(f"Modo keep_temp_folders ON. Se conserva: {folder_to_clean}")
@@ -182,8 +189,12 @@ class PatrolNode(rclpy.node.Node):
 
             while not self.navigator.isTaskComplete():
                 # El feedback de goToPose no tiene current_waypoint
-                print(f"Punto actual: {current_index}/{total_points} | Intento: {it + 1}/{max_retries} | (s) Saltar | (d) Detener informe", end='\r')
-                
+                if self.report_completed:
+                    nav_msg = f"Punto actual: {current_index}/{total_points} | Intento: {it + 1}/{max_retries} | (s) Saltar | (d) Detener informe | (q) Salir | (c) Abrir Chatbot"
+                else:
+                    nav_msg = f"Punto actual: {current_index}/{total_points} | Intento: {it + 1}/{max_retries} | (s) Saltar | (d) Detener informe | (q) Salir | (c) Abrir Chatbot"
+                print(f"{nav_msg}   ", end='\r')
+
                 key = get_key_non_blocking()
                 if key and key.lower() == 's':
                     self.get_logger().warn(f"\n [Salto] Punto {current_index} omitido por el usuario")
@@ -192,9 +203,18 @@ class PatrolNode(rclpy.node.Node):
                     time.sleep(0.2) # Que le de tiempo a procesarlo
                     return True # para que no salte error
 
-                if key and key.lower( ) == 'd' and hasattr(self, 'active_goal_handle') and self.active_goal_handle:
+                elif key and key.lower( ) == 'd' and hasattr(self, 'active_goal_handle') and self.active_goal_handle:
                     self.get_logger().warn("[Informe] Cancelado el informe en curso")
                     self.active_goal_handle.cancel_goal_async()
+
+                elif key == 'c':
+                    if self.report_completed:
+                        print("\n") # Salto de línea para no pisar el log
+                        self.get_logger().info("Abriendo terminal de Chatbot...")
+                        subprocess.Popen([
+                            'gnome-terminal', '--', 'bash', '-c', 
+                            'ros2 run ruta_hospital patrol_chatbot_node; exec bash'
+                        ])
 
             result = self.navigator.getResult()
             

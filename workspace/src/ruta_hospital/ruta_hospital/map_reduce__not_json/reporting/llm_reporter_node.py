@@ -4,7 +4,7 @@ import rclpy
 from rclpy.executors import MultiThreadedExecutor
 from hospital_interfaces.srv import AnalyzeActivity
 from ruta_hospital.reporting.base_reporter import BaseReporterNode
-from ruta_hospital.commons.api_utils import call_ollama_api
+from workspace.src.ruta_hospital.ruta_hospital.utils.commons.api_utils import call_ollama_api
 
 class LLMReporterNode(BaseReporterNode):
     def __init__(self):

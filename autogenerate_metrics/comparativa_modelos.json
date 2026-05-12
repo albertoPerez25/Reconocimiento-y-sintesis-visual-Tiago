@@ -58,6 +58,41 @@
         "tiempo_total_segundos": 335.92,
         "caracteres_contexto_visual": 2891,
         "caracteres_informe_final": 1476
+    },
+    {
+        "fecha": "2026-05-04 19:04:12.481352",
+        "modelo_reportero": "llm_reporter_node",
+        "total_imagenes_procesadas": 256,
+        "zonas_despejadas": 0,
+        "zonas_con_output": 21,
+        "tiempo_percepcion_segundos": 0.25,
+        "tiempo_llm_segundos": 198.69,
+        "tiempo_total_segundos": 198.95,
+        "caracteres_contexto_visual": 43267,
+        "caracteres_informe_final": 2404
+    },
+    {
+        "fecha": "2026-05-04 19:15:10.375454",
+        "modelo_reportero": "llm_reporter_node",
+        "total_imagenes_procesadas": 256,
+        "zonas_despejadas": 0,
+        "zonas_con_output": 21,
+        "tiempo_percepcion_segundos": 4.37,
+        "tiempo_llm_segundos": 176.61,
+        "tiempo_total_segundos": 180.98,
+        "caracteres_contexto_visual": 39427,
+        "caracteres_informe_final": 1431
+    },
+    {
+        "fecha": "2026-05-04 21:06:10.356556",
+        "modelo_reportero": "llm_reporter_node",
+        "total_imagenes_procesadas": 256,
+        "zonas_despejadas": 17,
+        "zonas_con_output": 4,
+        "tiempo_percepcion_segundos": 1919.14,
+        "tiempo_llm_segundos": 50.63,
+        "tiempo_total_segundos": 1969.77,
+        "caracteres_contexto_visual": 4217,
+        "caracteres_informe_final": 1165
     }
 ]
-

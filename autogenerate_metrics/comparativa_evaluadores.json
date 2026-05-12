@@ -1,0 +1,15 @@
+[
+    {
+        "fecha": "2026-05-05 20:11:39.391863",
+        "nodo_ejecutor": "system_evaluator_node",
+        "evaluacion_nombre": "video",
+        "total_imagenes_procesadas": 0,
+        "tiempo_percepcion_segundos": 0.0,
+        "tiempo_llm_segundos": 0.0,
+        "tiempo_inferencia_total_segundos": 0.0,
+        "tiempo_ragas_evaluacion_segundos": 0.0,
+        "tiempo_total_ejecucion_segundos": 1510.36,
+        "caracteres_contexto_visual": 0,
+        "caracteres_informe_final": 0
+    }
+]

@@ -31,12 +31,14 @@ setup(
     entry_points={
         'console_scripts': [
             'patrulla = ruta_hospital.navigation.patrol_node:main',
-            'fotos = ruta_hospital.perception.photos_node:main',
+            'fotos = ruta_hospital.capturer.photos_capturer_node:main',
+            'video_capturer_node = ruta_hospital.capturer.video_capturer_node:main',
 
             'yolo_perception_node = ruta_hospital.perception.yolo_perception_node:main',
             'vlm_perception_node = ruta_hospital.perception.vlm_perception_node:main',
             'sequence_perception_node = ruta_hospital.perception.sequence_perception_node:main',
             'hybrid_perception_node = ruta_hospital.perception.hybrid_perception_node:main',
+            'video_perception_node = ruta_hospital.perception.video_perception_node:main',
 
             'llm_reporter_node = ruta_hospital.reporting.llm_reporter_node:main',
             'vlm_direct_reporter_node = ruta_hospital.reporting.vlm_direct_reporter_node:main',

@@ -2,6 +2,7 @@ import os
 import csv
 import json
 import math
+import datetime
 from abc import ABC, abstractmethod
 from rclpy.node import Node
 from rclpy.callback_groups import ReentrantCallbackGroup
@@ -9,7 +10,8 @@ from ament_index_python.packages import get_package_share_directory
 
 from rclpy.action import ActionServer
 from hospital_interfaces.action import GenerateReport
-from ruta_hospital.commons.semantic_map_utils import load_semantic_map, get_zone_name
+from workspace.src.ruta_hospital.ruta_hospital.utils.shared.semantic_map_utils import load_semantic_map, get_zone_name
+from workspace.src.ruta_hospital.ruta_hospital.utils.commons.metrics_utils import save_metrics_to_file
 
 # metricas
 import datetime
@@ -24,6 +26,7 @@ METADATA_PATH = os.path.join(PKG_DIR, 'config', 'hospital_metadata.json')
 DEFAULT_MODEL = "llama3"
 DEFAULT_OLLAMA_URL = "http://localhost:11434/api/generate"
 DEFAULT_WORD_LIMIT = 300
+DEFAULT_SAVE_CONTEXT = False
 
 class BaseReporterNode(Node, ABC):
     '''Clase abstracta para los nodos generadores de informes'''
@@ -38,6 +41,7 @@ class BaseReporterNode(Node, ABC):
         self.declare_parameter('llm_model', DEFAULT_MODEL)
         self.declare_parameter('ollama_url', DEFAULT_OLLAMA_URL)
         self.declare_parameter('max_words', DEFAULT_WORD_LIMIT)
+        self.declare_parameter('save_summary', DEFAULT_SAVE_CONTEXT = False)
 
         self.semantic_map_path = self.get_parameter('semantic_map_path').get_parameter_value().string_value
         self.metrics_dir = self.get_parameter('metrics_dir').get_parameter_value().string_value
@@ -45,9 +49,12 @@ class BaseReporterNode(Node, ABC):
         self.llm_model = self.get_parameter('llm_model').get_parameter_value().string_value
         self.ollama_url = self.get_parameter('ollama_url').get_parameter_value().string_value
         self.max_words = self.get_parameter('max_words').get_parameter_value().integer_value
+        self.bool_save_summ = self.get_parameter('save_summary').get_parameter_value().bool_value
 
         self.hospital_zones, self.reception_zone = load_semantic_map(self.semantic_map_path, self.get_logger())
         self.hospital_metadata = self.load_hospital_metadata()
+        self.latest_global_context = "" # para que el chatbot pueda obtener siempre el último contexto
+        self.latest_final_summary = ""
 
         self.cb_group = ReentrantCallbackGroup()
         
@@ -122,25 +129,10 @@ class BaseReporterNode(Node, ABC):
         return zone_groups
 
     def save_metrics(self):
-        '''Guarda las métricas en un archivo JSON para comparativas'''
-        metrics_file = os.path.join(self.metrics_dir, 'comparativa_modelos.json')
-        all_metrics = []
-
-        if os.path.isfile(metrics_file): # para añadir las metricas existentes
-            with open(metrics_file, 'r') as f:
-                try:
-                    all_metrics = json.load(f)
-                except json.JSONDecodeError:
-                    pass
+        '''Guarda las métricas usando la utilidad de commons'''
+        save_metrics_to_file(self.metrics_dir, self.current_metrics, self.get_logger())
         
-        all_metrics.append(self.current_metrics)
-        with open(metrics_file, 'w') as f:
-            json.dump(all_metrics, f, indent=4)
-            
-        self.get_logger().info(f" Métricas de la vuelta guardadas en {metrics_file}")
-        
-        # Resetear para la siguiente vuelta
-        self.current_metrics = self.init_metrics_dict()
+        self.current_metrics = self.init_metrics_dict() # para la siguiente vuelta empezar todo a 0
 
     def load_hospital_metadata(self):
         '''Carga las reglas y objetos comunes desde el JSON de metadatos (RAG)'''

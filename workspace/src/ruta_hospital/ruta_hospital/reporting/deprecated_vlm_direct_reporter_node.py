@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 import rclpy
 from rclpy.executors import MultiThreadedExecutor
-from ruta_hospital.commons.api_utils import encode_image_to_base64, call_ollama_api
+from workspace.src.ruta_hospital.ruta_hospital.utils.commons.api_utils import encode_image_to_base64, call_ollama_api
 from ruta_hospital.reporting.base_reporter import BaseReporterNode
 
 class VLMDirectReporterNode(BaseReporterNode):
