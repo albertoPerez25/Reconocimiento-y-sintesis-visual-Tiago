@@ -1,12 +1,20 @@
 #!/usr/bin/env python3
+import os
 import time
 import rclpy
 import json
 from rclpy.executors import MultiThreadedExecutor
 from hospital_interfaces.srv import AnalyzeActivity
 from hospital_interfaces.action import GenerateReport
+from hospital_interfaces.srv import GetPatrolContext
 from ruta_hospital.reporting.base_reporter import BaseReporterNode
 from ruta_hospital.reporting.utils.recursive_summarizer import RecursiveSummarizer
+
+from ruta_hospital.reporting.utils.perception_strategies import (
+    SequencePerceptionStrategy, 
+    ImagePerceptionStrategy, 
+    VideoPerceptionStrategy
+)
 
 DEFAULT_PERCEPTION_MODE = 'image' # 'sequence' para VLM temporal, 'image' para YOLO foto a foto, 'video' para clips de video
 
@@ -16,13 +24,29 @@ class LLMReporterNode(BaseReporterNode):
         self.declare_parameter('perception_mode', DEFAULT_PERCEPTION_MODE) 
         self.perception_mode = self.get_parameter('perception_mode').get_parameter_value().string_value     
         self.vision_cli = self.create_client(AnalyzeActivity, 'analyze_image', callback_group=self.cb_group)
+
+        self.context_srv = self.create_service(
+            GetPatrolContext, 
+            'get_patrol_context', 
+            self.get_context_callback
+        )
         
+        # Estrategia como composición
         if self.perception_mode == "sequence":
             self.get_logger().info("MODO SECUENCIA DE IMAGENES")
+            self.perception_strategy = SequencePerceptionStrategy(self.vision_cli, self)
         elif self.perception_mode == "video":
             self.get_logger().info("MODO CLIPS DE VIDEO")
+            self.perception_strategy = VideoPerceptionStrategy(self.vision_cli, self)
         else:
             self.get_logger().info("MODO IMAGENES INDIVIDUALES")
+            self.perception_strategy = ImagePerceptionStrategy(self.vision_cli, self)
+
+    def get_context_callback(self, request, response):
+        response.global_context = self.latest_global_context
+        response.final_summary = self.latest_final_summary
+        response.success = (self.latest_global_context != "")
+        return response
 
 
     async def execute_report_callback(self, goal_handle):
@@ -59,9 +83,28 @@ class LLMReporterNode(BaseReporterNode):
         self.current_metrics["tiempo_total_segundos"] = round(time.time() - t_inicio_total, 2)
         self.save_metrics()
 
+        self.latest_global_context = global_context_json
+        self.latest_final_summary = global_sum.final_report if global_sum.success else ""
+
+        if self.bool_save_summ:
+            self.save_summary(global_context_json, global_sum)
+
         goal_handle.succeed()
         return global_sum
         
+    def save_summary(self, global_context_json, global_sum):
+        try:
+            chatbot_data = {
+                "global_context": json.loads(global_context_json) if global_context_json else {},
+                "final_summary": global_sum.final_report if global_sum.success else "Error en la generación."
+            }
+            # Reusamos la carpeta de métricas para centralizar los JSON autogenerados
+            chatbot_file = os.path.join(self.metrics_dir, "latest_patrol_context.json")
+            with open(chatbot_file, "w", encoding="utf-8") as f:
+                json.dump(chatbot_data, f, ensure_ascii=False, indent=4)
+            self.get_logger().info(f"Contexto estructurado guardado en {chatbot_file} para el chatbot.")
+        except Exception as e:
+            self.get_logger().error(f"Error guardando contexto para el chatbot: {e}")
 
     def validate_data(self, folder_path, result):
         if not self.vision_cli.wait_for_service(timeout_sec=5.0):
@@ -122,132 +165,13 @@ class LLMReporterNode(BaseReporterNode):
             "eventos_recientes": []
         }
         
-        if self.perception_mode == 'sequence':
-            has_activity = await self.process_sequence_mode(images, zone, zone_data, goal_handle)
-        elif self.perception_mode == 'video':
-            has_activity = await self.process_video_mode(images, zone, zone_data, goal_handle)
-        else:
-            has_activity = await self.process_individual_mode(images, zone, zone_data, goal_handle)
+        has_activity = await self.perception_strategy.process(images, zone, zone_data, goal_handle)
 
         if not has_activity:
             self.current_metrics["zonas_despejadas"] += 1
         else:
             self.current_metrics["zonas_con_output"] += 1
         return zone_data
-    
-
-    async def process_sequence_mode(self, images, zone, zone_data, goal_handle):
-        '''Procesa una zona según la lógica de secuencia'''
-        if goal_handle.is_cancel_requested or len(images) == 0:
-            return False
-        
-        rutas_str = ",".join([img['path'] for img in images])
-        req = AnalyzeActivity.Request()
-        req.image_path = rutas_str
-
-        req.zone_name = zone
-        req.time = f"{images[0]['time']}s - {images[-1]['time']}s"
-        activities = self.get_zone_metadata(zone).get("actividades_comunes", [])
-        req.expected_activities = ", ".join(activities) if activities else "No especificados"
-        req.zone_type = zone_data["tipo_zona"] # TODO: Cambiar todo para que sea coherente con el nuevo json de metadatos de hospital
-
-        result = await self.vision_cli.call_async(req)
-        
-        try:
-            vlm_dict = json.loads(result.report)
-        except:
-            vlm_dict = {"descripcion_vlm": result.report, "alerta": False}
-        
-        has_activity = False
-        desc = vlm_dict.get("descripcion_vlm", "").lower()
-        if "despejado" not in desc:
-            has_activity = True
-            aprox_time = f"{images[-1]['time']}s"
-            zone_data["eventos_recientes"].append({
-                "tiempo": aprox_time, 
-                "descripcion_vlm": vlm_dict.get("descripcion_vlm", ""),
-                "alerta": vlm_dict.get("alerta", False)
-            })
-        return has_activity
-        
-    
-    async def process_individual_mode(self, images, zone, zone_data, goal_handle):
-        '''Procesa una zona según para el modo de imágenes sueltas'''
-        has_activity = False
-        for img in images:
-            if goal_handle.is_cancel_requested:
-                break
-
-            req = AnalyzeActivity.Request()
-            req.image_path = img['path']
-
-            req.zone_name = zone
-            req.time = f"{img['time']}s"
-            activities = self.get_zone_metadata(zone).get("actividades_comunes", [])
-            req.expected_activities = ", ".join(activities) if activities else "No especificados"
-            req.zone_type = zone_data["tipo_zona"]
-
-            result = await self.vision_cli.call_async(req) 
-            
-            try:
-                vlm_dict = json.loads(result.report) # si no carga el formato estaba mal
-            except json.JSONDecodeError:
-                vlm_dict = {
-                    "descripcion_vlm": result.report.strip(), 
-                    "alerta": ("ATENCIÓN" in result.report.upper() or "PELIGRO" in result.report.upper())
-                }
-            
-            desc = vlm_dict.get("descripcion_vlm", "").lower()
-            # Filtra datos irrelevantes para simplificar el output
-            if "despejado" not in desc and "(ignorar)" not in desc and "no se han detectado personas" not in desc:
-                has_activity = True
-                zone_data["eventos_recientes"].append({
-                    "tiempo": f"{img['time']}s", 
-                    "descripcion_vlm": vlm_dict.get("descripcion_vlm", ""),
-                    "alerta": vlm_dict.get("alerta", False)
-                })
-        return has_activity
-    
-    async def process_video_mode(self, files, zone, zone_data, goal_handle):
-        '''Procesa una zona para el modo de vídeo (un clip = una llamada al modelo)'''
-        has_activity = False
-        
-        for video_file in files:
-            if goal_handle.is_cancel_requested:
-                break
-
-            req = AnalyzeActivity.Request()
-            req.image_path = video_file['path'] # El video
-            req.zone_name = zone
-            req.time = f"{video_file['time']}s"
-            
-            activities = self.get_zone_metadata(zone).get("actividades_comunes", [])
-            req.expected_activities = ", ".join(activities) if activities else "No especificados"
-            req.zone_type = zone_data["tipo_zona"]
-
-            result = await self.vision_cli.call_async(req) 
-            
-            # Formatear la salida asegurando consistencia con el reportero
-            try:
-                vlm_dict = json.loads(result.report)
-            except json.JSONDecodeError:
-                vlm_dict = {
-                    "descripcion_vlm": result.report.strip(), 
-                    "alerta": ("ATENCIÓN" in result.report.upper() or "PELIGRO" in result.report.upper())
-                }
-            
-            desc = vlm_dict.get("descripcion_vlm", "").lower()
-            
-            if "despejado" not in desc and "(ignorar)" not in desc and "no se han detectado personas" not in desc:
-                has_activity = True
-                zone_data["eventos_recientes"].append({
-                    "tiempo": f"{video_file['time']}s", 
-                    "descripcion_vlm": vlm_dict.get("descripcion_vlm", ""),
-                    "alerta": vlm_dict.get("alerta", False)
-                })
-                
-        return has_activity
-
 
     def generate_global_summary(self, global_context, result):
         '''Toma todos los mini reportes y genera el resumen final unificado'''

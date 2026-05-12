@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 import rclpy
 import os
-from ruta_hospital.commons.api_utils import encode_image_to_base64, call_ollama_api
+from workspace.src.ruta_hospital.ruta_hospital.utils.commons.api_utils import encode_image_to_base64, call_ollama_api
 from ruta_hospital.perception.base_perception import BasePerceptionNode
 
 class VLMPerceptionNode(BasePerceptionNode):
