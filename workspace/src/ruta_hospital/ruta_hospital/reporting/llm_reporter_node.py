@@ -17,7 +17,6 @@ from ruta_hospital.reporting.utils.perception_strategies import (
 )
 
 DEFAULT_PERCEPTION_MODE = 'image' # 'sequence' para VLM temporal, 'image' para YOLO foto a foto, 'video' para clips de video
-# TODO: Refactorizar el modo de ejecucion de percepción para usar la herencia y distintos nodos reporteros en lugar de un parámetro
 
 class LLMReporterNode(BaseReporterNode):
     def __init__(self):

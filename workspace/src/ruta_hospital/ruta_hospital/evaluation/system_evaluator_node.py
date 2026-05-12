@@ -70,9 +70,9 @@ class SystemEvaluatorNode(BaseEvaluatorNode):
         ragas_time = 0.0
 
         if self.evaluation_mode == "evaluate_only":
-            short_dict, summary_dict = self.evaluate_only(request, response)
+            short_dict, summary_dict = self.get_data_for_evaluate_only(request, response)
         else:
-            short_dict, summary_dict = await self.inference_and_evaluate(request, response)
+            short_dict, summary_dict = await self.get_data_for_inference_and_evaluate(request, response)
 
             if self.evaluation_mode == "generate_only":
                 response.success = True
@@ -122,7 +122,7 @@ class SystemEvaluatorNode(BaseEvaluatorNode):
         self.current_metrics["tiempo_ragas_evaluacion_segundos"] = ragas_time
         self.current_metrics["tiempo_total_ejecucion_segundos"] = round(time.time() - total_init_time, 2)
     
-    def evaluate_only(self, request, response):
+    def get_data_for_evaluate_only(self, request, response):
         saved_data = self.load_intermediate_answers()
         if not saved_data or "short_dict" not in saved_data or "summary_dict" not in saved_data:
             response.success = False
@@ -134,7 +134,7 @@ class SystemEvaluatorNode(BaseEvaluatorNode):
 
         return short_dict,summary_dict
     
-    async def inference_and_evaluate(self, request, response):
+    async def get_data_for_inference_and_evaluate(self, request, response):
         mock_result = GenerateReport.Result()
         mock_goal_handle = MockGoalHandle()
         

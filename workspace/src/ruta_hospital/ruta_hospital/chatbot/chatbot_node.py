@@ -15,7 +15,9 @@ from ruta_hospital.reporting.utils.recursive_summarizer import RecursiveSummariz
 DEFAULT_CONTEXT_FILE = "/home/alberto/tfg/Reconocimiento-y-sintesis-visual-Tiago/autogenerate_metrics/latest_patrol_context.json"
 DEFAULT_OLLAMA_URL = "http://localhost:11434/api/generate"
 DEFAULT_CHAT_MODEL = "llama3" 
-DEFAULT_WORD_LIMIT = "300"
+DEFAULT_HISTORY_LIMIT = 5
+DEFAULT_WORD_LIMIT = 300
+DEFAULT_INCLUDE_FINAL_SUMMARY = False
 
 class PatrolChatbotNode(Node):
     def __init__(self):
@@ -24,21 +26,23 @@ class PatrolChatbotNode(Node):
         self.declare_parameter('chat_model', DEFAULT_CHAT_MODEL)
         self.declare_parameter('context_file', DEFAULT_CONTEXT_FILE)
         self.declare_parameter('max_words', DEFAULT_WORD_LIMIT)
+        self.declare_parameter('history_limit', DEFAULT_HISTORY_LIMIT)
+        self.declare_parameter('include_final_summary', DEFAULT_INCLUDE_FINAL_SUMMARY)
 
         self.ollama_url = self.get_parameter('ollama_url').get_parameter_value().string_value
         self.chat_model = self.get_parameter('chat_model').get_parameter_value().string_value
         self.context_file = self.get_parameter('context_file').get_parameter_value().string_value
-        self.max_words = self.declare_parameter('max_words', DEFAULT_WORD_LIMIT)
+        self.max_words = self.get_parameter('max_words').get_parameter_value().integer_value
+        self.history_limit = self.get_parameter('history_limit').get_parameter_value().integer_value
+        self.include_final_summary = self.get_parameter('include_final_summary').get_parameter_value().bool_value
 
         self.context_data = self.get_context_hybrid()
-
-        self.context_data = self.load_context()
 
     def get_context_hybrid(self):
         '''Intenta obtener contexto por servicio o por archivo'''
         client = self.create_client(GetPatrolContext, 'get_patrol_context')
         
-        self.get_logger().info("Intentando conectar con el Reportero...")
+        self.get_logger().debug("Intentando conectar con el Reportero")
         if client.wait_for_service(timeout_sec=2.0):
             req = GetPatrolContext.Request()
             future = client.call_async(req)
@@ -71,18 +75,20 @@ class PatrolChatbotNode(Node):
         if not self.context_data:
             return "Eres el asistente de seguridad del hospital. No tienes datos de patrullas recientes."
         
-        final_summary = self.context_data.get("final_summary", "")
-
-        return f"""Eres una IA de reconocimiento de actividades humanas en un robot de patrulla del hospital. 
-        El usuario te hará preguntas sobre la última patrulla realizada.
-        A continuación tienes los datos detallados de cada zona y el resumen general de incidentes.
-
+        base_prompt = """Eres una IA de reconocimiento de actividades humanas en un robot de patrulla del hospital. 
+        El usuario te hará preguntas sobre la última patrulla realizada."""
+        
+        if self.include_final_summary:
+            final_summary = self.context_data.get("final_summary", "")
+            base_prompt += f"""\nA continuación tienes el resumen general de incidentes.
         RESUMEN FINAL:
-        {final_summary}
-
-        Se te proporcionará información específica de los sensores (eventos) según lo que el usuario pregunte.
-        Usa esa información y el resumen para responder de forma concisa, directa y profesional.
+        {final_summary}"""
+        
+        base_prompt += """\nSe te proporcionará información específica de los sensores (eventos) según lo que el usuario pregunte.
+        Usa esa información para responder de forma concisa, directa y profesional.
         No inventes información que no esté en el contexto explícito. Si los datos indican que no hay actividad en una zona, dilo. Responde siempre en español."""
+
+        return base_prompt
 
     def call_ollama(self, prompt):
         '''Wrapper para call_ollama_api'''
@@ -106,25 +112,46 @@ class PatrolChatbotNode(Node):
         global_context_json = json.dumps(global_context_dict, ensure_ascii=False)
         return format_context_for_ragas(global_context_json, filter_empty=False)
 
-    def get_relevant_context_str(self, user_input, natural_context_full):
+    def get_relevant_context_str(self, user_input, natural_context_full, base_prompt_words):
         '''Filtra y resume el contexto basándose en la entrada del usuario'''
         relevant_contexts = get_relevant_context(natural_context_full, user_input.lower())
+
+        if relevant_contexts == natural_context_full:
+            if not self.include_final_summary:
+                # Resumen del LLM como fallback si RAG no encuentra la zona
+                final_summary = self.context_data.get("final_summary", "No hay resumen disponible.")
+                relevant_contexts = [final_summary]
+            else:
+                # Evitar duplicar el contexto
+                relevant_contexts = ["Consulta el resumen final incluido en tus instrucciones."]
+
         context_str = "\n".join(relevant_contexts)
 
-        if len(context_str.split()) > self.max_words:
+        available_words = self.max_words - base_prompt_words
+        if available_words < 50:
+            available_words = 50 # Mínimo vital para que el Summary Tree no crashee por escasez
+            
+        if len(context_str.split()) > available_words:
             try:
                 print("Chatbot: Resumiendo registros extensos...", end="\r")
                 summarizer = RecursiveSummarizer(
                     ollama_url=self.ollama_url,
                     model_name=self.chat_model,
                     logger=self.get_logger(),
-                    max_words=self.max_words
+                    max_words=available_words
                 )
                 context_str = summarizer.recursive_summarize(relevant_contexts, reduction_prompt)
             except Exception as e:
                 self.get_logger().error(f"Error en summary trees chatbot: {e}")
                 
         return context_str
+    
+    def format_history_to_str(self, history_list):
+        '''Convierte la lista de diccionarios del historial en un texto plano'''
+        text = ""
+        for turn in history_list:
+            text += f"\nUsuario: {turn['usuario']}\nAsistente: {turn['chatbot']}\n"
+        return text
 
     def run_chat(self):
         '''Orquestador del bucle y la interfaz'''
@@ -137,7 +164,7 @@ class PatrolChatbotNode(Node):
         print("="*60 + "\n")
 
         system_prompt = self.build_system_prompt()
-        chat_history = "" # Memoria simple de la conversación
+        chat_history = [] # Memoria de la conversación como sliding window
 
         while rclpy.ok():
             try:
@@ -149,17 +176,25 @@ class PatrolChatbotNode(Node):
                     continue
                 
                 print("Chatbot: Analizando registros...", end="\r")
+
+                history_str_base = self.format_history_to_str(chat_history)
+                current_history_str = history_str_base + f"\nUsuario: {user_input}\n"
+
+                # Pre-calcular el prompt sin contexto para contar sus palabras
+                prompt_template = f"{system_prompt}\n\nDATOS RELEVANTES DE LOS SENSORES PARA ESTA PREGUNTA:\n\n\nHISTORIAL DE CONVERSACIÓN RECIENTE:{current_history_str}\nAsistente:"
+                base_prompt_words = len(prompt_template.split())
                 
-                context_str = self.get_relevant_context_str(user_input, natural_context_full)
+                context_str = self.get_relevant_context_str(user_input, natural_context_full, base_prompt_words)
 
                 # Inyección del contexto filtrado y construcción del prompt
-                chat_history += f"\nUsuario: {user_input}\n"
-                full_prompt = f"{system_prompt}\n\nDATOS RELEVANTES DE LOS SENSORES PARA ESTA PREGUNTA:\n{context_str}\n\nHISTORIAL DE CONVERSACIÓN RECIENTE:{chat_history}\nAsistente:"
+                full_prompt = f"{system_prompt}\n\nDATOS RELEVANTES DE LOS SENSORES PARA ESTA PREGUNTA:\n{context_str}\n\nHISTORIAL DE CONVERSACIÓN RECIENTE:{current_history_str}\nAsistente:"
                 
                 print("Chatbot: Generando respuesta...       ", end="\r")
                 response = self.call_ollama(full_prompt)
                 
-                chat_history += f"Asistente: {response}\n"
+                chat_history.append({"usuario": user_input, "chatbot": response})
+                if len(chat_history) > self.history_limit:
+                    chat_history.pop(0) 
                 
                 print(" "*50, end="\r") # Limpiar la línea de "pensando"
                 print(f"Chatbot: {response}")

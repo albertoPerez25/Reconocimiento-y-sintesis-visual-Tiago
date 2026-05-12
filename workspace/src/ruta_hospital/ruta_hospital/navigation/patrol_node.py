@@ -215,7 +215,6 @@ class PatrolNode(rclpy.node.Node):
                             'gnome-terminal', '--', 'bash', '-c', 
                             'ros2 run ruta_hospital patrol_chatbot_node; exec bash'
                         ])
-                
 
             result = self.navigator.getResult()
             
