@@ -1,0 +1,52 @@
+sequenceDiagram
+    participant P as Usuario / PatrolNode
+    participant C as PatrolChatbotNode
+    participant R as LLMReporterNode
+    participant Disco as Disco Local
+    participant O as Ollama API (Llama3)
+
+    P->>C: Inicia nodo (Comando directo o tecla 'c')
+    
+    rect rgb(240, 248, 255)
+        Note over C, R: Recuperación de Contexto
+        C->>R: Llama Service: /get_patrol_context
+        alt Servicio Disponible
+            R-->>C: Devuelve contexto crudo + Resumen Final
+        else Timeout (Fallback)
+            C->>Disco: Carga latest_patrol_context.json
+            Disco-->>C: Devuelve contexto 
+        end
+    end
+    
+	Note over C: Inyección de resumen del reportero, opcional según parámetro
+    C->>C: build_system_prompt()
+    
+    loop Bucle de conversación infinito 
+        P->>C: Escribe una pregunta
+        
+        alt Comando de salida ('salir', 'q')
+            C->>P: Finaliza la sesión y cierra el nodo
+        else Pregunta válida
+            C->>C: Calcula tamaño de Base (System + Historial + Pregunta)
+            
+            C->>C: get_relevant_context_str() (RAG)
+            Note over C: Si no hay zona -> Fallback a Resumen
+            
+            opt (Tamaño Base + Contexto) > max_words
+                Note over C, O: Summary Trees
+                C->>O: Reduce contexto al espacio restante
+                O-->>C: Devuelve contexto concentrado
+            end
+            
+            C->>O: Inferencia con el prompt optimizado
+            
+            O-->>C: Respuesta final generada
+            
+            rect rgb(255, 245, 230)
+                C->>C: Añade turno a la lista de historial
+                C->>C: Si len(historial) > history_limit -> pop(0)
+            end
+            
+            C-->>P: Imprime respuesta en Terminal
+        end
+    end

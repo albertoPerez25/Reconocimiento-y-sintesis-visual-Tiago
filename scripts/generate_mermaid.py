@@ -8,9 +8,10 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 logging.basicConfig(level=logging.INFO, format='%(levelname)s: %(message)s')
 
 # CONSTANTES DE CONFIGURACIÓN 
-DIAGRAMS_FOLDER = "diagrams/s4/mermaid/" 
-OUTPUT_FOLDER = "diagrams/s4"             
-DEFAULT_FORMAT = "svg"                    # Formatos soportados por mmdc: png, svg, pdf
+DIAGRAMS_FOLDER = "diagrams/s6/mermaid/" 
+OUTPUT_FOLDER = "diagrams/s6"             
+DEFAULT_FORMAT = "png"                    # Formatos soportados por mmdc: png, svg, pdf
+CHROME_INSTALLATION = "/usr/bin/google-chrome-stable" # Como paquete es preferible a snap o flatpak
 
 
 class MermaidCLIConverter:
@@ -32,16 +33,21 @@ class MermaidCLIConverter:
         # Comando: mmdc -i archivo_entrada.mmd -o archivo_salida.png -s 15
         cmd = [
             "mmdc",
+            "-p", "scripts/configs/puppeteer-config.json",
             "-i", str(input_path),
             "-o", str(output_path),
-            "-s", "15"  
+            "-s", "9"  
         ]
 
+        # Inyectamos la ruta del Chrome oficial
+        env = os.environ.copy()
+        env["PUPPETEER_EXECUTABLE_PATH"] = CHROME_INSTALLATION
+
+
         try:
-            subprocess.run(cmd, check=True, capture_output=True, text=True)
+            subprocess.run(cmd, check=True, capture_output=True, text=True, env=env)
             logging.info(f"Convertido: {input_path.name} -> {output_filename}")
             return True
-
         except subprocess.CalledProcessError as e:
             logging.error(f"Error en {input_path.name}:\n{e.stderr}")
             return False

@@ -1,0 +1,49 @@
+---
+config:
+  layout: elk
+  theme: redux
+---
+flowchart TB
+ subgraph Sensores["Sensores"]
+        Cam[/"Topic: /head_front_camera/rgb/image_raw"/]
+        Odom[/"Topic: /odom"/]
+  end
+ subgraph Sistema_ROS2_Hospital["Sistema_ROS2_Hospital"]
+        Photo["Nodo: photos_capturer_node"]
+        VideoCap["Nodo: video_capturer_node"]
+        Patrol["Nodo: patrol_node"]
+        Reporter["Nodo: llm_reporter_node"]
+        Perceptor["Nodos de Percepción<br>(Hybrid, Video, Seq)"]
+        Chatbot["Nodo: patrol_chatbot_node"]
+  end
+    Cam --> Photo & VideoCap
+    Odom --> Photo & VideoCap
+    
+    Patrol -- "SetParameters" --> Photo & VideoCap
+    Photo & VideoCap -- "Escritura de datos (vuelta_X)" --> Disco[("Disco Local<br>Multimedia, Semantic Map<br>y Hospital Metadata")]
+    
+    Usuario(("Usuario")) -. "Inicia el sistema" .-> Patrol
+    Patrol -- Action: /generate_patrol_report --> Reporter
+    
+    Reporter -- "Lee datos de vuelta_X y hospital_metadata.json (RAG)" --> Disco
+    Reporter -- "Service: /analyze_image<br>+ Contexto RAG (Zona, Hora, Actividades)" --> Perceptor
+    Reporter -- Genera Síntesis Final (Llama3) --> Ollama(("Ollama API Local<br>http://localhost:11434"))
+    Reporter -- "Actualiza Contexto" --> ContextFile[("latest_patrol_context.json")]
+    
+    Perceptor -- "Lógica interna (YOLO26n-pose)" --> Perceptor
+    Perceptor -- Analiza contexto visual (Moondream) --> Ollama
+    
+    Chatbot -. Service: /get_patrol_context .-> Reporter
+    Chatbot -- "RAG sobre registros" --> ContextFile
+    Chatbot -- "Responde dudas" --> Ollama
+    Usuario -. "Consulta de incidencias" .-> Chatbot
+
+     Photo:::ros
+     VideoCap:::ros
+     Patrol:::ros
+     Reporter:::ros
+     Perceptor:::ros
+     Chatbot:::ros
+     Ollama:::api
+    classDef ros fill:#e1f5fe,stroke:#01579b,stroke-width:2px
+    classDef api fill:#fff3e0,stroke:#e65100,stroke-width:2px

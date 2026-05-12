@@ -1,0 +1,74 @@
+---
+config:
+  look: classic
+---
+sequenceDiagram
+    participant Terminal as Terminal / Usuario
+    participant E as SystemEvaluatorNode
+    participant R as Lógica: LLMReporterNode
+    participant V as Nodo: PerceptionNode
+    participant Ragas as RagasEvaluator
+    participant O@{ "type": "entity" } as Ollama API
+    participant Disco@{ "type": "database" } as Disco Local
+
+    Note over Terminal, Disco: Fase Inicial: El usuario inicia perceptores y evaluador
+    
+    Terminal->>E: Service Call: /evaluate_patrol_system [Mode]
+    
+    E->>E: Instancia MockGoalHandle y Result
+    
+    rect rgb(240, 248, 255)
+        opt Si Mode != 'evaluate_only'
+            Note right of E: Fase 1: Extracción de Contexto Visual
+            E->>R: validate_data(eval_folder_path, mock_result)
+            R->>Disco: Lee metadata.csv e imágenes del test_dataset
+            
+            E->>R: process_each_image(zone_groups)
+            loop Por cada zona e imagen/secuencia del dataset
+                R->>V: Llama /analyze_image(path, Contexto RAG)
+                alt YOLO
+                    V->>V: Inferencia local (YOLO-Pose)
+                else Híbrido
+                    V->>V: Inferencia local (YOLO-Pose)
+                    V->>O: Inferencia visual (Moondream)
+                    O-->>V: JSON descriptivo
+                else VLM / Híbrido / Secuencia / Video
+                    V->>O: Inferencia visual (Moondream / Nemotron)
+                    O-->>V: JSON descriptivo
+                end
+                V-->>R: Retorna JSON {descripcion_vlm, alerta}
+            end
+            R-->>E: Devuelve global_context_json
+        end
+    end
+    
+    alt Si Mode == 'evaluate_only'
+        E->>Disco: Lee /tmp/ragas_intermediate_answers.json
+    else Si Mode == 'full' OR Mode == 'generate_only'
+        E->>Ragas: generate_answers(global_context_json)
+        E->>Disco: Guarda Savepoint: ragas_intermediate_answers.json
+    end
+    
+    rect rgb(255, 245, 238)
+        
+        Note right of E: Fase 2: Evaluación Ragas
+        opt Si Mode != 'generate_only'   
+           
+        	E->>Ragas: evaluate_system()
+
+            Ragas->>Disco: Lee quest.json (Preguntas y Ground Truth)
+            
+            loop Por cada pregunta en quest.json
+                Ragas->>O: Prompt + pregunta y contexto
+                O-->>Ragas: Respuesta generada por Llama-3
+            end
+            
+            Ragas->>O: ragas.evaluate() (HuggingFace Dataset)
+            O-->>Ragas: Retorna métricas (answer_correctness, answer_relevancy, faithfulness)
+            
+            Ragas->>Disco: Guarda ragas_system_*.csv
+            Ragas-->>E: Retorna DataFrame con resultados
+        end
+    end
+    
+    E-->>Terminal: Devuelve Trigger Response (Success)
