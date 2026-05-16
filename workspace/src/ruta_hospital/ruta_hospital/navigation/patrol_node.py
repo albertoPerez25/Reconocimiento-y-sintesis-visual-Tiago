@@ -7,6 +7,7 @@ import subprocess # para lanzar el proceso del chatbot
 from nav2_simple_commander.robot_navigator import BasicNavigator, TaskResult
 from rclpy.action import ActionClient
 from hospital_interfaces.action import GenerateReport
+from chatbot import chatbot_web
 
 from rcl_interfaces.srv import SetParameters # Para cambiar el dir del photos_node
 from rcl_interfaces.msg import Parameter, ParameterValue, ParameterType
@@ -207,14 +208,15 @@ class PatrolNode(rclpy.node.Node):
                     self.get_logger().warn("[Informe] Cancelado el informe en curso")
                     self.active_goal_handle.cancel_goal_async()
 
-                elif key == 'c':
-                    if self.report_completed:
-                        print("\n") # Salto de línea para no pisar el log
-                        self.get_logger().info("Abriendo terminal de Chatbot...")
-                        subprocess.Popen([
-                            'gnome-terminal', '--', 'bash', '-c', 
-                            'ros2 run ruta_hospital patrol_chatbot_node; exec bash'
-                        ])
+                elif key and key.lower() == 'c':
+                    print("\n") # Salto de línea para no pisar el log
+                    self.get_logger().info("Abriendo interfaz web del Chatbot (Streamlit)...")
+                    
+                    try:
+                        chatbot_script = chatbot_web.__file__
+                        subprocess.Popen(['streamlit', 'run', chatbot_script])
+                    except ImportError:
+                        self.get_logger().warn(f"Error al lanzar el proceso del chatbot: No se pudo importar el proceso")
 
             result = self.navigator.getResult()
             
