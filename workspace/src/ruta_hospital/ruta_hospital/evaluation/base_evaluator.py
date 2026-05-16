@@ -22,6 +22,7 @@ DEFAULT_ANSWERS_FILE = "/tmp/ragas_intermediate_answers.json"
 DEFAULT_METRICS_DIR = "/home/alberto/tfg/Reconocimiento-y-sintesis-visual-Tiago/autogenerate_metrics/"
 
 DEFAULT_WORD_LIMIT = 300
+DEFAULT_MAX_STORED_ROUNDS = 5
 
 class InferencePipelineError(Exception):
     """Excepción cuando falla un paso en el pipeline de inferencia."""
@@ -45,6 +46,7 @@ class BaseEvaluatorNode(Node, ABC):
         self.declare_parameter('answers_file', DEFAULT_ANSWERS_FILE)
         self.declare_parameter('metrics_dir', DEFAULT_METRICS_DIR)
         self.declare_parameter('max_words', DEFAULT_WORD_LIMIT)
+        self.declare_parameter('max_stored_rounds', DEFAULT_MAX_STORED_ROUNDS)
 
         # Extracción de valores
         ollama_url = self.get_parameter('ollama_url').get_parameter_value().string_value
@@ -61,6 +63,8 @@ class BaseEvaluatorNode(Node, ABC):
         self.answers_file = self.get_parameter('answers_file').get_parameter_value().string_value
         self.metrics_dir = self.get_parameter('metrics_dir').get_parameter_value().string_value
         max_words = self.get_parameter('max_words').get_parameter_value().integer_value
+        max_stored_rounds = self.get_parameter('max_stored_rounds').get_parameter_value().integer_value
+
 
         self.current_metrics = self.init_metrics_dict()
 
@@ -75,7 +79,8 @@ class BaseEvaluatorNode(Node, ABC):
             system_timeout=sys_timeout, 
             perceptor_workers=perc_workers, 
             perceptors_timeout=perc_timeout,
-            max_words=max_words
+            max_words=max_words,
+            max_stored_rounds=max_stored_rounds
         )
 
     def init_metrics_dict(self):

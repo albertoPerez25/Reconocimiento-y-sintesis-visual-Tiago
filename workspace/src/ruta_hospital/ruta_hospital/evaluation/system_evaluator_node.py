@@ -2,6 +2,7 @@
 import os
 import time
 import rclpy
+import json
 from rclpy.executors import MultiThreadedExecutor
 from std_srvs.srv import Trigger
 from ament_index_python.packages import get_package_share_directory
@@ -143,27 +144,31 @@ class SystemEvaluatorNode(BaseEvaluatorNode):
             raise InferencePipelineError("Fallo validando los datos del directorio")
             
         self.get_logger().info("Extrayendo contexto de perceptores")
-        global_context_json = await self.reporter_logic.process_each_image(zone_groups, mock_goal_handle, mock_result)
+        hospital_data_dict = await self.reporter_logic.process_each_image(zone_groups, mock_goal_handle, mock_result)
         
-        if not global_context_json:
+        if not hospital_data_dict:
             raise InferencePipelineError("Fallo en el procesamiento de imágenes en el perceptor")
+        
+        self.reporter_logic.current_round += 1
+        self.reporter_logic.vector_manager.ingest_and_update_index(self.reporter_logic.current_round, hospital_data_dict)
         
         self.get_logger().info("Generando resumen global...")
         t_init_llm = time.time()
-        mock_result = self.reporter_logic.generate_global_summary(global_context_json, mock_result)
+        summary_text = self.reporter_logic.vector_manager.generate_global_summary(self.reporter_logic.current_round)
         self.reporter_logic.current_metrics["tiempo_llm_segundos"] = round(time.time() - t_init_llm, 2)
 
-        if not mock_result.success:
+        if "Error" in summary_text:
             raise InferencePipelineError("Fallo al generar el resumen global por lotes")
             
-        pregenerated_summary = mock_result.final_report.replace("Informe generado:\n", "").strip() # quitarlo para evitar errores de ragas
-        reduced_context = getattr(self.reporter_logic, 'last_reduced_context', None)
-        
+        pregenerated_summary = summary_text.replace("Informe generado:\n", "").strip() # quitarlo para evitar errores de ragas
+
         self.get_logger().info("Generando respuestas LLM...")
+        # Serializar para la evaluación del resumen y pasar el vector_manager a RAGAS
+        global_context_json = json.dumps(hospital_data_dict, ensure_ascii=False)
         short_dict, summary_dict = self.ragas_evaluator.generate_answers(
-            global_context_json,
-            pregenerated_summary=pregenerated_summary,
-            reduced_context=reduced_context
+            vector_manager=self.reporter_logic.vector_manager,
+            global_context_json=global_context_json,
+            pregenerated_summary=pregenerated_summary
         )
         
         # Guardado intermedio si no es "evaluate_only"
