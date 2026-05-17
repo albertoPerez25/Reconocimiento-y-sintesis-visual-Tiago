@@ -40,17 +40,30 @@ class VectorManager:
         if not os.path.exists(self.docs_dir):
             os.makedirs(self.docs_dir)
 
+    def clear_all_data(self):
+        '''Elimina los datos y la base vectorial de sesiones anteriores'''
+        if os.path.exists(self.base_dir):
+            shutil.rmtree(self.base_dir)
+            self._log_info(f"Limpiados datos temporales RAG en {self.base_dir}")
+        os.makedirs(self.docs_dir, exist_ok=True)
+
     def log_info(self, msg):
-        if self.logger: self.logger.info(msg)
-        else: print(f"[INFO] {msg}")
+        if self.logger: 
+            self.logger.info(msg)
+        else: 
+            print(f"[INFO] {msg}")
 
     def log_error(self, msg):
-        if self.logger: self.logger.error(msg)
-        else: print(f"[ERROR] {msg}")
+        if self.logger: 
+            self.logger.error(msg)
+        else: 
+            print(f"[ERROR] {msg}")
 
     def log_debug(self, msg):
-        if self.logger: self.logger.debug(msg)
-        else: print(f"[DEBUG] {msg}")
+        if self.logger: 
+            self.logger.debug(msg)
+        else: 
+            print(f"[DEBUG] {msg}")
 
     # INGESTIÓN Y GESTIÓN DE LA BASE DE DATOS (FAISS)
     def ingest_and_update_index(self, round_number, zone_data_dict):

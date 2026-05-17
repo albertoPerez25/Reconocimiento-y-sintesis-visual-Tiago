@@ -25,18 +25,21 @@ class LLMReporterNode(BaseReporterNode):
         self.declare_parameter('perception_mode', DEFAULT_PERCEPTION_MODE) 
         self.perception_mode = self.get_parameter('perception_mode').get_parameter_value().string_value     
         self.vision_cli = self.create_client(AnalyzeActivity, 'analyze_image', callback_group=self.cb_group)
+        ollama_base_url = self.ollama_url.split('/api')[0] if '/api' in self.ollama_url else self.ollama_url
 
         # Contador interno de vueltas para el Temporal RAG 
         self.current_round = 0
         
         # Gestor de FAISS y LangChain
         self.vector_manager = VectorManager(
-            base_dir=self.metrics_dir,
-            ollama_url=self.ollama_url,
+            base_dir=self.rag_dir,
+            ollama_url=ollama_base_url,
             llm_model=self.llm_model,
             max_stored_rounds=self.max_stored_rounds,
             logger=self.get_logger()
         )
+
+        self.vector_manager.clear_all_data()
 
         self.context_srv = self.create_service(
             GetPatrolContext, 

@@ -6,13 +6,13 @@ from ruta_hospital.utils.shared.vector_manager import VectorManager
 st.set_page_config(page_title="Chatbot de patrulla", page_icon="🤖", layout="wide")
 
 # Rutas de directorios basadas en la misma configuración del sistema
-METRICS_DIR = "/home/alberto/tfg/Reconocimiento-y-sintesis-visual-Tiago/autogenerate_metrics/"
+RAG_DIR = "/tmp/ruta_hospital_rag_data/"
 
 @st.cache_resource
 def get_vector_manager():
     # Inicializa el gestor y lo cachea para no recargarlo en cada interacción de Streamlit
     return VectorManager(
-        base_dir=METRICS_DIR,
+        base_dir=RAG_DIR,
         # Asume la URL por defecto de Ollama, si se cambia en ROS, deberá ajustarse aquí
         ollama_url="http://localhost:11434", 
         llm_model="llama3",
@@ -29,7 +29,7 @@ def main():
         st.header("Resúmenes Anteriores")
         
         # Encontrar todas las vueltas disponibles en el disco
-        docs_dir = os.path.join(METRICS_DIR, "db_docs")
+        docs_dir = os.path.join(RAG_DIR, "db_docs")
         vueltas_disponibles = []
         if os.path.exists(docs_dir):
             for d in os.listdir(docs_dir):

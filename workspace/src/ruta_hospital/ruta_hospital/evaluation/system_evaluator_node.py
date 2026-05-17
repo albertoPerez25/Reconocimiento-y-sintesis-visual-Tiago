@@ -26,7 +26,7 @@ class MockGoalHandle:
         self.is_cancel_requested = False
 
     def publish_feedback(self, msg):
-        # Ignorar el feedback durante la evaluación en segundo plano
+        '''Ignorar el feedback durante la evaluación en segundo plano'''
         pass
 
 class SystemEvaluatorNode(BaseEvaluatorNode):
@@ -65,6 +65,9 @@ class SystemEvaluatorNode(BaseEvaluatorNode):
         self.get_logger().info("Nodo Evaluador listo. Llama al servicio '/evaluate_patrol_system'")
 
     async def evaluate_callback(self, request, response):
+        '''Orquesta el flujo de evaluación completo: obtención de datos (inferencia o lectura de disco), 
+        ejecución de RAGAS y actualización de métricas'''
+        
         self.get_logger().info("Iniciada Evaluación Ragas")
         total_init_time = time.time()
         inference_time = 0.0
@@ -108,6 +111,9 @@ class SystemEvaluatorNode(BaseEvaluatorNode):
         return response
     
     def sync_metrics_from_reporter(self, inference_time, ragas_time, total_init_time):
+        '''Sincroniza y consolida las métricas de rendimiento y ejecución obtenidas desde el nodo reportero 
+        instanciado.'''
+
         rep_metrics = self.reporter_logic.current_metrics
         
         # tiempos y contadores
@@ -124,6 +130,9 @@ class SystemEvaluatorNode(BaseEvaluatorNode):
         self.current_metrics["tiempo_total_ejecucion_segundos"] = round(time.time() - total_init_time, 2)
     
     def get_data_for_evaluate_only(self, request, response):
+        '''Carga y devuelve los diccionarios de evaluación intermedios desde el disco para una ejecución rápida 
+        de métricas RAGAS sin inferencia'''
+
         saved_data = self.load_intermediate_answers()
         if not saved_data or "short_dict" not in saved_data or "summary_dict" not in saved_data:
             response.success = False
@@ -135,7 +144,10 @@ class SystemEvaluatorNode(BaseEvaluatorNode):
 
         return short_dict,summary_dict
     
-    async def get_data_for_inference_and_evaluate(self, request, response):
+    async def get_data_for_inference_and_evaluate(self, request, response): # TODO: Dividir esta funciónen varias, es mu larga
+        '''Simula el ciclo completo de una patrulla: extrae contexto visual, lo ingesta en la base vectorial aislada, 
+        genera el resumen global y extrae las respuestas de LangChain para su posterior evaluación en RAGAS'''
+        
         mock_result = GenerateReport.Result()
         mock_goal_handle = MockGoalHandle()
         
@@ -143,13 +155,18 @@ class SystemEvaluatorNode(BaseEvaluatorNode):
         if not zone_groups:
             raise InferencePipelineError("Fallo validando los datos del directorio")
             
+        # Limpiar los datos del RAG justo antes de la evaluación para garantizar un entorno aislado
+        self.get_logger().info("Limpiando base vectorial para garantizar una evaluación aislada...")
+        self.reporter_logic.vector_manager.clear_all_data()
+        self.reporter_logic.current_round = 1 # Forzar siempre la primera vuelta
+            
         self.get_logger().info("Extrayendo contexto de perceptores")
         hospital_data_dict = await self.reporter_logic.process_each_image(zone_groups, mock_goal_handle, mock_result)
         
         if not hospital_data_dict:
             raise InferencePipelineError("Fallo en el procesamiento de imágenes en el perceptor")
         
-        self.reporter_logic.current_round += 1
+        self.get_logger().info("Ingestando en FAISS...")
         self.reporter_logic.vector_manager.ingest_and_update_index(self.reporter_logic.current_round, hospital_data_dict)
         
         self.get_logger().info("Generando resumen global...")
