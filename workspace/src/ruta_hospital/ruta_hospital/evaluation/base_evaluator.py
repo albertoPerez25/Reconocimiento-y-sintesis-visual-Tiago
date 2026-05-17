@@ -4,7 +4,7 @@ import datetime
 import os
 from rclpy.node import Node
 from ruta_hospital.evaluation.utils.ragas_evaluator import OllamaParams, EvaluatorRunParams
-from workspace.src.ruta_hospital.ruta_hospital.utils.commons.metrics_utils import save_metrics_to_file
+from ruta_hospital.utils.commons.metrics_utils import save_metrics_to_file
 
 DEFAULT_OLLAMA_URL = "http://localhost:11434"
 DEFAULT_EVALUATOR_LLM_MODEL = "llama3"

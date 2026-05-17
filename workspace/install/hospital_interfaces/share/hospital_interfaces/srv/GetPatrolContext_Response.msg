@@ -1,0 +1,4 @@
+
+bool success
+string global_context
+string final_summary

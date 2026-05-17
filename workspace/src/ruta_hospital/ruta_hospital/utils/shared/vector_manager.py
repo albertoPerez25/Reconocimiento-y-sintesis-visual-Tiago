@@ -1,16 +1,22 @@
 import os
 import json
 import shutil
+
+# ECOSISTEMA COMUNITARIO 
 from langchain_community.document_loaders import DirectoryLoader, TextLoader
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 from langchain_community.vectorstores import FAISS
 from langchain_ollama import ChatOllama, OllamaEmbeddings
-from langchain.chains.summarize import load_summarize_chain
-from langchain.chains import ConversationalRetrievalChain
-from langchain.memory import ConversationBufferWindowMemory
-from langchain.retrievers.self_query.base import SelfQueryRetriever
-from langchain.chains.query_constructor.base import AttributeInfo
-from langchain.prompts import PromptTemplate, ChatPromptTemplate, SystemMessagePromptTemplate, HumanMessagePromptTemplate
+
+# IMPORTACIONES PROFUNDAS 
+from langchain_classic.chains.summarize.chain import load_summarize_chain
+from langchain_classic.chains.conversational_retrieval.base import ConversationalRetrievalChain
+from langchain_classic.memory.buffer_window import ConversationBufferWindowMemory
+from langchain_classic.retrievers.self_query.base import SelfQueryRetriever
+from langchain_classic.chains.query_constructor.base import AttributeInfo
+
+# PROMPTS
+from langchain_core.prompts import PromptTemplate, ChatPromptTemplate, SystemMessagePromptTemplate, HumanMessagePromptTemplate
 
 class VectorManager:
     '''
@@ -44,7 +50,7 @@ class VectorManager:
         '''Elimina los datos y la base vectorial de sesiones anteriores'''
         if os.path.exists(self.base_dir):
             shutil.rmtree(self.base_dir)
-            self._log_info(f"Limpiados datos temporales RAG en {self.base_dir}")
+            self.log_info(f"Limpiados datos temporales RAG en {self.base_dir}")
         os.makedirs(self.docs_dir, exist_ok=True)
 
     def log_info(self, msg):

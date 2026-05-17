@@ -7,9 +7,9 @@ from ragas import evaluate
 from ragas.metrics import answer_correctness, answer_relevancy, faithfulness, summarization_score
 from langchain_ollama import ChatOllama, OllamaEmbeddings
 from ragas.run_config import RunConfig
-from workspace.src.ruta_hospital.ruta_hospital.utils.commons.api_utils import call_ollama_api 
+from ruta_hospital.utils.commons.api_utils import call_ollama_api 
 from ruta_hospital.utils.shared.rag_utils import format_context_for_ragas, get_relevant_context
-from workspace.src.ruta_hospital.ruta_hospital.utils.shared import vector_manager
+from ruta_hospital.utils.shared import vector_manager
 
 class OllamaParams:
     def __init__(self, ollama_url = "http://localhost:11434", evaluator_llm_model = "llama3", evaluator_embed_model = "nomic-embed-text"):

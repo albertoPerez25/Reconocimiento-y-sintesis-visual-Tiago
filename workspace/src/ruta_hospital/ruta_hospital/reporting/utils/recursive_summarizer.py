@@ -1,4 +1,4 @@
-from workspace.src.ruta_hospital.ruta_hospital.utils.commons.api_utils import call_ollama_api
+from ruta_hospital.utils.commons.api_utils import call_ollama_api
 
 class RecursiveSummarizer:
     def __init__(self, ollama_url, model_name, logger, max_words=800):

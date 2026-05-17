@@ -10,8 +10,8 @@ from ament_index_python.packages import get_package_share_directory
 
 from rclpy.action import ActionServer
 from hospital_interfaces.action import GenerateReport
-from workspace.src.ruta_hospital.ruta_hospital.utils.shared.semantic_map_utils import load_semantic_map, get_zone_name
-from workspace.src.ruta_hospital.ruta_hospital.utils.commons.metrics_utils import save_metrics_to_file
+from ruta_hospital.utils.shared.semantic_map_utils import load_semantic_map, get_zone_name
+from ruta_hospital.utils.commons.metrics_utils import save_metrics_to_file
 
 # metricas
 import datetime
@@ -43,7 +43,7 @@ class BaseReporterNode(Node, ABC):
         self.declare_parameter('llm_model', DEFAULT_MODEL)
         self.declare_parameter('ollama_url', DEFAULT_OLLAMA_URL)
         self.declare_parameter('max_words', DEFAULT_WORD_LIMIT)
-        self.declare_parameter('save_summary', DEFAULT_SAVE_CONTEXT = False)
+        self.declare_parameter('save_summary', DEFAULT_SAVE_CONTEXT)
         self.declare_parameter('max_stored_rounds', DEFAULT_MAX_STORED_ROUNDS)
         self.declare_parameter('rag_dir', DEFAULT_RAG_DIR)
 

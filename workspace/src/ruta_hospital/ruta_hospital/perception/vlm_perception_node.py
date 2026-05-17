@@ -3,7 +3,7 @@ import rclpy
 import os
 import re
 import json
-from workspace.src.ruta_hospital.ruta_hospital.utils.commons.api_utils import encode_image_to_base64, call_ollama_api
+from ruta_hospital.utils.commons.api_utils import encode_image_to_base64, call_ollama_api
 from ruta_hospital.perception.base_perception import BasePerceptionNode
 
 DEFAULT_MODEL = 'moondream'
