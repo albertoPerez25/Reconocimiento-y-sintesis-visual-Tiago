@@ -8,6 +8,11 @@ from langchain_text_splitters import RecursiveCharacterTextSplitter
 from langchain_community.vectorstores import FAISS
 from langchain_ollama import ChatOllama, OllamaEmbeddings
 
+# BÚSQUEDA HÍBRIDA
+from langchain_community.retrievers import BM25Retriever
+from langchain_classic.retrievers.ensemble import EnsembleRetriever
+from langchain_core.documents import Document
+
 # IMPORTACIONES PROFUNDAS 
 from langchain_classic.chains.summarize.chain import load_summarize_chain
 from langchain_classic.chains.conversational_retrieval.base import ConversationalRetrievalChain
@@ -138,6 +143,16 @@ class VectorManager:
         # Particionado estándar para RAG
         text_splitter = RecursiveCharacterTextSplitter(chunk_size=1000, chunk_overlap=200)
         chunks = text_splitter.split_documents(documents)
+
+        # FAISS y BM25 es mejor que lean el nombre exacto de la sala, insertado en todos los chunks
+        # para siempre poder recuperarlos por sala y evitar perder info
+        chunks = [
+            Document(
+                page_content=f"[Zona: {c.metadata.get('zona', 'N/A')} | Vuelta: {c.metadata.get('vuelta', 'N/A')}]\n{c.page_content}",
+                metadata=c.metadata
+            )
+            for c in text_splitter.split_documents(documents)
+        ] # TODO: Quitar repeticion de estos metadatos, a través de eliminarlos en la creacion de los documentos o al cargarlos en RAM
         
         # Indexación en memoria y guardado a disco
         vectorstore = FAISS.from_documents(chunks, self.embeddings)
@@ -204,34 +219,19 @@ class VectorManager:
         # allow_dangerous_deserialization=True es requerido por FAISS en versiones modernas para cargar archivos locales
         vectorstore = FAISS.load_local(self.faiss_path, self.embeddings, allow_dangerous_deserialization=True)
         
-        # Configuración del SelfQueryRetriever (RAG tempiral)
-        metadata_field_info = [
-            AttributeInfo(
-                name="vuelta",
-                description="El número de la vuelta o ronda de patrulla a la que pertenece el reporte",
-                type="integer",
-            ),
-            AttributeInfo(
-                name="zona",
-                description="El nombre de la zona del hospital (ej. pasillo, recepcion, habitacion)",
-                type="string",
-            ),
-        ]
+        # Buscador Denso (Semántico FAISS)
+        semantic_retriever = vectorstore.as_retriever(search_kwargs={"k": top_k_docs})
         
-        document_description = "Reportes de seguridad de los sensores de un robot de patrulla en un hospital"
+        # Buscador Disperso (Léxico BM25)
+        docs_in_faiss = list(vectorstore.docstore._dict.values())
+        lexic_retriever = BM25Retriever.from_documents(docs_in_faiss)
+        lexic_retriever.k = top_k_docs
         
-        try:
-            # IA pequeña que traducirá "¿Qué pasó en la vuelta 1?" a un filtro FAISS {"vuelta": 1}
-            retriever = SelfQueryRetriever.from_llm(
-                self.llm,
-                vectorstore,
-                document_description,
-                metadata_field_info,
-                search_kwargs={"k": top_k_docs}
-            )
-        except Exception as e:
-            self.log_error(f"Fallo inicializando SelfQueryRetriever, usando fallback estándar: {e}")
-            retriever = vectorstore.as_retriever(search_kwargs={"k": top_k_docs})
+        # Fusión Híbrida (Reciprocal Rank Fusion - 50% peso léxico, 50% peso semántico)
+        retriever = EnsembleRetriever(
+            retrievers=[lexic_retriever, semantic_retriever],
+            weights=[0.7, 0.3]
+        )
 
         # Configuración de la memoria
         memory = ConversationBufferWindowMemory(
@@ -240,6 +240,29 @@ class VectorManager:
             return_messages=True,
             output_key="answer" # Crítico para que LangChain guarde solo la respuesta final y no los documentos fuente
         )
+
+        valid_zones = set()
+        if os.path.exists(self.docs_dir):
+            for folder in os.listdir(self.docs_dir):
+                folder_path = os.path.join(self.docs_dir, folder)
+                if os.path.isdir(folder_path):
+                    for f in os.listdir(folder_path):
+                        if f.endswith(".txt"):
+                            valid_zones.add(f.replace(".txt", ""))
+        zones_str = ", ".join(valid_zones) if valid_zones else "Zonas desconocidas"
+
+        condense_template = f"""Dada la siguiente conversación y una nueva pregunta, reformula la nueva pregunta para que sea una búsqueda independiente en ESPAÑOL.
+        
+        IMPORTANTE: El mapa del sistema tiene EXACTAMENTE estas zonas válidas: [{zones_str}].
+        Si el usuario pregunta por un lugar, usa el NOMBRE EXACTO de la lista anterior que más se le parezca.
+        
+        Historial del chat:
+        {{chat_history}}
+        
+        Nueva pregunta: {{question}}
+        Búsqueda independiente en español:"""
+
+        CONDENSE_QUESTION_PROMPT = PromptTemplate.from_template(condense_template)
 
         # Prompt del asistente
         system_template = """Eres una IA de reconocimiento de actividades y humanos de un hospital.
@@ -260,7 +283,8 @@ CONTEXTO DE SENSORES RECUPERADO:
             retriever=retriever,
             memory=memory,
             return_source_documents=True, #para que RAGAS pueda evaluar la fidelidad exacta
-            combine_docs_chain_kwargs={"prompt": qa_prompt}
+            combine_docs_chain_kwargs={"prompt": qa_prompt},
+            condense_question_prompt=CONDENSE_QUESTION_PROMPT
         )
         
         return chain
