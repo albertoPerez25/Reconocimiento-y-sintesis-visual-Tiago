@@ -1,15 +1,15 @@
 [
     {
-        "fecha": "2026-05-05 20:11:39.391863",
+        "fecha": "2026-05-18 22:22:29.039392",
         "nodo_ejecutor": "system_evaluator_node",
-        "evaluacion_nombre": "video",
-        "total_imagenes_procesadas": 0,
-        "tiempo_percepcion_segundos": 0.0,
-        "tiempo_llm_segundos": 0.0,
+        "evaluacion_nombre": "ragas_new_RAG_embbedings_only",
+        "total_imagenes_procesadas": 1247,
+        "tiempo_percepcion_segundos": 970.44,
+        "tiempo_llm_segundos": 441.15,
         "tiempo_inferencia_total_segundos": 0.0,
         "tiempo_ragas_evaluacion_segundos": 0.0,
-        "tiempo_total_ejecucion_segundos": 1510.36,
-        "caracteres_contexto_visual": 0,
+        "tiempo_total_ejecucion_segundos": 5092.01,
+        "caracteres_contexto_visual": 99552,
         "caracteres_informe_final": 0
     }
 ]

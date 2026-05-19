@@ -73,20 +73,20 @@ class SystemEvaluatorNode(BaseEvaluatorNode):
         inference_time = 0.0
         ragas_time = 0.0
 
-        if self.evaluation_mode == "evaluate_only":
-            short_dict, summary_dict = self.get_data_for_evaluate_only(request, response)
-        else:
-            short_dict, summary_dict = await self.get_data_for_inference_and_evaluate(request, response)
-
-            if self.evaluation_mode == "generate_only":
-                response.success = True
-                response.message = f"Generación completada. Respuestas guardadas en {self.answers_file}"
-                
-                self.sync_metrics_from_reporter(inference_time, 0.0, total_init_time)
-                self.save_metrics()
-                return response
-
         try:
+            if self.evaluation_mode == "evaluate_only":
+                short_dict, summary_dict = self.get_data_for_evaluate_only(request, response)
+            else:
+                short_dict, summary_dict = await self.get_data_for_inference_and_evaluate(request, response)
+
+                if self.evaluation_mode == "generate_only":
+                    response.success = True
+                    response.message = f"Generación completada. Respuestas guardadas en {self.answers_file}"
+                    
+                    self.sync_metrics_from_reporter(inference_time, 0.0, total_init_time)
+                    self.save_metrics()
+                    return response
+
             self.ragas_evaluator.evaluate_system(
                 short_dict=short_dict,
                 summary_dict=summary_dict,
@@ -135,9 +135,7 @@ class SystemEvaluatorNode(BaseEvaluatorNode):
 
         saved_data = self.load_intermediate_answers()
         if not saved_data or "short_dict" not in saved_data or "summary_dict" not in saved_data:
-            response.success = False
-            response.message = "Fallo cargando datos persistentes para evaluar."
-            return response
+            raise InferencePipelineError("Fallo cargando las respuestas del LLM a evaluar")
         
         short_dict = saved_data["short_dict"]
         summary_dict = saved_data["summary_dict"]

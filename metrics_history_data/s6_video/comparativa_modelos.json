@@ -94,5 +94,29 @@
         "tiempo_total_segundos": 1969.77,
         "caracteres_contexto_visual": 4217,
         "caracteres_informe_final": 1165
+    },
+    {
+        "fecha": "2026-05-18 16:28:54.184846",
+        "modelo_reportero": "llm_reporter_node",
+        "total_imagenes_procesadas": 259,
+        "zonas_despejadas": 4,
+        "zonas_con_output": 17,
+        "tiempo_percepcion_segundos": 134.3,
+        "tiempo_llm_segundos": 286.87,
+        "tiempo_total_segundos": 421.18,
+        "caracteres_contexto_visual": 25509,
+        "caracteres_informe_final": 0
+    },
+    {
+        "fecha": "2026-05-18 18:31:48.395949",
+        "modelo_reportero": "llm_reporter_node",
+        "total_imagenes_procesadas": 259,
+        "zonas_despejadas": 4,
+        "zonas_con_output": 17,
+        "tiempo_percepcion_segundos": 136.41,
+        "tiempo_llm_segundos": 360.81,
+        "tiempo_total_segundos": 497.22,
+        "caracteres_contexto_visual": 25457,
+        "caracteres_informe_final": 0
     }
 ]

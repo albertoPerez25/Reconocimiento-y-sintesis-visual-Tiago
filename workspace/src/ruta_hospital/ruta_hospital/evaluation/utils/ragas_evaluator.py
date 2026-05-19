@@ -121,7 +121,7 @@ class RagasEvaluator:
         df['evaluation_name'] = config_name if config_name else eval_type_name
         return df
 
-    def generate_answers(self, global_context_json, pregenerated_summary=None, reduced_context=None):
+    def generate_answers(self, vector_manager, global_context_json, pregenerated_summary=None, reduced_context=None):
         '''Usa el LLM para responder a las preguntas basándose solo en la patrulla'''
         with open(self.quest_path, 'r', encoding='utf-8') as f:
             questions_data = json.load(f)

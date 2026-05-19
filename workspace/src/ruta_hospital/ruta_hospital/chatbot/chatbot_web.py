@@ -2,6 +2,9 @@ import os
 import streamlit as st
 from ruta_hospital.utils.shared.vector_manager import VectorManager
 
+import langchain
+langchain.debug = True
+
 # Configuración inicial de Streamlit
 st.set_page_config(page_title="Chatbot de patrulla", page_icon="🤖", layout="wide")
 
@@ -98,8 +101,18 @@ def main():
                     # La salida depende de si output_key="answer" está configurado.
                     # Si no, por defecto puede ser 'answer'.
                     answer = response_dict.get("answer", "No se generó respuesta.")
+                    source_docs = response_dict.get("source_documents", [])
                     
                     st.markdown(answer)
+                    with st.expander("🔍 Ver contexto que FAISS le pasó al LLM (Debug)"):
+                        if not source_docs:
+                            st.warning("FAISS no encontró ningún documento que coincidiera con tu pregunta.")
+                        else:
+                            for i, doc in enumerate(source_docs):
+                                source_name = doc.metadata.get("source", "Desconocido")
+                                st.write(f"**Documento {i+1} | Archivo:** `{source_name}`")
+                                st.text(doc.page_content)
+
                     st.session_state.messages.append({"role": "assistant", "content": answer})
                     
                 except Exception as e:
