@@ -57,6 +57,7 @@ class BaseReporterNode(Node, ABC):
         self.max_stored_rounds = self.get_parameter('max_stored_rounds').get_parameter_value().integer_value
         self.rag_dir = self.get_parameter('rag_dir').get_parameter_value().string_value
 
+        self.use_reranker = False # Para el resumen de vuelta no se usa ni tiene sentido usarlo
         self.hospital_zones, self.reception_zone = load_semantic_map(self.semantic_map_path, self.get_logger())
         self.hospital_metadata = self.load_hospital_metadata()
         self.latest_global_context = "" # para que el chatbot pueda obtener siempre el último contexto

@@ -53,6 +53,7 @@ DEFAULT_WAYPOINTS_PATH = os.path.join(PKG_DIR, "config", "route_waypoints.json")
 DEFAULT_PHOTOS_DIR = "/home/alberto/tfg/Reconocimiento-y-sintesis-visual-Tiago/hospital_photos/"
 DEFAULT_KEEP_TEMP_FOLDERS = False
 DEFAULT_CAPTURER_NAME = "photos_node"
+DEFAULT_USE_RERANKER = False # también se puede configurar con una variable de entorno
 
 class PatrolNode(rclpy.node.Node):
     def __init__(self):
@@ -71,6 +72,9 @@ class PatrolNode(rclpy.node.Node):
 
         self.declare_parameter('capturer_node_name', DEFAULT_CAPTURER_NAME)
         self.capturer_node_name = self.get_parameter('capturer_node_name').get_parameter_value().string_value
+
+        self.declare_parameter('use_reranker', DEFAULT_USE_RERANKER)
+        self.use_reranker = self.get_parameter('use_reranker').get_parameter_value().bool_value
 
         self.path_points = load_route(self.route_file_path, DEFAULT_PATH_POINTS, self.get_logger())
 
@@ -214,7 +218,9 @@ class PatrolNode(rclpy.node.Node):
                     
                     try:
                         chatbot_script = chatbot_web.__file__
-                        subprocess.Popen(['streamlit', 'run', chatbot_script])
+                        env_config = os.environ.copy()
+                        env_config["USE_RERANKER"] = str(self.use_reranker)
+                        subprocess.Popen(['streamlit', 'run', chatbot_script], env=env_config)
                     except ImportError:
                         self.get_logger().warn(f"Error al lanzar el proceso del chatbot: No se pudo importar el proceso")
 

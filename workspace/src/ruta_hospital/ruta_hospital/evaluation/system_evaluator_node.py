@@ -15,9 +15,11 @@ from ruta_hospital.evaluation.base_evaluator import InferencePipelineError
 from hospital_interfaces.action import GenerateReport
 
 PKG_DIR = get_package_share_directory('ruta_hospital')
+
 DEFAULT_QUESTIONS_PATH = os.path.join(PKG_DIR, 'config', 'quest.json')
 DEFAULT_EVAL_FOLDER = "/home/alberto/tfg/Reconocimiento-y-sintesis-visual-Tiago/hospital_photos/vuelta_A/"
 DEFAULT_PERCEPTION_MODE = "image"
+DEFAULT_USE_RERANKER = False
 
 class MockGoalHandle:
     ''' Falso Goal Handle para reutilizar el código de LLMReporterNode
@@ -39,12 +41,16 @@ class SystemEvaluatorNode(BaseEvaluatorNode):
         self.declare_parameter('questions_path', DEFAULT_QUESTIONS_PATH)
         self.declare_parameter('eval_folder_path', DEFAULT_EVAL_FOLDER)
         self.declare_parameter('perception_mode', DEFAULT_PERCEPTION_MODE)
+        self.declare_parameter('use_reranker', DEFAULT_USE_RERANKER)
 
         quest_path = self.get_parameter('questions_path').get_parameter_value().string_value
         self.eval_folder_path = self.get_parameter('eval_folder_path').get_parameter_value().string_value
         
         perception_mode = self.get_parameter('perception_mode').get_parameter_value().string_value
         self.reporter_logic.perception_mode = perception_mode
+        
+        use_reranker = self.get_parameter('use_reranker').get_parameter_value().bool_value
+        self.reporter_logic.vector_manager.use_reranker = use_reranker
 
         self.metrics_dir = self.reporter_logic.metrics_dir # el mismo path de métricas
         self.ragas_evaluator = RagasEvaluator(

@@ -1,9 +1,7 @@
 import os
+import sys
 import streamlit as st
 from ruta_hospital.utils.shared.vector_manager import VectorManager
-
-import langchain
-langchain.debug = True
 
 # Configuración inicial de Streamlit
 st.set_page_config(page_title="Chatbot de patrulla", page_icon="🤖", layout="wide")
@@ -11,18 +9,24 @@ st.set_page_config(page_title="Chatbot de patrulla", page_icon="🤖", layout="w
 # Rutas de directorios basadas en la misma configuración del sistema
 RAG_DIR = "/tmp/ruta_hospital_rag_data/"
 
+# Reranker
+use_reranker_env = os.environ.get("USE_RERANKER", "False").lower() in ("true", "1", "yes")
+use_reranker_arg = "--use-reranker" in sys.argv
+USE_RERANKER = use_reranker_env or use_reranker_arg
+
 @st.cache_resource
-def get_vector_manager():
+def get_vector_manager(use_reranker=False):
     # Inicializa el gestor y lo cachea para no recargarlo en cada interacción de Streamlit
     return VectorManager(
         base_dir=RAG_DIR,
         # Asume la URL por defecto de Ollama, si se cambia en ROS, deberá ajustarse aquí
         ollama_url="http://localhost:11434", 
         llm_model="llama3",
-        max_stored_rounds=5 # Para evitar errores de lectura
+        max_stored_rounds=5, # Para evitar errores de lectura
+        use_reranker=use_reranker
     )
 
-vector_manager = get_vector_manager()
+vector_manager = get_vector_manager(USE_RERANKER)
 
 def main():
     st.title("Chatbot de patrulla")

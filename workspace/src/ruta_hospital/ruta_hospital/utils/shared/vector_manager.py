@@ -23,6 +23,8 @@ from langchain_classic.chains.query_constructor.base import AttributeInfo
 # PROMPTS
 from langchain_core.prompts import PromptTemplate, ChatPromptTemplate, SystemMessagePromptTemplate, HumanMessagePromptTemplate
 
+CROSS_ENCODER_MODEL_NAME = "cross-encoder/ms-marco-MiniLM-L-6-v2"
+
 class VectorManager:
     '''
     Clase encargada de orquestar la ingesta de documentos, la gestión del almacenamiento
@@ -30,7 +32,7 @@ class VectorManager:
     '''
     def __init__(self, base_dir, ollama_url="http://localhost:11434", 
                  llm_model="llama3", embed_model="nomic-embed-text",
-                 max_stored_rounds=5, logger=None):
+                 max_stored_rounds=5, use_reranker=False, logger=None):
         
         self.base_dir = base_dir
         self.docs_dir = os.path.join(base_dir, "db_docs")
@@ -41,7 +43,20 @@ class VectorManager:
         self.llm_model = llm_model
         self.embed_model = embed_model
         self.max_stored_rounds = max_stored_rounds
+        self.use_reranker = use_reranker
         self.logger = logger
+
+        self.reranker_model = None
+        if self.use_reranker:
+            try:
+                from langchain_community.cross_encoders import HuggingFaceCrossEncoder
+                # Modelo ultraligero especializado en relevancia de pares (Pregunta -> Contexto)
+                self.reranker_model = HuggingFaceCrossEncoder(model_name="cross-encoder/ms-marco-MiniLM-L-6-v2") # Se descarga/carga en memoria 1 sola vez en el ciclo de vida del nodo o Streamlit
+                if self.logger:
+                    self.logger.info("Modelo Cross-Encoder cargado correctamente en memoria.")
+            except Exception as e:
+                if self.logger:
+                    self.logger.error(f"Fallo cargando el Cross-Encoder: {e}")
         
         # Inicialización de los motores locales
         self.embeddings = OllamaEmbeddings(model=self.embed_model, base_url=self.ollama_url)
@@ -218,9 +233,12 @@ class VectorManager:
             
         # allow_dangerous_deserialization=True es requerido por FAISS en versiones modernas para cargar archivos locales
         vectorstore = FAISS.load_local(self.faiss_path, self.embeddings, allow_dangerous_deserialization=True)
+
+        # Con reranker (opcional) usar el doble o 9, pues se filtrara luego
+        initial_k = max(9, top_k_docs * 2) if self.use_reranker else top_k_docs
         
         # Buscador Denso (Semántico FAISS)
-        semantic_retriever = vectorstore.as_retriever(search_kwargs={"k": top_k_docs})
+        semantic_retriever = vectorstore.as_retriever(search_kwargs={"k": initial_k})
         
         # Buscador Disperso (Léxico BM25)
         docs_in_faiss = list(vectorstore.docstore._dict.values())
@@ -228,7 +246,7 @@ class VectorManager:
         lexic_retriever.k = top_k_docs
         
         # Fusión Híbrida (Reciprocal Rank Fusion - 50% peso léxico, 50% peso semántico)
-        retriever = EnsembleRetriever(
+        base_retriever = EnsembleRetriever(
             retrievers=[lexic_retriever, semantic_retriever],
             weights=[0.7, 0.3]
         )
@@ -240,6 +258,21 @@ class VectorManager:
             return_messages=True,
             output_key="answer" # Crítico para que LangChain guarde solo la respuesta final y no los documentos fuente
         )
+
+        # Compresión y Re-Clasificación (Cross-Encoder)
+        if self.use_reranker:
+            # Importación Lazy: No consume memoria ni tiempo si el nodo lo tiene desactivado   
+            from langchain_classic.retrievers.document_compressors import CrossEncoderReranker
+            from langchain_classic.retrievers import ContextualCompressionRetriever  
+                
+            compressor = CrossEncoderReranker(model=self.reranker_model, top_n=top_k_docs)
+            retriever = ContextualCompressionRetriever(
+                base_compressor=compressor, base_retriever=base_retriever
+            )
+            self.log_debug("Retriever configurado: Híbrido + Cross-Encoder Reranker")
+        else:
+            retriever = base_retriever
+            self.log_debug("Retriever configurado: Híbrido Estándar")
 
         valid_zones = set()
         if os.path.exists(self.docs_dir):

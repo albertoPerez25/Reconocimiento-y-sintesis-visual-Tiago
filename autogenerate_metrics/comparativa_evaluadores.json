@@ -11,5 +11,18 @@
         "tiempo_total_ejecucion_segundos": 5092.01,
         "caracteres_contexto_visual": 99552,
         "caracteres_informe_final": 0
+    },
+    {
+        "fecha": "2026-05-21 11:36:04.852310",
+        "nodo_ejecutor": "system_evaluator_node",
+        "evaluacion_nombre": "hybrid+reranker",
+        "total_imagenes_procesadas": 1247,
+        "tiempo_percepcion_segundos": 982.66,
+        "tiempo_llm_segundos": 357.41,
+        "tiempo_inferencia_total_segundos": 0.0,
+        "tiempo_ragas_evaluacion_segundos": 0.0,
+        "tiempo_total_ejecucion_segundos": 6899.46,
+        "caracteres_contexto_visual": 119060,
+        "caracteres_informe_final": 0
     }
 ]

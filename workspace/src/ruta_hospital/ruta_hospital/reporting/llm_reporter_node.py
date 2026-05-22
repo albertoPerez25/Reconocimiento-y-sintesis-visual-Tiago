@@ -36,6 +36,7 @@ class LLMReporterNode(BaseReporterNode):
             ollama_url=ollama_base_url,
             llm_model=self.llm_model,
             max_stored_rounds=self.max_stored_rounds,
+            use_reranker=self.use_reranker,
             logger=self.get_logger()
         )
 
