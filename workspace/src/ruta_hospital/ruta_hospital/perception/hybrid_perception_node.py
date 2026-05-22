@@ -44,7 +44,7 @@ class HybridPerceptionNode(BasePerceptionNode):
         self.get_logger().debug(f"zone_name:{context.zone_name} | time_str:{context.time_str} | expected_activities:{context.expected_activities} | zone_type:{context.zone_type}")
 
         # Posiciones, conteo exacto y tracking
-        yolo_json_str = self.yolo_logic.process_image(image_path, None)
+        yolo_json_str = self.yolo_logic.process_image(image_path, True)
         
         try:
             yolo_data = json.loads(yolo_json_str)
@@ -127,28 +127,34 @@ class HybridPerceptionNode(BasePerceptionNode):
         '''Devuelve la descripcion y alertas finales teniendo en cuenta los json de yolo y del vlm'''
         final_alert = yolo.alert or vlm.alert
 
-        if "despejado" in yolo.desc.lower() and "despejado" in vlm.desc.lower():
-            combined_desc = "Despejado"
-        else:
-            combined_desc = f"[YOLO]: {yolo.desc} | [VLM]: {vlm.desc}"
+        final_alert = yolo.alert or vlm.alert
+        
+        # Deduplicación y formateo limpio (Estilo Log)
+        yolo_text = yolo.desc.strip()
+        vlm_text = vlm.desc.strip()
+        
+        # Caso base: Ambos perceptores ven la zona vacía o despejada
+        if "0 p." in yolo_text and any(term in vlm_text.lower() for term in ["despejado", "despejada", "."]):
+            return f"Despejado.", final_alert
             
-            # confianza en base a lo que detecto cada modelo
-            if yolo.alert and vlm.alert:
-                combined_desc += " ALTA FIABILIDAD: Presencia humana confirmada por ambos modelos."
-            elif yolo.alert and not vlm.alert:
-                combined_desc += " FIABLE: Presencia humana detectada por YOLO (posible falso negativo del VLM)."
-            elif vlm.alert and not yolo.alert:
-                combined_desc += " PRECAUCIÓN: Detección exclusiva del VLM (posible falso positivo)."
+        # Unir descripciones compactas usando un punto como separador limpio
+        parts = []
+        if yolo_text:
+            parts.append(yolo_text)
+        if vlm_text and any(term in vlm_text.lower() for term in ["despejado", "despejada", "."]):
+            parts.append(vlm_text)
+            
+        combined_desc = f"{'. '.join(parts)}"
 
         return combined_desc,final_alert
     
     def get_json_response(self, yolo_data, vlm_data):
         '''Devuelve la respuesta final a la petición en formato json'''
-        yolo_desc = str(yolo_data.get("descripcion_vlm", "")) 
+        yolo_desc = str(yolo_data.get("descripcion_vlm", "")).strip()
         yolo_alert = bool(yolo_data.get("alerta", False)) # TODO: cambiar nombre a algo más descriptivo (atención)
         yolo = model_atr(yolo_desc,yolo_alert) # TODO: La falta de una persona puede ser información relevante
 
-        vlm_desc = str(vlm_data.get("descripcion_vlm", "")) # Convierto a str o bool para evitar que crashe si el vlm alucina pero devuelve un formato json "valido"
+        vlm_desc = str(vlm_data.get("descripcion_vlm", "")).strip() # Convierto a str o bool para evitar que crashe si el vlm alucina pero devuelve un formato json "valido"
         vlm_alert = bool(vlm_data.get("alerta", False))
         vlm = model_atr(vlm_desc,vlm_alert)
 

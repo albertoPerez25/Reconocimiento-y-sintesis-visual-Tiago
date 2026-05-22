@@ -30,7 +30,8 @@ class VLMPerceptionNode(BasePerceptionNode):
                 alerta = False
             else:
                 descripcion = vlm_text
-                alerta = True # Si dijo cualquier otra cosa, es que hay personas
+                if ["caída","ayuda","urgente","alerta"] in vlm_text.lower:
+                    alerta = True # Si dijo cualquier otra cosa, es que hay personas
             
             json_str = json.dumps({
                 "descripcion_vlm": descripcion,
@@ -52,8 +53,8 @@ class VLMPerceptionNode(BasePerceptionNode):
         '''Crea el prompt y devuelve el payload completo para enviarle al modelo'''
         tracking_hist = getattr(context, 'tracking_history', '')
         prompt = f"""
-        Estás en {context.zone_name} dentro de un hospital. Es una zona de tipo {context.zone_type}. 
-        En esta zona puede que veas gente {context.expected_activities}.
+        Estás dentro de un hospital en {context.zone_name}, que es zona de tipo {context.zone_type}. 
+        Aquí puede que veas gente {context.expected_activities}.
         """
         
         if tracking_hist:
@@ -61,15 +62,18 @@ class VLMPerceptionNode(BasePerceptionNode):
             [MEMORIA A CORTO PLAZO]:
             {tracking_hist}
             
-            Instrucciones críticas:
-            Fíjate en las cajas de colores dibujadas en la imagen para identificar a los sujetos. 
-            Describe BREVEMENTE QUÉ HACEN y cómo interactúan, basándote en la memoria reciente.
+            Instrucciones críticas (DE OBLIGADO CUMPLIMIENTO):
+            - MÁXIMO 15 PALABRAS.
+            - AGRUPA a las personas por su actividad. PROHIBIDO hacer listas individuales de sujetos o IDs.
+            - Usa formato telegráfico de log de seguridad (ej: '3 pacientes sentados, 1 médico de pie').
+            - Fíjate en las cajas dibujadas para confirmar las actividades basándote en la memoria.
+            - Si ves una situación peligrosa para la vida (como una caída) que requiera enviar ayuda, añade al final "URGENTE".
             """
             #TODO: Pasarle también el número de personas detectadas por YOLO, id, posicion...
         else:
             prompt += """
-            Describe BREVEMENTE QUÉ HACEN las personas de la imagen. 
-            Si no ves personas responde única y exactamente con "Despejado."
+            Describe BREVEMENTE QUÉ HACEN las personas de la imagen en MÁXIMO 15 PALABRAS. 
+            Si no ves personas responde ÚNICA Y EXACTAMENTE con "Despejado."
             """
         
     

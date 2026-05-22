@@ -26,7 +26,7 @@ class SequencePerceptionNode(BasePerceptionNode):
         
         if not ok_paths:
             return json.dumps({"descripcion_vlm": "Error: No se encontraron imágenes válidas en la secuencia.", "alerta": False}, ensure_ascii=False)
-        payload = self.get_payload(ok_paths, context.zone_name, context.time_str, context.expected_activities, context.zone_type)
+        payload = self.get_payload(ok_paths, context)
 
         try:
             vlm_text = call_ollama_api(self.ollama_url, payload)
@@ -47,26 +47,23 @@ class SequencePerceptionNode(BasePerceptionNode):
             self.get_logger().error(f"Error procesando secuencia: {e}")
             return json.dumps({"descripcion_vlm": f"Error en inferencia de secuencia: {e}", "alerta": False}, ensure_ascii=False)
 
-    def get_payload(self, ok_paths, zone_name, time_str, expected_objects, zone_type):
+    def get_payload(self, ok_paths, context):
         '''Crea el prompt y devuelve el payload completo para enviarle al modelo'''
         base64_frames = self.extract_key_frames(ok_paths, max_frames=40) 
 
         prompt = f"""
-        You are a security AI analyzing a chronological SEQUENCE of images from a hospital camera.
-        Analyze the sequence globally as a single continuous action and output ONLY a valid JSON.
+        Actúa como una IA analizadora de actividades en el hospital.
+        Analiza esta secuencia temporal  en la zona {context.zone_name} (zona {context.zone_type}).
+        Actividades esperadas aquí: {context.expected_activities}.
         
-        Estás en la zona '{zone_name}' a las {time_str}. 
-        Objetos esperados: {expected_objects}. 
-        Infiere la actividad humana considerando este contexto.
-        
-        - If the sequence shows an empty room or everything is safe, the description must be exactly: "Despejado"
-        - If there are people, describe their actions over time briefly in SPANISH. Pay special attention to fights, people fallen on the ground, or emergencies.
-        - Set "alerta" to true ONLY if there is an emergency, danger, or someone in need of help.
-
-        Example of expected output:
+        INSTRUCCIONES CRÍTICAS (DE OBLIGADO CUMPLIMIENTO):
+        1. Responde con un resumen telegráfico en MÁXIMO 15 PALABRAS.
+        2. Formato estricto de log de seguridad (ej: 'Secuencia muestra 2 pacientes paseando').
+        3. Si detectas una emergencia médica evidente (como alguien tirado en el suelo), incluye obligatoriamente la palabra 'URGENTE'.
+        4. Devuelve un JSON con esta estructura exacta:
         {{
-          "descripcion_vlm": "Despejado",
-          "alerta": false
+           "descripcion_vlm": "Tu resumen de max 15 palabras aquí",
+           "alerta": true (solo si hay caídas o peligro inminente) o false
         }}
         """
         
@@ -75,7 +72,7 @@ class SequencePerceptionNode(BasePerceptionNode):
             "prompt": prompt, 
             "images": base64_frames, 
             "stream": False,
-            "format": "json"
+            #"format": "json"
         }
         self.get_logger().info(f"Visualizando secuencia... ({len(base64_frames)} imágenes procesadas)")
         return payload

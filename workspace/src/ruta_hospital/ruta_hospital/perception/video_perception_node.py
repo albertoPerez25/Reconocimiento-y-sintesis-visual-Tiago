@@ -33,11 +33,19 @@ class VideoPerceptionNode(BasePerceptionNode):
             return "Error extrayendo frames del clip de vídeo"
 
         prompt = f"""
-        Eres un sistema analizador de actividades humanas analizando un clip corto de vídeo del hospital.
-        Observa la evolución temporal en el clip e indica BREVEMENTE QUÉ HACEN las personas.
-        Contexto (Zona: {context.zone_name}, Tipo: {context.zone_type}).
+        Analiza este clip de vídeo de la zona {context.zone_name} ({context.zone_type}).
+        Actúa como una IA analizadora de actividades en el hospital. 
         Actividades esperadas aquí: {context.expected_activities}.
-        Si no ves personas en ninguna parte del clip, responde única y exactamente con "Despejado."
+        
+        INSTRUCCIONES:
+        1. Describe la acción principal observada en MÁXIMO 15 PALABRAS.
+        2. Usa estilo de log directo (ej: 'Personal médico moviendo camilla').
+        3. Si ves a alguien sufriendo una caída o tirado en el suelo, escribe la palabra clave 'URGENTE'.
+        4. Responde con un JSON estricto:
+        {{
+           "descripcion_vlm": "Descripción compacta aquí",
+           "alerta": true (solo si hay caídas o peligro inminente) o false
+        }}
         """
         
         self.get_logger().debug(f"PROMPT AL VLM DE VÍDEO: {prompt}")

@@ -24,7 +24,7 @@ class YoloPerceptionNode(BasePerceptionNode):
         self.model = YOLO(selected_yolo_model)
         self.get_logger().info(f"Modelo {selected_yolo_model} cargado")
 
-    def process_image(self, image_path, context):
+    def process_image(self, image_path, is_hybrid):
         '''Procesa la imagen y devuelve el reporte en forma de string '''
         image = cv2.imread(image_path)
         if image is None:
@@ -38,7 +38,7 @@ class YoloPerceptionNode(BasePerceptionNode):
 
         descriptions = []
         detections = []
-        global_humans_detected = False
+        alert = False
 
         ids = result.boxes.id.int().cpu().tolist() if result.boxes.id is not None else [i+1 for i in range(len(result.boxes))]
 
@@ -48,8 +48,8 @@ class YoloPerceptionNode(BasePerceptionNode):
             pts = keypoints.xy[0].tolist()
             confs = keypoints.conf[0].tolist()
             
-            posture = self.calculate_posture(width, height, pts, confs)
-            descriptions.append(f"Persona {track_id}: {posture}")
+            posture,alert = self.calculate_posture(width, height, pts, confs)
+            descriptions.append(f"P{track_id}: {posture}")
 
             detections.append({
                 "id": track_id,
@@ -57,24 +57,23 @@ class YoloPerceptionNode(BasePerceptionNode):
                 "posture": posture
             })
 
-            #if "ATENCIÓN" in posture:
-            global_humans_detected = True
-
         # Conteo de personas con la lista de posturas
-        final_description = f"Estado: Se han detectado {len(result.boxes)} persona(s). " + " ".join(descriptions)
+        final_description = f"{len(results[0].boxes)} p. ({', '.join(descriptions)}"
 
         json_response = {
             "descripcion_vlm": final_description,
-            "alerta": global_humans_detected,
-            "detecciones": detections
+            "alerta": alert
         }
+
+        if is_hybrid:
+            json_response["detecciones"] = detections
 
         return json.dumps(json_response, ensure_ascii=False) # evita que se rompan los acentos
 
     def calculate_posture(self, width, height, pts, confs):
         '''Calcula las posturas en base a los puntos devueltos por YOLO'''
         if width > (height * 1.2): 
-            return "ATENCIÓN Caída detectada (cuerpo en el suelo), ENVIAR AYUDA URGENTEMENTE."
+            return "Caída URGENTE",True
         
         nose_y, nose_c = pts[0][1], confs[0]
         hip_y = (pts[11][1] + pts[12][1]) / 2.0
@@ -88,19 +87,19 @@ class YoloPerceptionNode(BasePerceptionNode):
 
         if hip_c > self.min_confidence and knee_c > self.min_confidence:
             if abs(hip_y - knee_y) < (height * 0.2) or (width > height * 0.6 and width < height * 1.2):
-                return "Persona sentada"
+                return "Sentada",False
             
         if nose_c > self.min_confidence and ankle_c > self.min_confidence:
             if abs(ankle_y - nose_y) < (width * 0.6): 
-                return "ATENCIÓN Caída detectada, ENVIAR AYUDA URGENTEMENTE." # (cabeza y pies a altura similar)
+                return "Caída URGENTE",True # (cabeza y pies a altura similar)
             
             elif height > (width * 1.5): 
-                return "(ignorar) Todo correcto. Persona de pie o caminando"
+                return "De pie o caminando",False
         
         if height > (width * 1.3): 
-            return "Persona de pie (predicción con poca confianza)" # piernas parcialmente ocultas 
+            return "De pie (?)",False # piernas parcialmente ocultas 
         
-        return "Persona sentada o torso visible (predicción con poca confianza)" # piernas parcialmente ocultas 
+        return "Sentada (?)",False # piernas parcialmente ocultas 
     
     def check_path(self, path):
         '''Metodo para comprobar que el path es de una imagen que exista'''
