@@ -47,16 +47,7 @@ class VectorManager:
         self.logger = logger
 
         self.reranker_model = None
-        if self.use_reranker:
-            try:
-                from langchain_community.cross_encoders import HuggingFaceCrossEncoder
-                # Modelo ultraligero especializado en relevancia de pares (Pregunta -> Contexto)
-                self.reranker_model = HuggingFaceCrossEncoder(model_name="cross-encoder/ms-marco-MiniLM-L-6-v2") # Se descarga/carga en memoria 1 sola vez en el ciclo de vida del nodo o Streamlit
-                if self.logger:
-                    self.logger.info("Modelo Cross-Encoder cargado correctamente en memoria.")
-            except Exception as e:
-                if self.logger:
-                    self.logger.error(f"Fallo cargando el Cross-Encoder: {e}")
+        self.load_reranker_model_if_needed()
         
         # Inicialización de los motores locales
         self.embeddings = OllamaEmbeddings(model=self.embed_model, base_url=self.ollama_url)
@@ -65,6 +56,19 @@ class VectorManager:
         
         if not os.path.exists(self.docs_dir):
             os.makedirs(self.docs_dir)
+
+    def load_reranker_model_if_needed(self):
+        '''Carga el modelo de reranking en memoria solo si no estaba cargado previamente.'''
+        if self.use_reranker and self.reranker_model is None:
+            try:
+                from langchain_community.cross_encoders import HuggingFaceCrossEncoder
+                # Modelo ultraligero especializado en relevancia de pares (Pregunta -> Contexto)
+                self.reranker_model = HuggingFaceCrossEncoder(model_name=CROSS_ENCODER_MODEL_NAME)
+                if self.logger:
+                    self.logger.info("Modelo Cross-Encoder cargado en memoria")
+            except Exception as e:
+                if self.logger:
+                    self.logger.error(f"Fallo cargando el Cross-Encoder: {e}")
 
     def clear_all_data(self):
         '''Elimina los datos y la base vectorial de sesiones anteriores'''
@@ -147,7 +151,16 @@ class VectorManager:
             for doc in folder_docs:
                 doc.metadata["vuelta"] = round_num
                 basename = os.path.basename(doc.metadata["source"])
-                doc.metadata["zona"] = os.path.splitext(basename)[0]
+                zone_name = os.path.splitext(basename)[0]
+                doc.metadata["zona"] = zone_name
+
+                # Borrar los metadatos innecesarios para el RAG, puesto que se insertarán
+                # manualmente en cada lote/chunk
+                doc.page_content = doc.page_content.replace(f"Reporte de la Zona: {zone_name}\n", "")
+                doc.page_content = doc.page_content.replace(f"Vuelta: {round_num}\n", "")
+
+                doc.page_content = doc.page_content.replace(f'  "nombre_zona": "{zone_name}",\n', "")
+                doc.page_content = doc.page_content.strip()
                 
             documents.extend(folder_docs)
             
@@ -167,7 +180,7 @@ class VectorManager:
                 metadata=c.metadata
             )
             for c in text_splitter.split_documents(documents)
-        ] # TODO: Quitar repeticion de estos metadatos, a través de eliminarlos en la creacion de los documentos o al cargarlos en RAM
+        ]
         
         # Indexación en memoria y guardado a disco
         vectorstore = FAISS.from_documents(chunks, self.embeddings)
@@ -245,7 +258,7 @@ class VectorManager:
         lexic_retriever = BM25Retriever.from_documents(docs_in_faiss)
         lexic_retriever.k = top_k_docs
         
-        # Fusión Híbrida (Reciprocal Rank Fusion - 50% peso léxico, 50% peso semántico)
+        # Fusión Híbrida (Reciprocal Rank Fusion, 50% peso léxico, 50% peso semántico)
         base_retriever = EnsembleRetriever(
             retrievers=[lexic_retriever, semantic_retriever],
             weights=[0.7, 0.3]

@@ -4,7 +4,7 @@ import rclpy
 import json
 import re # extraer el json
 from ruta_hospital.perception.base_perception import BasePerceptionNode
-from workspace.src.ruta_hospital.ruta_hospital.utils.commons.api_utils import encode_image_to_base64, call_ollama_api
+from ruta_hospital.utils.commons.api_utils import encode_image_to_base64, call_ollama_api
 
 DEFAULT_MODEL = 'moondream'
 DEFAULT_OLLAMA_URL = 'http://localhost:11434/api/generate'

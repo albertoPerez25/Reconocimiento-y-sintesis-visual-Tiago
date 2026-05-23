@@ -9,7 +9,7 @@ def encode_image_to_base64(image_path: str) -> str:
 def call_ollama_api(url: str, payload: dict) -> str:
     '''Realiza la petición POST a la API local de Ollama y devuelve el texto'''
     try:
-        response = requests.post(url, json=payload)
+        response = requests.post(url, json=payload, timeout=60)
         response.raise_for_status()
         return response.json()['response'].strip()
     except Exception as e:

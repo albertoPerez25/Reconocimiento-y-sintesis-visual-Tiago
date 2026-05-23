@@ -35,6 +35,9 @@ class YoloPerceptionNode(BasePerceptionNode):
 
         if len(result.boxes) == 0:
             return json.dumps({"descripcion_vlm": "Despejado", "alerta": False}, ensure_ascii=False)
+        
+        if result.keypoints is None:
+            return json.dumps({"descripcion_vlm": f"{len(result.boxes)} p. (Ocultos/Sin posturas)", "alerta": False}, ensure_ascii=False)
 
         descriptions = []
         detections = []
@@ -48,7 +51,11 @@ class YoloPerceptionNode(BasePerceptionNode):
             pts = keypoints.xy[0].tolist()
             confs = keypoints.conf[0].tolist()
             
-            posture,alert = self.calculate_posture(width, height, pts, confs)
+            posture,is_alert = self.calculate_posture(width, height, pts, confs)
+
+            if is_alert:
+                alert = True
+
             descriptions.append(f"P{track_id}: {posture}")
 
             detections.append({
@@ -58,7 +65,7 @@ class YoloPerceptionNode(BasePerceptionNode):
             })
 
         # Conteo de personas con la lista de posturas
-        final_description = f"{len(results[0].boxes)} p. ({', '.join(descriptions)}"
+        final_description = f"{len(result.boxes)} p. ({', '.join(descriptions)})"
 
         json_response = {
             "descripcion_vlm": final_description,

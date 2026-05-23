@@ -24,18 +24,18 @@ class VLMPerceptionNode(BasePerceptionNode):
         payload = self.get_payload(image_path, context)
         try:
             vlm_text = call_ollama_api(self.ollama_url, payload).strip()
+            alert = False
             
             if any(term in vlm_text.lower() for term in ["despejado", "empty", "no people"]):
                 descripcion = "Despejado"
-                alerta = False
             else:
                 descripcion = vlm_text
-                if ["caída","ayuda","urgente","alerta"] in vlm_text.lower:
-                    alerta = True # Si dijo cualquier otra cosa, es que hay personas
+                if any(term in vlm_text.lower() for term in ["caída","ayuda","urgente","alerta"]):
+                    alert = True # Si dijo cualquier otra cosa, es que hay personas
             
             json_str = json.dumps({
                 "descripcion_vlm": descripcion,
-                "alerta": alerta
+                "alerta": alert
             }, ensure_ascii=False)
 
             self.get_logger().debug(f"RESPUESTA DEL VLM: {json_str}")
@@ -62,12 +62,10 @@ class VLMPerceptionNode(BasePerceptionNode):
             [MEMORIA A CORTO PLAZO]:
             {tracking_hist}
             
-            Instrucciones críticas (DE OBLIGADO CUMPLIMIENTO):
-            - MÁXIMO 15 PALABRAS.
-            - AGRUPA a las personas por su actividad. PROHIBIDO hacer listas individuales de sujetos o IDs.
-            - Usa formato telegráfico de log de seguridad (ej: '3 pacientes sentados, 1 médico de pie').
-            - Fíjate en las cajas dibujadas para confirmar las actividades basándote en la memoria.
-            - Si ves una situación peligrosa para la vida (como una caída) que requiera enviar ayuda, añade al final "URGENTE".
+            Describe brevemente qué hacen las personas en la imagen basándote en la memoria.
+            Sé telegráfico, responde en menos de 20 palabras. 
+            Si ves una situación de peligro vital (como una caída), escribe "URGENTE".
+            Fíjate en las cajas dibujadas para confirmar las actividades basándote en la memoria.
             """
             #TODO: Pasarle también el número de personas detectadas por YOLO, id, posicion...
         else:
@@ -79,7 +77,15 @@ class VLMPerceptionNode(BasePerceptionNode):
     
         self.get_logger().debug(f"PROMPT AL VLM: {prompt}")
         base64_img = encode_image_to_base64(image_path)
-        payload = {"model": self.vlm_model, "prompt": prompt, "images": [base64_img], "stream": False}
+        payload = {"model": self.vlm_model, 
+                   "prompt": prompt, 
+                   "images": [base64_img], 
+                   "stream": False,
+                   "options": {
+                        "num_predict": 30,  # Evitar que alucine infinitamente
+                        "temperature": 0.1  # Hace las respuestas menos creativas y más predecibles
+                    }   
+                }
 
         return payload
     

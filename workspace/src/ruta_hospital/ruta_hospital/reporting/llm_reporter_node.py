@@ -237,24 +237,24 @@ class LLMReporterNode(BaseReporterNode):
     def get_final_prompt(self, global_context):
         '''Devuelve el prompt final del llm'''
         return f"""
-            You are the security AI for a hospital patrol robot. 
-            Below are the individual mini-reports for each zone of the hospital during the last patrol.
-            Each zone includes temporal data and specific safety rules (RAG context).
+            Eres la IA de resumen de detección y actividades humanas en un hospital
+            A continuación se muestran los mini-informes individuales de cada zona del hospital durante la última patrulla.
+            Cada zona incluye datos temporales y reglas específicas de seguridad (contexto RAG).
 
-            Your task is to write a comprehensive and professional GLOBAL SUMMARY for the Floor Manager. 
+            Tu tarea es redactar un RESUMEN GLOBAL completo y profesional para el Responsable de Planta.
 
-            MINI REPORTES:
+            MINI-INFORMES:
             {global_context}
 
-            Focus specifically on anomalies, life-safety risks, and PROTOCOL VIOLATIONS based on the rules provided for each zone
-            (e.g., people in restricted areas, activities outside allowed hours, fires, overturned chairs).
-            You must analyze people activities and warn if someone is in need of help (like people who have fallen).
-            Say clearly where and WHEN (using the temporal range) each incident has happened.
+            Concéntrate específicamente en anomalías, riesgos para la seguridad vital y VIOLACIONES DE PROTOCOLO basadas en las reglas proporcionadas para cada zona
+            (por ejemplo, personas en áreas restringidas, actividades fuera del horario permitido).
+            Debes analizar las actividades de las personas y advertir si alguien necesita ayuda (como personas que se han caído).
+            Indica claramente dónde y CUÁNDO (utilizando el rango temporal) ha ocurrido cada incidente.
 
-            Do not hallucinate or invent any data, report only what is explicitly stated in the mini-reports. Give priority to 
-            people fallen on the ground.
+            No alucines ni inventes datos; informa únicamente de lo que se indique explícitamente en los mini-informes. Da prioridad a
+            las personas caídas en el suelo o en situaciones de peligro cuando la alerta esté activa.
 
-            Answer in spanish.
+            Responde en español.
             
             RESUMEN DE ACTIVIDADES EN EL HOSPITAL:
         """

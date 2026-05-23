@@ -50,7 +50,9 @@ class SystemEvaluatorNode(BaseEvaluatorNode):
         self.reporter_logic.perception_mode = perception_mode
         
         use_reranker = self.get_parameter('use_reranker').get_parameter_value().bool_value
-        self.reporter_logic.vector_manager.use_reranker = use_reranker
+        if use_reranker:
+            self.reporter_logic.vector_manager.use_reranker = True
+            self.reporter_logic.vector_manager.load_reranker_model_if_needed()
 
         self.metrics_dir = self.reporter_logic.metrics_dir # el mismo path de métricas
         self.ragas_evaluator = RagasEvaluator(
