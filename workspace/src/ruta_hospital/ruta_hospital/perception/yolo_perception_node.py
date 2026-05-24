@@ -6,13 +6,13 @@ import json
 from ultralytics import YOLO
 
 # Servicio personalizado para comunicación entre LLM y Yolo
-from ruta_hospital.perception.base_perception import BasePerceptionNode 
+from ruta_hospital.perception.base_position_perception import BasePositionPerceptionNode
 
 #yolov8n-pose.pt
 DEFAULT_YOLO_MODEL = "yolo26n-pose.pt"
 DEFAULT_MIN_CONFIDENCE = 0.5
 
-class YoloPerceptionNode(BasePerceptionNode):
+class YoloPerceptionNode(BasePositionPerceptionNode):
     def __init__(self,start_service=True):
         super().__init__('yolo_perception_node',start_service=start_service)
         self.declare_parameter('yolo_model', DEFAULT_YOLO_MODEL)
@@ -24,7 +24,7 @@ class YoloPerceptionNode(BasePerceptionNode):
         self.model = YOLO(selected_yolo_model)
         self.get_logger().info(f"Modelo {selected_yolo_model} cargado")
 
-    def process_image(self, image_path, is_hybrid):
+    def process_image(self, image_path, include_raw_detections=False):
         '''Procesa la imagen y devuelve el reporte en forma de string '''
         image = cv2.imread(image_path)
         if image is None:
@@ -72,7 +72,7 @@ class YoloPerceptionNode(BasePerceptionNode):
             "alerta": alert
         }
 
-        if is_hybrid:
+        if include_raw_detections:
             json_response["detecciones"] = detections
 
         return json.dumps(json_response, ensure_ascii=False) # evita que se rompan los acentos

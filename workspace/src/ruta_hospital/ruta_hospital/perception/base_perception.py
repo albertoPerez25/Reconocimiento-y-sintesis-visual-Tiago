@@ -1,4 +1,3 @@
-import os
 from abc import ABC, abstractmethod
 from rclpy.node import Node
 from hospital_interfaces.srv import AnalyzeActivity
@@ -27,19 +26,10 @@ class BasePerceptionNode(Node, ABC):
         else:
             self.get_logger().info(f"Lógica de [{node_name}] cargada internamente como módulo.")
 
+    @abstractmethod
     def analyze_callback(self, request, response):
         '''Se ejecuta cada vez que recibe una imagen por el servicio'''
-        if not self.check_path(request.image_path):
-            self.get_logger().error("No se encontró la imagen en la ruta especificada")
-            response.report = "Error: No se encontró la imagen en la ruta especificada."
-            return response 
-                    
-        self.get_logger().info(f"Analizando imagen: {os.path.basename(request.image_path)}...")
-        
-        context = RagContext(request)
-
-        response.report = self.process_image(request.image_path, context)
-        return response
+        pass
 
     @abstractmethod
     def process_image(self, image_path, context):

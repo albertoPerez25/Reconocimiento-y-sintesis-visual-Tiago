@@ -1,4 +1,5 @@
-from ruta_hospital.perception.base_perception import BasePerceptionNode
+import os
+from ruta_hospital.perception.base_perception import BasePerceptionNode, RagContext
 
 DEFAULT_OLLAMA_URL = 'http://localhost:11434/api/generate'
 DEFAULT_WORD_LIMIT = 20
@@ -15,3 +16,17 @@ class BaseVLMPerceptionNode(BasePerceptionNode):
         self.vlm_model = self.get_parameter('vlm_model').get_parameter_value().string_value
         self.ollama_url = self.get_parameter('ollama_url').get_parameter_value().string_value
         self.word_limit = self.get_parameter('word_limit').get_parameter_value().integer_value
+
+    def analyze_callback(self, request, response):
+        '''Se ejecuta cada vez que recibe una imagen por el servicio'''
+        if not self.check_path(request.image_path):
+            self.get_logger().error("No se encontró la imagen en la ruta especificada")
+            response.report = "Error: No se encontró la imagen en la ruta especificada."
+            return response 
+                    
+        self.get_logger().info(f"Analizando imagen: {os.path.basename(request.image_path)}...")
+        
+        context = RagContext(request)
+
+        response.report = self.process_image(request.image_path, context)
+        return response
