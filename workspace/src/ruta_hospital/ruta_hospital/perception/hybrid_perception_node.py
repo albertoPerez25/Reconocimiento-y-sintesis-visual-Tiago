@@ -80,6 +80,8 @@ class HybridPerceptionNode(BasePerceptionNode):
 
         pos_data_list = []
         all_detections = []
+        # Generar imagen anotada
+        image_to_vlm = image_path
 
         # Ejecutar modelos de posición (posiciones, conteo exacto y tracking)
         for model in self.pos_models:
@@ -95,11 +97,13 @@ class HybridPerceptionNode(BasePerceptionNode):
                 # Detecciones para el renderizado visual
                 if "detecciones" in data:
                     all_detections.extend(data["detecciones"])
+                if "ruta_anotada" in data:
+                    # El estimador ya provee el archivo con tracking
+                    image_to_vlm = data["ruta_anotada"]
         
-        # Generar imagen anotada
-        image_to_vlm = image_path
+        
         # comentar el bloque 'if all_detections:' para que sea image_to_vlm = image_path (imagen limpia)
-        if all_detections: 
+        if all_detections and image_to_vlm == image_path: 
             self.get_logger().debug("Generando imagen anotada con detecciones para el VLM...")
             annotated_img = self.get_image_with_tracking_data(all_detections, image_path, context)
             if annotated_img: # Seguridad por si cv2 falla al escribir

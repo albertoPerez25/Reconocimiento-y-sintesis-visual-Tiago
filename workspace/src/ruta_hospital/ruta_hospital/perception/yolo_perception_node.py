@@ -4,6 +4,7 @@ import rclpy
 import os
 import json
 from ultralytics import YOLO
+from dataclasses import dataclass, field
 
 # Servicio personalizado para comunicación entre LLM y Yolo
 from ruta_hospital.perception.base_position_perception import BasePositionPerceptionNode
@@ -11,6 +12,14 @@ from ruta_hospital.perception.base_position_perception import BasePositionPercep
 #yolov8n-pose.pt
 DEFAULT_YOLO_MODEL = "yolo26n-pose.pt"
 DEFAULT_MIN_CONFIDENCE = 0.5
+
+@dataclass
+class TemporalRenderState:
+    is_hybrid: bool
+    is_video: bool
+    output_video_path: str = "/tmp/yolo_annotated_video.avi"
+    video_writer: object = None
+    sequence_paths: list = field(default_factory=list)
 
 class YoloPerceptionNode(BasePositionPerceptionNode):
     def __init__(self,start_service=True):
@@ -26,6 +35,12 @@ class YoloPerceptionNode(BasePositionPerceptionNode):
 
     def process_image(self, image_path, include_raw_detections=False):
         '''Procesa la imagen y devuelve el reporte en forma de string '''
+        is_video = image_path.lower().endswith('.avi')
+        is_sequence = ',' in image_path
+        
+        if is_video or is_sequence:
+            return self.process_temporal_data(image_path, is_video, include_raw_detections)
+
         image = cv2.imread(image_path)
         if image is None:
             return json.dumps({"descripcion_vlm": "Error: No se pudo leer la imagen con OpenCV", "alerta": False}, ensure_ascii=False)
@@ -108,9 +123,106 @@ class YoloPerceptionNode(BasePositionPerceptionNode):
         
         return "Sentada (?)",False # piernas parcialmente ocultas 
     
+    def process_temporal_data(self, image_path, is_video, include_raw_detections):
+        '''Procesa vídeo o secuencias orquestando el renderizado y el análisis'''
+        source = image_path if is_video else [r.strip() for r in image_path.split(',') if os.path.isfile(r.strip())]
+        
+        if not source:
+            return json.dumps({"descripcion_vlm": "Error: Fuente temporal vacía", "alerta": False}, ensure_ascii=False)
+            
+        results = self.model.track(source, persist=True, verbose=False, stream=True)
+        
+        global_alert = False
+        track_history = {} 
+        state = TemporalRenderState(is_hybrid=include_raw_detections, is_video=is_video)
+        
+        for i, result in enumerate(results):
+            # Renderizado visual
+            if state.is_hybrid:
+                self.handle_temporal_rendering(result, i, state)
+                
+            # Análisis de posturas y alertas 
+            frame_alert = self.update_tracking_history(result, track_history)
+            if frame_alert:
+                global_alert = True
+
+        if state.video_writer is not None:
+            state.video_writer.release()
+            
+        # Formateo y retorno de la respuesta
+        return self._build_temporal_response(track_history, global_alert, state)
+
+    def handle_temporal_rendering(self, result, index, state):
+        '''Gestiona el renderizado SOTA y guardado de frames para vídeo o secuencias'''
+        annotated_frame = result.plot() 
+        
+        if state.is_video:
+            if state.video_writer is None:
+                height, width, _ = annotated_frame.shape
+                fourcc = cv2.VideoWriter_fourcc(*'XVID')
+                state.video_writer = cv2.VideoWriter(state.output_video_path, fourcc, 30, (width, height))
+            state.video_writer.write(annotated_frame)
+        else:
+            frame_path = f"/tmp/yolo_seq_{index}.jpg"
+            cv2.imwrite(frame_path, annotated_frame)
+            state.sequence_paths.append(frame_path)
+
+    def update_tracking_history(self, result, track_history):
+        '''Actualiza el historial de posturas y devuelve True si hay alerta en este frame'''
+        frame_alert = False
+        
+        if result.boxes is None or len(result.boxes) == 0 or result.keypoints is None:
+            return frame_alert
+            
+        ids = result.boxes.id.int().cpu().tolist() if result.boxes.id is not None else [i+1 for i in range(len(result.boxes))]
+        
+        for box, keypoints, track_id in zip(result.boxes, result.keypoints, ids):
+            x1, y1, x2, y2 = box.xyxy[0].tolist()
+            width, height = x2 - x1, y2 - y1
+            pts = keypoints.xy[0].tolist()
+            confs = keypoints.conf[0].tolist()
+            
+            posture, is_alert = self.calculate_posture(width, height, pts, confs)
+            if is_alert:
+                frame_alert = True
+            
+            if track_id not in track_history:
+                track_history[track_id] = set()
+            track_history[track_id].add(posture)
+            
+        return frame_alert
+
+    def build_temporal_response(self, track_history, global_alert, state):
+        '''Construye el JSON final con el resumen de la escena y las rutas renderizadas'''
+        if not track_history:
+            return json.dumps({"descripcion_vlm": "Despejado", "alerta": False}, ensure_ascii=False)
+            
+        descriptions = []
+        for tid, postures in track_history.items():
+            descriptions.append(f"P{tid}: {' -> '.join(list(postures))}")
+            
+        final_description = f"{len(track_history)} p. ({', '.join(descriptions)})"
+        
+        json_response = {
+            "descripcion_vlm": final_description,
+            "alerta": global_alert
+        }
+        
+        if state.is_hybrid:
+            json_response["ruta_anotada"] = state.output_video_path if state.is_video else ",".join(state.sequence_paths)
+            
+        return json.dumps(json_response, ensure_ascii=False)
+    
     def check_path(self, path):
-        '''Metodo para comprobar que el path es de una imagen que exista'''
-        return os.path.isfile(path)
+        '''Verifica que el input sea una imagen, vídeo o secuencia válida'''
+        if not path:
+            return False
+            
+        if path.lower().endswith('.avi') and os.path.isfile(path):
+            return True
+            
+        rutas = path.split(',')
+        return any(os.path.isfile(r.strip()) for r in rutas)
 
 def main(args=None):
     rclpy.init(args=args)
