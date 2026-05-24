@@ -5,19 +5,14 @@ import re
 import json
 from ruta_hospital.utils.commons.api_utils import encode_image_to_base64, call_ollama_api
 from ruta_hospital.perception.base_perception import BasePerceptionNode
+from ruta_hospital.perception.base_vlm_perception import BaseVLMPerceptionNode
 
 DEFAULT_MODEL = 'moondream'
-DEFAULT_OLLAMA_URL = 'http://localhost:11434/api/generate'
 
-class VLMPerceptionNode(BasePerceptionNode):
+class VLMPerceptionNode(BaseVLMPerceptionNode):
     def __init__(self,start_service=True):
-        super().__init__('vlm_perception_node',start_service=start_service)
+        super().__init__('vlm_perception_node', start_service=start_service, default_model=DEFAULT_MODEL)
         #self.declare_parameter('vlm_model', 'llava') # No tengo tanta VRAM
-        self.declare_parameter('vlm_model', DEFAULT_MODEL)
-        self.declare_parameter('ollama_url', DEFAULT_OLLAMA_URL)
-        
-        self.vlm_model = self.get_parameter('vlm_model').get_parameter_value().string_value
-        self.ollama_url = self.get_parameter('ollama_url').get_parameter_value().string_value
 
     def process_image(self, image_path, context):
         '''Interactua con el modelo y devuelve el reporte en forma de string'''
@@ -63,14 +58,14 @@ class VLMPerceptionNode(BasePerceptionNode):
             {tracking_hist}
             
             Describe brevemente qué hacen las personas en la imagen basándote en la memoria.
-            Sé telegráfico, responde en menos de 20 palabras. 
+            Sé telegráfico, responde en MÁXIMO {self.word_limit} PALABRAS. 
             Si ves una situación de peligro vital (como una caída), escribe "URGENTE".
             Fíjate en las cajas dibujadas para confirmar las actividades basándote en la memoria.
             """
             #TODO: Pasarle también el número de personas detectadas por YOLO, id, posicion...
         else:
             prompt += """
-            Describe BREVEMENTE QUÉ HACEN las personas de la imagen en MÁXIMO 15 PALABRAS. 
+            Describe BREVEMENTE QUÉ HACEN las personas de la imagen en MÁXIMO {self.word_limit} PALABRAS. 
             Si no ves personas responde ÚNICA Y EXACTAMENTE con "Despejado."
             """
         
@@ -82,7 +77,7 @@ class VLMPerceptionNode(BasePerceptionNode):
                    "images": [base64_img], 
                    "stream": False,
                    "options": {
-                        "num_predict": 30,  # Evitar que alucine infinitamente
+                        "num_predict": self.word_limit * 2,  # Evitar que alucine infinitamente
                         "temperature": 0.1  # Hace las respuestas menos creativas y más predecibles
                     }   
                 }

@@ -5,18 +5,15 @@ import json
 import re # extraer el json
 from ruta_hospital.perception.base_perception import BasePerceptionNode
 from ruta_hospital.utils.commons.api_utils import encode_image_to_base64, call_ollama_api
+from ruta_hospital.perception.base_vlm_perception import BaseVLMPerceptionNode
 
 DEFAULT_MODEL = 'moondream'
-DEFAULT_OLLAMA_URL = 'http://localhost:11434/api/generate'
 
-class SequencePerceptionNode(BasePerceptionNode):
+class SequencePerceptionNode(BaseVLMPerceptionNode):
     def __init__(self):
-        super().__init__('sequence_perception_node')
+        super().__init__('sequence_perception_node', default_model=DEFAULT_MODEL)
         self.declare_parameter('vlm_model', DEFAULT_MODEL)
-        self.declare_parameter('ollama_url', DEFAULT_OLLAMA_URL)
         
-        self.vlm_model = self.get_parameter('vlm_model').get_parameter_value().string_value
-        self.ollama_url = self.get_parameter('ollama_url').get_parameter_value().string_value
 
     def process_image(self, image_paths_str, context):
         '''Recibe múltiples rutas de frames separadas por coma y los manda al VLM'''
@@ -57,12 +54,12 @@ class SequencePerceptionNode(BasePerceptionNode):
         Actividades esperadas aquí: {context.expected_activities}.
         
         INSTRUCCIONES CRÍTICAS (DE OBLIGADO CUMPLIMIENTO):
-        1. Responde con un resumen telegráfico en MÁXIMO 15 PALABRAS.
+        1. Responde con un resumen telegráfico en MÁXIMO {self.word_limit} PALABRAS.
         2. Formato estricto de log de seguridad (ej: 'Secuencia muestra 2 pacientes paseando').
         3. Si detectas una emergencia médica evidente (como alguien tirado en el suelo), incluye obligatoriamente la palabra 'URGENTE'.
         4. Devuelve un JSON con esta estructura exacta:
         {{
-           "descripcion_vlm": "Tu resumen de max 15 palabras aquí",
+           "descripcion_vlm": "Tu resumen de max {self.word_limit} palabras aquí",
            "alerta": true (solo si hay caídas o peligro inminente) o false
         }}
         """
@@ -72,7 +69,11 @@ class SequencePerceptionNode(BasePerceptionNode):
             "prompt": prompt, 
             "images": base64_frames, 
             "stream": False,
-            #"format": "json"
+            #"format": "json",
+            "options": {
+                "num_predict": self.word_limit * 2,
+                "temperature": 0.1
+            }
         }
         self.get_logger().info(f"Visualizando secuencia... ({len(base64_frames)} imágenes procesadas)")
         return payload

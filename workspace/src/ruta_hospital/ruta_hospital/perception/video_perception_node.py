@@ -4,24 +4,22 @@ import os
 import cv2
 import base64
 from ruta_hospital.utils.commons.api_utils import call_ollama_api
-from ruta_hospital.perception.base_perception import BasePerceptionNode
+from ruta_hospital.perception.base_vlm_perception import BaseVLMPerceptionNode
 
 # modelo con capacidades nativas de vídeo 
 DEFAULT_MODEL = 'nemotron-3-nano:4b' 
 DEFAULT_OLLAMA_URL = 'http://localhost:11434/api/generate'
 DEFAULT_SAMPLED_FRAMES = 5
 
-class VideoPerceptionNode(BasePerceptionNode):
+class VideoPerceptionNode(BaseVLMPerceptionNode):
     '''Nodo que analiza un clip de vídeo usando un VLM extrayendo frames clave'''
     def __init__(self, start_service=True):
-        super().__init__('video_perception_node', start_service=start_service)
+        super().__init__('video_perception_node', 
+                         start_service=start_service, 
+                         default_model=DEFAULT_MODEL
+                        )
         
-        self.declare_parameter('vlm_model', DEFAULT_MODEL)
-        self.declare_parameter('ollama_url', DEFAULT_OLLAMA_URL)
         self.declare_parameter('sampled_frames', DEFAULT_SAMPLED_FRAMES)
-        
-        self.vlm_model = self.get_parameter('vlm_model').get_parameter_value().string_value
-        self.ollama_url = self.get_parameter('ollama_url').get_parameter_value().string_value
         self.sampled_frames = self.get_parameter('sampled_frames').value
 
     def process_image(self, file_path, context): 
@@ -38,7 +36,7 @@ class VideoPerceptionNode(BasePerceptionNode):
         Actividades esperadas aquí: {context.expected_activities}.
         
         INSTRUCCIONES:
-        1. Describe la acción principal observada en MÁXIMO 15 PALABRAS.
+        1. Describe la acción principal observada en MÁXIMO {self.word_limit} PALABRAS.
         2. Usa estilo de log directo (ej: 'Personal médico moviendo camilla').
         3. Si ves a alguien sufriendo una caída o tirado en el suelo, escribe la palabra clave 'URGENTE'.
         4. Responde con un JSON estricto:
@@ -56,7 +54,11 @@ class VideoPerceptionNode(BasePerceptionNode):
             "model": self.vlm_model, 
             "prompt": prompt, 
             "images": base64_images,  
-            "stream": False
+            "stream": False,
+            "options": {
+                "num_predict": self.word_limit * 2,
+                "temperature": 0.1
+            }
         }
         
         try:
