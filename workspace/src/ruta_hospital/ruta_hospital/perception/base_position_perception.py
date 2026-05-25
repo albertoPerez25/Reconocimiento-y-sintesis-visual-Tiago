@@ -1,4 +1,5 @@
 import os
+import json
 from abc import abstractmethod
 from ruta_hospital.perception.base_perception import BasePerceptionNode
 
@@ -16,8 +17,9 @@ class BasePositionPerceptionNode(BasePerceptionNode):
                     
         self.get_logger().info(f"Analizando posición en: {os.path.basename(request.image_path)}...")
         
-        # Como funciona en modo independiente (no híbrido), pasamos is_hybrid=False por defecto
-        response.report = self.process_image(request.image_path, include_raw_detections=False)
+        # Funciona en modo independiente (no híbrido), no debe incluir las detecciones
+        report_dict = self.process_image(request.image_path, include_raw_detections=False)
+        response.report = json.dumps(report_dict, ensure_ascii=False)
         return response
 
     @abstractmethod

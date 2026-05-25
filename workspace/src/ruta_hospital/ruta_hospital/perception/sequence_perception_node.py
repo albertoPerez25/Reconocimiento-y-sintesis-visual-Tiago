@@ -11,9 +11,7 @@ DEFAULT_MODEL = 'moondream'
 
 class SequencePerceptionNode(BaseVLMPerceptionNode):
     def __init__(self):
-        super().__init__('sequence_perception_node', default_model=DEFAULT_MODEL)
-        self.declare_parameter('vlm_model', DEFAULT_MODEL)
-        
+        super().__init__('sequence_perception_node', default_model=DEFAULT_MODEL)        
 
     def process_image(self, image_paths_str, context):
         '''Recibe múltiples rutas de frames separadas por coma y los manda al VLM'''
@@ -22,7 +20,7 @@ class SequencePerceptionNode(BaseVLMPerceptionNode):
         ok_paths = [r.strip() for r in paths if os.path.isfile(r.strip())]
         
         if not ok_paths:
-            return json.dumps({"descripcion_vlm": "Error: No se encontraron imágenes válidas en la secuencia.", "alerta": False}, ensure_ascii=False)
+            return {"descripcion_vlm": "Error: No se encontraron imágenes válidas en la secuencia.", "alerta": False}
         payload = self.get_payload(ok_paths, context)
 
         try:
@@ -35,33 +33,30 @@ class SequencePerceptionNode(BaseVLMPerceptionNode):
                 return json_str
             else:
                 self.get_logger().warn(f"El VLM de secuencia no devolvió un JSON válido: {vlm_text}")
-                return json.dumps({"descripcion_vlm": "Error de formato VLM temporal", "alerta": False}, ensure_ascii=False)
+                return {"descripcion_vlm": "Error de formato VLM temporal", "alerta": False}
                 
         except json.JSONDecodeError:
             self.get_logger().warn(f"El JSON generado en la secuencia está malformado: {vlm_text}")
-            return json.dumps({"descripcion_vlm": "Error de sintaxis JSON en secuencia", "alerta": False}, ensure_ascii=False)
+            return {"descripcion_vlm": "Error de sintaxis JSON en secuencia", "alerta": False}
         except Exception as e:
             self.get_logger().error(f"Error procesando secuencia: {e}")
-            return json.dumps({"descripcion_vlm": f"Error en inferencia de secuencia: {e}", "alerta": False}, ensure_ascii=False)
+            return {"descripcion_vlm": f"Error en inferencia de secuencia: {e}", "alerta": False}
 
     def get_payload(self, ok_paths, context):
         '''Crea el prompt y devuelve el payload completo para enviarle al modelo'''
         base64_frames = self.extract_key_frames(ok_paths, max_frames=40) 
 
         prompt = f"""
-        Actúa como una IA analizadora de actividades en el hospital.
-        Analiza esta secuencia temporal  en la zona {context.zone_name} (zona {context.zone_type}).
+        Actúa como una IA analizadora de seguridad de un hospital.
+        Analiza esta secuencia temporal en la zona {context.zone_name} ({context.zone_type}).
         Actividades esperadas aquí: {context.expected_activities}.
         
-        INSTRUCCIONES CRÍTICAS (DE OBLIGADO CUMPLIMIENTO):
+        INSTRUCCIONES CRÍTICAS:
         1. Responde con un resumen telegráfico en MÁXIMO {self.word_limit} PALABRAS.
-        2. Formato estricto de log de seguridad (ej: 'Secuencia muestra 2 pacientes paseando').
-        3. Si detectas una emergencia médica evidente (como alguien tirado en el suelo), incluye obligatoriamente la palabra 'URGENTE'.
-        4. Devuelve un JSON con esta estructura exacta:
-        {{
-           "descripcion_vlm": "Tu resumen de max {self.word_limit} palabras aquí",
-           "alerta": true (solo si hay caídas o peligro inminente) o false
-        }}
+        2. Usa formato estricto de log de seguridad (ej: 'Secuencia muestra 2 pacientes paseando').
+        3. Si detectas una emergencia médica (como alguien tirado en el suelo), incluye la palabra "URGENTE".
+        
+        DESCRIPCIÓN DE LA ESCENA (en español):
         """
         
         payload = {
@@ -72,7 +67,14 @@ class SequencePerceptionNode(BaseVLMPerceptionNode):
             #"format": "json",
             "options": {
                 "num_predict": self.word_limit * 2,
-                "temperature": 0.1
+                "temperature": 0.0,  # Hace las respuestas menos creativas y más predecibles
+                "stop": [
+                    "Sujeto ID_", 
+                    "Historial", 
+                    "[DATOS", 
+                    "Caja AZUL", 
+                    "Caja VERDE"
+                ]
             }
         }
         self.get_logger().info(f"Visualizando secuencia... ({len(base64_frames)} imágenes procesadas)")

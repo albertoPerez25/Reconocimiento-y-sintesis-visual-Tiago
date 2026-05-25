@@ -1,6 +1,8 @@
 import os
+import re
 import json
 import shutil
+import unicodedata
 
 # ECOSISTEMA COMUNITARIO 
 from langchain_community.document_loaders import DirectoryLoader, TextLoader
@@ -23,7 +25,8 @@ from langchain_classic.chains.query_constructor.base import AttributeInfo
 # PROMPTS
 from langchain_core.prompts import PromptTemplate, ChatPromptTemplate, SystemMessagePromptTemplate, HumanMessagePromptTemplate
 
-CROSS_ENCODER_MODEL_NAME = "cross-encoder/ms-marco-MiniLM-L-6-v2"
+#CROSS_ENCODER_MODEL_NAME = "cross-encoder/ms-marco-MiniLM-L-6-v2" # este NO es multilingual
+CROSS_ENCODER_MODEL_NAME = "cross-encoder/mmarco-mMiniLMv2-L12-H384-v1"
 
 class VectorManager:
     '''
@@ -95,6 +98,13 @@ class VectorManager:
         else: 
             print(f"[DEBUG] {msg}")
 
+    def preprocess_spanish_text(self, text: str) -> str:
+        """Elimina acentos y pasa todo a minusculas para mejorar la recuperación"""
+        if not text: return ""
+        text = text.lower()
+        return ''.join(c for c in unicodedata.normalize('NFD', text) 
+                        if unicodedata.category(c) != 'Mn')
+
     # INGESTIÓN Y GESTIÓN DE LA BASE DE DATOS (FAISS)
     def ingest_and_update_index(self, round_number, zone_data_dict):
         '''
@@ -154,12 +164,25 @@ class VectorManager:
                 zone_name = os.path.splitext(basename)[0]
                 doc.metadata["zona"] = zone_name
 
+                json_str = doc.page_content.replace(f"Reporte de la Zona: {zone_name}\n", "").replace(f"Vuelta: {round_num}\n", "")
+                try:
+                    data_dict = json.loads(json_str)
+                    zone_type = data_dict.get("tipo_zona", "Desconocido")
+                except json.JSONDecodeError:
+                    zone_type = "Desconocido"
+                
+                doc.metadata["tipo_zona"] = zone_type
+
                 # Borrar los metadatos innecesarios para el RAG, puesto que se insertarán
                 # manualmente en cada lote/chunk
                 doc.page_content = doc.page_content.replace(f"Reporte de la Zona: {zone_name}\n", "")
                 doc.page_content = doc.page_content.replace(f"Vuelta: {round_num}\n", "")
 
                 doc.page_content = doc.page_content.replace(f'  "nombre_zona": "{zone_name}",\n', "")
+
+                doc.page_content = doc.page_content.replace(f'  "tipo_zona": "{zone_type}",\n', "")
+                doc.page_content = doc.page_content.replace(f'  "tipo_zona": "{zone_type}"\n', "") # Por si es el último elemento sin coma
+                
                 doc.page_content = doc.page_content.strip()
                 
             documents.extend(folder_docs)
@@ -176,7 +199,7 @@ class VectorManager:
         # para siempre poder recuperarlos por sala y evitar perder info
         chunks = [
             Document(
-                page_content=f"[Zona: {c.metadata.get('zona', 'N/A')} | Vuelta: {c.metadata.get('vuelta', 'N/A')}]\n{c.page_content}",
+                page_content=f"[Zona: {c.metadata.get('zona', 'N/A')} | Tipo: {c.metadata.get('tipo_zona', 'N/A')} | Vuelta: {c.metadata.get('vuelta', 'N/A')}]\n{c.page_content}",
                 metadata=c.metadata
             )
             for c in text_splitter.split_documents(documents)
@@ -255,13 +278,16 @@ class VectorManager:
         
         # Buscador Disperso (Léxico BM25)
         docs_in_faiss = list(vectorstore.docstore._dict.values())
-        lexic_retriever = BM25Retriever.from_documents(docs_in_faiss)
+        lexic_retriever = BM25Retriever.from_documents(
+            docs_in_faiss,
+            preprocess_func=self.preprocess_spanish_text
+        )
         lexic_retriever.k = top_k_docs
         
         # Fusión Híbrida (Reciprocal Rank Fusion, 50% peso léxico, 50% peso semántico)
         base_retriever = EnsembleRetriever(
             retrievers=[lexic_retriever, semantic_retriever],
-            weights=[0.7, 0.3]
+            weights=[0.5, 0.5]
         )
 
         # Configuración de la memoria

@@ -31,19 +31,17 @@ class VideoPerceptionNode(BaseVLMPerceptionNode):
             return "Error extrayendo frames del clip de vídeo"
 
         prompt = f"""
+        Actúa como una IA analizadora de seguridad de un hospital.
         Analiza este clip de vídeo de la zona {context.zone_name} ({context.zone_type}).
-        Actúa como una IA analizadora de actividades en el hospital. 
         Actividades esperadas aquí: {context.expected_activities}.
         
-        INSTRUCCIONES:
+        INSTRUCCIONES CRÍTICAS:
         1. Describe la acción principal observada en MÁXIMO {self.word_limit} PALABRAS.
-        2. Usa estilo de log directo (ej: 'Personal médico moviendo camilla').
-        3. Si ves a alguien sufriendo una caída o tirado en el suelo, escribe la palabra clave 'URGENTE'.
-        4. Responde con un JSON estricto:
-        {{
-           "descripcion_vlm": "Descripción compacta aquí",
-           "alerta": true (solo si hay caídas o peligro inminente) o false
-        }}
+        2. Usa formato de log directo (ej: 'Personal médico moviendo camilla').
+        3. Si ves a alguien sufriendo una caída o tirado en el suelo, escribe la palabra "URGENTE".
+        4. ESTÁ PROHIBIDO copiar o repetir el contexto. Úsalo solo para confirmar la acción.
+        
+        DESCRIPCIÓN DE LA ESCENA (en español):
         """
         
         self.get_logger().debug(f"PROMPT AL VLM DE VÍDEO: {prompt}")
@@ -57,7 +55,14 @@ class VideoPerceptionNode(BaseVLMPerceptionNode):
             "stream": False,
             "options": {
                 "num_predict": self.word_limit * 2,
-                "temperature": 0.1
+                "temperature": 0.0,  # Hace las respuestas menos creativas y más predecibles
+                "stop": [
+                    "Sujeto ID_", 
+                    "Historial", 
+                    "[DATOS", 
+                    "Caja AZUL", 
+                    "Caja VERDE"
+                ]
             }
         }
         

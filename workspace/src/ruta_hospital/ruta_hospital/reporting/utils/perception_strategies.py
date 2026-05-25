@@ -17,6 +17,12 @@ class BasePerceptionStrategy(ABC):
         '''Parsea el resultado del LLM/VLM, filtra respuestas nulas y añade el evento si procede'''
         try:
             vlm_dict = json.loads(result_report)
+
+            if not isinstance(vlm_dict, dict):
+                vlm_dict = {
+                    "descripcion_vlm": str(vlm_dict).strip(), 
+                    "alerta": ("ATENCIÓN" in str(vlm_dict).upper() or "PELIGRO" in str(vlm_dict).upper())
+                }
         except Exception:
             vlm_dict = {
                 "descripcion_vlm": result_report.strip(), 

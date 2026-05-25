@@ -125,6 +125,10 @@ class RagasEvaluator:
         '''Usa el LLM para responder a las preguntas basándose solo en la patrulla'''
         with open(self.quest_path, 'r', encoding='utf-8') as f:
             questions_data = json.load(f)
+        
+        # Si se puso un diccionario directamente, se envuelve en una lista
+        if isinstance(questions_data, dict):
+            questions_data = [questions_data]
 
         short_eval_data = {"question": [], "answer": [], "ground_truth": [], "contexts": []}
         summary_eval_data = {"question": [], "answer": [], "ground_truth": [], "contexts": [], "reference_contexts": []}
@@ -140,6 +144,10 @@ class RagasEvaluator:
         rag_chain = vector_manager.get_conversational_chain()
 
         for item in questions_data:
+            if not isinstance(item, dict):
+                if self.logger:
+                    self.logger.warning(f"Elemento ignorado en quest.json (no es un objeto JSON válido): {item}")
+                continue
             question_type = item.get("type", "short") # asume short para retrocompatibilidad con archivos legacy
             
             if question_type == "summary":

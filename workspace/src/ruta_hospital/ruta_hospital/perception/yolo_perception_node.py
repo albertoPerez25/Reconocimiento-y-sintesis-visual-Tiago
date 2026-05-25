@@ -43,18 +43,18 @@ class YoloPerceptionNode(BasePositionPerceptionNode):
 
         image = cv2.imread(image_path)
         if image is None:
-            return json.dumps({"descripcion_vlm": "Error: No se pudo leer la imagen con OpenCV", "alerta": False}, ensure_ascii=False)
+            return {"descripcion_vlm": "Error: No se pudo leer la imagen con OpenCV", "alerta": False}
 
         results = self.model.track(image, persist=True, verbose=False)
         result = results[0]
 
         if len(result.boxes) == 0:
-            return json.dumps({"descripcion_vlm": "Despejado", "alerta": False}, ensure_ascii=False)
+            return {"descripcion_vlm": "Despejado", "alerta": False}
         
         if result.keypoints is None:
-            return json.dumps({"descripcion_vlm": f"{len(result.boxes)} p. (Ocultos/Sin posturas)", "alerta": False}, ensure_ascii=False)
+            return {"descripcion_vlm": f"{len(result.boxes)} p. (Ocultos/Sin posturas)", "alerta": False}
 
-        descriptions = []
+        track_history = {}
         detections = []
         alert = False
 
@@ -71,7 +71,7 @@ class YoloPerceptionNode(BasePositionPerceptionNode):
             if is_alert:
                 alert = True
 
-            descriptions.append(f"P{track_id}: {posture}")
+            track_history[track_id] = {posture}
 
             detections.append({
                 "id": track_id,
@@ -80,17 +80,13 @@ class YoloPerceptionNode(BasePositionPerceptionNode):
             })
 
         # Conteo de personas con la lista de posturas
-        final_description = f"{len(result.boxes)} p. ({', '.join(descriptions)})"
+        json_response = self.build_response(
+            track_history=track_history, 
+            global_alert=alert, 
+            detections=detections if include_raw_detections else None
+        )
 
-        json_response = {
-            "descripcion_vlm": final_description,
-            "alerta": alert
-        }
-
-        if include_raw_detections:
-            json_response["detecciones"] = detections
-
-        return json.dumps(json_response, ensure_ascii=False) # evita que se rompan los acentos
+        return json_response
 
     def calculate_posture(self, width, height, pts, confs):
         '''Calcula las posturas en base a los puntos devueltos por YOLO'''
@@ -128,7 +124,7 @@ class YoloPerceptionNode(BasePositionPerceptionNode):
         source = image_path if is_video else [r.strip() for r in image_path.split(',') if os.path.isfile(r.strip())]
         
         if not source:
-            return json.dumps({"descripcion_vlm": "Error: Fuente temporal vacía", "alerta": False}, ensure_ascii=False)
+            return {"descripcion_vlm": "Error: Fuente temporal vacía", "alerta": False}
             
         results = self.model.track(source, persist=True, verbose=False, stream=True)
         
@@ -150,7 +146,7 @@ class YoloPerceptionNode(BasePositionPerceptionNode):
             state.video_writer.release()
             
         # Formateo y retorno de la respuesta
-        return self._build_temporal_response(track_history, global_alert, state)
+        return self.build_response(track_history, global_alert, state=state)
 
     def handle_temporal_rendering(self, result, index, state):
         '''Gestiona el renderizado SOTA y guardado de frames para vídeo o secuencias'''
@@ -192,26 +188,31 @@ class YoloPerceptionNode(BasePositionPerceptionNode):
             
         return frame_alert
 
-    def build_temporal_response(self, track_history, global_alert, state):
-        '''Construye el JSON final con el resumen de la escena y las rutas renderizadas'''
+    def build_response(self, track_history, global_alert, state=None, detections=None):
+        '''Construye el JSON final con el resumen de la escena, integrando imagen estática y temporal'''
         if not track_history:
-            return json.dumps({"descripcion_vlm": "Despejado", "alerta": False}, ensure_ascii=False)
+            return {"descripcion_vlm": "Despejado", "alerta": False}
             
         descriptions = []
         for tid, postures in track_history.items():
-            descriptions.append(f"P{tid}: {' -> '.join(list(postures))}")
+            descriptions.append(f"Persona Nº {tid}: {' -> '.join(list(postures))}")
             
-        final_description = f"{len(track_history)} p. ({', '.join(descriptions)})"
+        final_description = f"{len(track_history)} personas. ({', '.join(descriptions)})"
         
         json_response = {
             "descripcion_vlm": final_description,
             "alerta": global_alert
         }
         
-        if state.is_hybrid:
+        # Inyección para flujos temporales (vídeo/secuencia)
+        if state and state.is_hybrid:
             json_response["ruta_anotada"] = state.output_video_path if state.is_video else ",".join(state.sequence_paths)
             
-        return json.dumps(json_response, ensure_ascii=False)
+        # Inyección para flujos estáticos (imagen)
+        if detections is not None:
+            json_response["detecciones"] = detections
+            
+        return json_response
     
     def check_path(self, path):
         '''Verifica que el input sea una imagen, vídeo o secuencia válida'''

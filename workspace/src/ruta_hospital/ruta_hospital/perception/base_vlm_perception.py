@@ -1,8 +1,9 @@
 import os
+import json
 from ruta_hospital.perception.base_perception import BasePerceptionNode, RagContext
 
 DEFAULT_OLLAMA_URL = 'http://localhost:11434/api/generate'
-DEFAULT_WORD_LIMIT = 20
+DEFAULT_WORD_LIMIT = 30
 
 class BaseVLMPerceptionNode(BasePerceptionNode):
     '''Clase intermedia para agrupar configuración y parámetros de Modelos de Lenguaje Visual'''
@@ -28,5 +29,6 @@ class BaseVLMPerceptionNode(BasePerceptionNode):
         
         context = RagContext(request)
 
-        response.report = self.process_image(request.image_path, context)
+        report_dict = self.process_image(request.image_path, context)
+        response.report = json.dumps(report_dict, ensure_ascii=False) # evita que se rompan los acentos
         return response

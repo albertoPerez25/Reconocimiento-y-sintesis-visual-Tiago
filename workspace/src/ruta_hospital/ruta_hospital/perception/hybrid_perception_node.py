@@ -6,7 +6,7 @@ import cv2
 import importlib
 from dataclasses import dataclass
 
-from ruta_hospital.perception.base_perception import BasePerceptionNode
+from ruta_hospital.perception.base_perception import BasePerceptionNode, RagContext
 #from .yolo_perception_node import YoloPerceptionNode
 #from .vlm_perception_node import VLMPerceptionNode
 
@@ -72,6 +72,23 @@ class HybridPerceptionNode(BasePerceptionNode):
         self.get_logger().info("Nodo percepcion con YOLO y VLM iniciado")
 
 
+    def analyze_callback(self, request, response):
+        '''Se ejecuta cada vez que recibe una petición del reportero por el servicio'''
+        if not self.check_path(request.image_path):
+            self.get_logger().error(f"Formato no soportado por los perceptores o ruta inválida: {request.image_path}")
+            # Devolvemos un JSON de error válido para que el reportero no crashee al parsearlo
+            response.report = json.dumps({"descripcion_vlm": "Error: Ruta o formato inválido.", "alerta": False}, ensure_ascii=False)
+            return response 
+                    
+        self.get_logger().info(f"Analizando imagen: {os.path.basename(request.image_path)}...")
+        
+        # Contexto de la zona (reglas RAG, historial) para dárselo a los VLMs
+        context = RagContext(request)
+        report_dict = self.process_image(request.image_path, context)
+        response.report = json.dumps(report_dict, ensure_ascii=False)
+        return response
+
+
     def process_image(self, image_path, context):
         '''Combina los resultados de la inferencia delegando en los perceptores compatibles'''
 
@@ -86,20 +103,16 @@ class HybridPerceptionNode(BasePerceptionNode):
         # Ejecutar modelos de posición (posiciones, conteo exacto y tracking)
         for model in self.pos_models:
             if model.check_path(image_path):
-                # Retorno crudo (is_hybrid=True)
-                report = model.process_image(image_path, is_hybrid=True)
-                try:
-                    data = json.loads(report)
-                except json.JSONDecodeError:
-                    data = {"descripcion_vlm": "Error de formato POSE", "alerta": False}
+                # Retorno crudo (include_raw_detections=True)
+                parsed_data = model.process_image(image_path, include_raw_detections=True)
+                pos_data_list.append(parsed_data)
 
-                pos_data_list.append(data)
                 # Detecciones para el renderizado visual
-                if "detecciones" in data:
-                    all_detections.extend(data["detecciones"])
-                if "ruta_anotada" in data:
+                if "detecciones" in parsed_data:
+                    all_detections.extend(parsed_data["detecciones"])
+                if "ruta_anotada" in parsed_data:
                     # El estimador ya provee el archivo con tracking
-                    image_to_vlm = data["ruta_anotada"]
+                    image_to_vlm = parsed_data["ruta_anotada"]
         
         
         # comentar el bloque 'if all_detections:' para que sea image_to_vlm = image_path (imagen limpia)
@@ -113,13 +126,8 @@ class HybridPerceptionNode(BasePerceptionNode):
         vlm_data_list = []
         for model in self.vlm_models:
             if model.check_path(image_to_vlm):
-                report = model.process_image(image_to_vlm, context)
-                try:
-                    report = json.loads(report)
-                except json.JSONDecodeError:
-                    report = {"descripcion_vlm": "Error de formato VLM", "alerta": False}
-                
-                vlm_data_list.append(json.loads(report))
+                parsed_report = model.process_image(image_to_vlm, context)
+                vlm_data_list.append(parsed_report)
 
         # Limpiaer frame temporal
         if self.delete_annotated_image and image_to_vlm == self.annotated_image_path and os.path.exists(image_to_vlm):
@@ -127,11 +135,11 @@ class HybridPerceptionNode(BasePerceptionNode):
 
         # Si el reportero envió un formato que no tiene modelos compatibles
         if not pos_data_list and not vlm_data_list:
-            return json.dumps({"descripcion_vlm": "Formato ignorado por los perceptores acoplados.", "alerta": False}, ensure_ascii=False)
+            return {"descripcion_vlm": "Formato ignorado por los perceptores acoplados.", "alerta": False}
         
         json_response = self.get_json_response(pos_data_list, vlm_data_list)
         self.get_logger().debug(f"{json_response}")
-        return json.dumps(json_response, ensure_ascii=False)
+        return json_response
     
         
     def check_path(self, path):
@@ -211,7 +219,7 @@ class HybridPerceptionNode(BasePerceptionNode):
 
         # Unir descripciones usando un punto como separador limpio
         parts = position_texts + useful_vlms
-        combined_desc = f"{prefix}{'. '.join(parts)}"
+        combined_desc = f"{prefix}{'| '.join(parts)}"
 
         return combined_desc, final_alert
     
@@ -239,7 +247,7 @@ class HybridPerceptionNode(BasePerceptionNode):
             "descripcion_vlm": final_desc,
             "alerta": final_alert
         }
-        return json.dumps(json_response, ensure_ascii=False)
+        return json_response
     
 
 def main(args=None):

@@ -3,11 +3,12 @@ import rclpy
 import os
 import re
 import json
-from ruta_hospital.utils.commons.api_utils import encode_image_to_base64, call_ollama_api
+from ruta_hospital.utils.commons.api_utils import encode_image_to_base64, call_ollama_api, load_image_and_scale
 from ruta_hospital.perception.base_perception import BasePerceptionNode
 from ruta_hospital.perception.base_vlm_perception import BaseVLMPerceptionNode
 
-DEFAULT_MODEL = 'moondream'
+#DEFAULT_MODEL = 'moondream'
+DEFAULT_MODEL = 'qwen2.5vl:3b'
 
 class VLMPerceptionNode(BaseVLMPerceptionNode):
     def __init__(self,start_service=True):
@@ -28,10 +29,10 @@ class VLMPerceptionNode(BaseVLMPerceptionNode):
                 if any(term in vlm_text.lower() for term in ["caída","ayuda","urgente","alerta"]):
                     alert = True # Si dijo cualquier otra cosa, es que hay personas
             
-            json_str = json.dumps({
+            json_str = {
                 "descripcion_vlm": descripcion,
                 "alerta": alert
-            }, ensure_ascii=False)
+            }
 
             self.get_logger().debug(f"RESPUESTA DEL VLM: {json_str}")
             return json_str
@@ -42,43 +43,60 @@ class VLMPerceptionNode(BaseVLMPerceptionNode):
                 "descripcion_vlm": f"Error de inferencia VLM: {e}", 
                 "alerta": False
             }
-            return json.dumps(error_json, ensure_ascii=False)
+            return error_json
         
     def get_payload(self, image_path, context):
         '''Crea el prompt y devuelve el payload completo para enviarle al modelo'''
         tracking_hist = getattr(context, 'tracking_history', '')
         prompt = f"""
-        Estás dentro de un hospital en {context.zone_name}, que es zona de tipo {context.zone_type}. 
-        Aquí puede que veas gente {context.expected_activities}.
+        Act as an AI security analyzer for a hospital.
+        You are inside a hospital in {context.zone_name}, which is a zone of type {context.zone_type}. 
+        Here you may see people {context.expected_activities}.
+
+        INSTRUCTIONS:
+            - Briefly describe the activities the people in the image are doing.
+            - If you see a life-threatening situation (such as a fall), write "URGENT".
+            - If there are no people in the image, write "Despejado"
         """
         
         if tracking_hist:
             prompt += f"""
-            [MEMORIA A CORTO PLAZO]:
+        YOLO TRACKER DATA:
+        ---
             {tracking_hist}
-            
-            Describe brevemente qué hacen las personas en la imagen basándote en la memoria.
-            Sé telegráfico, responde en MÁXIMO {self.word_limit} PALABRAS. 
-            Si ves una situación de peligro vital (como una caída), escribe "URGENTE".
-            Fíjate en las cajas dibujadas para confirmar las actividades basándote en la memoria.
-            """
+        ---
+        
+        ANSWER IN SPANISH ONLY
+        DESCRIPCIÓN:
+        """
             #TODO: Pasarle también el número de personas detectadas por YOLO, id, posicion...
         else:
-            prompt += """
-            Describe BREVEMENTE QUÉ HACEN las personas de la imagen en MÁXIMO {self.word_limit} PALABRAS. 
-            Si no ves personas responde ÚNICA Y EXACTAMENTE con "Despejado."
-            """
+            prompt += f"""
+        ANSWER IN SPANISH ONLY
+        DESCRIPCIÓN:
+        """
         
+        ''' - ESTÁ PROHIBIDO copiar o repetir el contexto y datos del tracker. Úsalos solo para confirmar la acción.
+            - Describe brevemente las actividades que hacen las personas en la imagen.
+            - Sé telegráfico, responde en MÁXIMO {self.word_limit} PALABRAS. 
+            - Si ves una situación de peligro vital (como una caída), escribe "URGENTE".'''
     
         self.get_logger().debug(f"PROMPT AL VLM: {prompt}")
-        base64_img = encode_image_to_base64(image_path)
+        base64_img = load_image_and_scale(image_path, self.get_logger())
         payload = {"model": self.vlm_model, 
                    "prompt": prompt, 
                    "images": [base64_img], 
                    "stream": False,
                    "options": {
                         "num_predict": self.word_limit * 2,  # Evitar que alucine infinitamente
-                        "temperature": 0.1  # Hace las respuestas menos creativas y más predecibles
+                        "temperature": 0.0,  # Hace las respuestas menos creativas y más predecibles
+                        "stop": [
+                            "Sujeto ID_", 
+                            "Historial", 
+                            "[DATOS", 
+                            "Caja AZUL", 
+                            "Caja VERDE"
+                        ]
                     }   
                 }
 
