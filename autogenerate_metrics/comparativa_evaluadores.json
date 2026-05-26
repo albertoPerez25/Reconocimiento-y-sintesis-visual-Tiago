@@ -154,5 +154,57 @@
         "tiempo_total_ejecucion_segundos": 621.7,
         "caracteres_contexto_visual": 14644,
         "caracteres_informe_final": 0
+    },
+    {
+        "fecha": "2026-05-25 22:58:38.070436",
+        "nodo_ejecutor": "system_evaluator_node",
+        "evaluacion_nombre": "qwen",
+        "total_imagenes_procesadas": 259,
+        "tiempo_percepcion_segundos": 1117.12,
+        "tiempo_llm_segundos": 312.78,
+        "tiempo_inferencia_total_segundos": 0.0,
+        "tiempo_ragas_evaluacion_segundos": 0.0,
+        "tiempo_total_ejecucion_segundos": 1628.14,
+        "caracteres_contexto_visual": 22614,
+        "caracteres_informe_final": 0
+    },
+    {
+        "fecha": "2026-05-26 10:15:51.476771",
+        "nodo_ejecutor": "system_evaluator_node",
+        "evaluacion_nombre": "gemma4",
+        "total_imagenes_procesadas": 64,
+        "tiempo_percepcion_segundos": 125.56,
+        "tiempo_llm_segundos": 104.25,
+        "tiempo_inferencia_total_segundos": 0.0,
+        "tiempo_ragas_evaluacion_segundos": 0.0,
+        "tiempo_total_ejecucion_segundos": 445.1,
+        "caracteres_contexto_visual": 7459,
+        "caracteres_informe_final": 0
+    },
+    {
+        "fecha": "2026-05-26 10:28:24.304754",
+        "nodo_ejecutor": "system_evaluator_node",
+        "evaluacion_nombre": "qwen3.5",
+        "total_imagenes_procesadas": 64,
+        "tiempo_percepcion_segundos": 127.23,
+        "tiempo_llm_segundos": 79.25,
+        "tiempo_inferencia_total_segundos": 0.0,
+        "tiempo_ragas_evaluacion_segundos": 0.0,
+        "tiempo_total_ejecucion_segundos": 424.15,
+        "caracteres_contexto_visual": 5181,
+        "caracteres_informe_final": 0
+    },
+    {
+        "fecha": "2026-05-26 11:15:30.535722",
+        "nodo_ejecutor": "system_evaluator_node",
+        "evaluacion_nombre": "qwen3.5",
+        "total_imagenes_procesadas": 64,
+        "tiempo_percepcion_segundos": 170.01,
+        "tiempo_llm_segundos": 96.42,
+        "tiempo_inferencia_total_segundos": 0.0,
+        "tiempo_ragas_evaluacion_segundos": 0.0,
+        "tiempo_total_ejecucion_segundos": 462.97,
+        "caracteres_contexto_visual": 7291,
+        "caracteres_informe_final": 0
     }
 ]

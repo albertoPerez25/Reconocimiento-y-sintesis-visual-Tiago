@@ -1,33 +1,36 @@
 #!/usr/bin/env python3
 import rclpy
 import os
-import re
-import json
+
 from ruta_hospital.utils.commons.api_utils import encode_image_to_base64, call_ollama_api, load_image_and_scale
 from ruta_hospital.perception.base_perception import BasePerceptionNode
 from ruta_hospital.perception.base_vlm_perception import BaseVLMPerceptionNode
 
 #DEFAULT_MODEL = 'moondream'
-DEFAULT_MODEL = 'qwen2.5vl:3b'
+#DEFAULT_MODEL = 'qwen2.5vl:3b'
+DEFAULT_MODEL = 'gemma4:e2b'
+DEFAULT_MODEL = 'qwen3.5:4b'
 
 class VLMPerceptionNode(BaseVLMPerceptionNode):
     def __init__(self,start_service=True):
         super().__init__('vlm_perception_node', start_service=start_service, default_model=DEFAULT_MODEL)
         #self.declare_parameter('vlm_model', 'llava') # No tengo tanta VRAM
+        #self.ollama_url = self.ollama_url.replace("generate", "chat")
 
     def process_image(self, image_path, context):
         '''Interactua con el modelo y devuelve el reporte en forma de string'''
         payload = self.get_payload(image_path, context)
         try:
             vlm_text = call_ollama_api(self.ollama_url, payload).strip()
+
             alert = False
             
-            if any(term in vlm_text.lower() for term in ["despejado", "empty", "no people"]):
-                descripcion = "Despejado"
+            if any(term in vlm_text.lower() for term in ["despejado", "empty", "no people", "vacio", "sin personas", "no hay personas"]):
+                descripcion = "Despejado" # Si dijo cualquier otra cosa, se asume que hay personas
             else:
                 descripcion = vlm_text
-                if any(term in vlm_text.lower() for term in ["caída","ayuda","urgente","alerta"]):
-                    alert = True # Si dijo cualquier otra cosa, es que hay personas
+                if any(term in vlm_text.lower() for term in ["urgente"]): #["caída","ayuda","urgente","alerta"]):
+                    alert = True 
             
             json_str = {
                 "descripcion_vlm": descripcion,
@@ -49,56 +52,55 @@ class VLMPerceptionNode(BaseVLMPerceptionNode):
         '''Crea el prompt y devuelve el payload completo para enviarle al modelo'''
         tracking_hist = getattr(context, 'tracking_history', '')
         prompt = f"""
-        Act as an AI security analyzer for a hospital.
-        You are inside a hospital in {context.zone_name}, which is a zone of type {context.zone_type}. 
-        Here you may see people {context.expected_activities}.
+Actúa como un analizador de seguridad con IA para un hospital.
+Estás dentro de un hospital en {context.zone_name}, que es una zona de tipo {context.zone_type}. 
+Aquí puedes ver personas {context.expected_activities}.
 
-        INSTRUCTIONS:
-            - Briefly describe the activities the people in the image are doing.
-            - If you see a life-threatening situation (such as a fall), write "URGENT".
-            - If there are no people in the image, write "Despejado"
-        """
+INSTRUCCIONES:
+    - Describe brevemente las actividades que las personas en la imagen están realizando.
+    - Si ves una situación que amenaza la vida (como una caída), escribe "URGENTE" y descríbela brevemente.
+    - Si no hay personas en la imagen, escribe "Despejado"
+"""
         
         if tracking_hist:
             prompt += f"""
-        YOLO TRACKER DATA:
-        ---
-            {tracking_hist}
-        ---
+DATOS DEL TRACKING YOLO:
+---
+    {tracking_hist}
+---
         
-        ANSWER IN SPANISH ONLY
-        DESCRIPCIÓN:
-        """
+RESPONDE SOLO EN ESPAÑOL
+"""
             #TODO: Pasarle también el número de personas detectadas por YOLO, id, posicion...
         else:
             prompt += f"""
-        ANSWER IN SPANISH ONLY
-        DESCRIPCIÓN:
-        """
-        
-        ''' - ESTÁ PROHIBIDO copiar o repetir el contexto y datos del tracker. Úsalos solo para confirmar la acción.
-            - Describe brevemente las actividades que hacen las personas en la imagen.
-            - Sé telegráfico, responde en MÁXIMO {self.word_limit} PALABRAS. 
-            - Si ves una situación de peligro vital (como una caída), escribe "URGENTE".'''
+RESPONDE SOLO EN ESPAÑOL
+"""
+    
     
         self.get_logger().debug(f"PROMPT AL VLM: {prompt}")
         base64_img = load_image_and_scale(image_path, self.get_logger())
-        payload = {"model": self.vlm_model, 
-                   "prompt": prompt, 
-                   "images": [base64_img], 
-                   "stream": False,
-                   "options": {
-                        "num_predict": self.word_limit * 2,  # Evitar que alucine infinitamente
-                        "temperature": 0.0,  # Hace las respuestas menos creativas y más predecibles
-                        "stop": [
-                            "Sujeto ID_", 
-                            "Historial", 
-                            "[DATOS", 
-                            "Caja AZUL", 
-                            "Caja VERDE"
-                        ]
-                    }   
-                }
+        payload = {
+            "model": self.vlm_model, 
+            "prompt": prompt, 
+            "images": [base64_img],
+            "think": False, 
+            "stream": False,
+            "keep_alive": "30s",
+            "options": {
+                "num_predict": self.word_limit * 2,
+                "temperature": 0.01,  
+                "num_ctx": 1024,
+                #"num_gpu": 99  no es un parámetro estándar
+                "stop": [
+                    "Sujeto ID_", 
+                    "Historial", 
+                    "[DATOS", 
+                    "Caja AZUL", 
+                    "Caja VERDE"
+                ]
+            }   
+        }
 
         return payload
     

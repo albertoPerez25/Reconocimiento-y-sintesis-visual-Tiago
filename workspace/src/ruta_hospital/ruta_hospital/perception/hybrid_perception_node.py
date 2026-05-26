@@ -162,14 +162,12 @@ class HybridPerceptionNode(BasePerceptionNode):
             for det in detections:
                 trk_id = det["id"]
                 bbox = det["bbox"]
-                
-                # Limpiar la postura de YOLO para intentar no saturar al VLM
-                clean_posture = det["posture"].replace("(ignorar) Todo correcto. ", "").replace("ATENCIÓN ", "")
+                posture = det["posture"]
                 
                 # Sliding Window (Memoria FIFO de 3 frames)
                 if trk_id not in self.tracking_memory:
                     self.tracking_memory[trk_id] = []
-                self.tracking_memory[trk_id].append(clean_posture)
+                self.tracking_memory[trk_id].append(posture)
                 if len(self.tracking_memory[trk_id]) > 3:
                     self.tracking_memory[trk_id].pop(0)
                     
@@ -202,7 +200,7 @@ class HybridPerceptionNode(BasePerceptionNode):
     def get_combined_json(self, pos_atr_list, vlm_atr_list):
         '''Devuelve la descripcion y alertas finales teniendo en cuenta los json de yolo y del vlm'''
         final_alert = any(m.alert for m in pos_atr_list + vlm_atr_list)
-        prefix = "[ALERTA] " if final_alert else ""
+        prefix = "ALERTA: " if final_alert else ""
         
         # Deduplicación y formateo limpio (Estilo Log)
         position_texts = [m.desc.strip() for m in pos_atr_list if m.desc.strip()]
