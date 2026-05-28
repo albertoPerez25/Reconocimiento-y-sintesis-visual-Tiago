@@ -4,7 +4,16 @@ import re
 import pandas as pd
 from datasets import Dataset
 from ragas import evaluate
-from ragas.metrics import answer_correctness, answer_relevancy, faithfulness, summarization_score
+from ragas.metrics import (
+    answer_correctness, 
+    answer_relevancy, 
+    faithfulness, 
+    summarization_score,
+    context_precision,
+    context_recall,
+    context_entity_recall,
+    _noise_sensitivity
+)
 from langchain_ollama import ChatOllama, OllamaEmbeddings
 from ragas.run_config import RunConfig
 from ruta_hospital.utils.commons.api_utils import call_ollama_api 
@@ -59,9 +68,19 @@ class RagasEvaluator:
         results_dfs = []
         
         # Evaluar preguntas cortas
+        short_metrics = [
+            answer_correctness, 
+            answer_relevancy, 
+            faithfulness,
+            context_precision,
+            context_recall,
+            context_entity_recall,
+            #_noise_sensitivity # TODO: Comprobar si aumenta demasiado el tiempo de evaluación
+        ]
+        
         df_short = self.run_evaluation_subset(
             data_dict=short_dict,
-            metrics=[answer_correctness, answer_relevancy, faithfulness],
+            metrics=short_metrics,
             eval_type_name='short',
             config_name=config_name
         )
