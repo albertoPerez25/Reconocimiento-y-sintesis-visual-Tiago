@@ -87,21 +87,32 @@ def calculate_system_metrics(df, config_name):
     df_short = df[df['eval_type'] == 'short']
     df_summ = df[df['eval_type'] == 'summary']
 
-    # Preguntas Cortas
+    # Preguntas Cortas End-to-End (Nota Final)
     short_correctness_score = df_short['answer_correctness'].mean() if not df_short.empty and 'answer_correctness' in df_short.columns else 0.0
     short_relevancy_score = df_short['answer_relevancy'].mean() if not df_short.empty and 'answer_relevancy' in df_short.columns else 0.0
-    short_faithfulness_score = df_short['faithfulness'].mean() if not df_short.empty and 'faithfulness' in df_short.columns else 0.0
-
+    
     short_metrics_for_final = [short_correctness_score, short_relevancy_score]
     final_short = sum(short_metrics_for_final) / float(len(short_metrics_for_final)) if not df_short.empty else 0.0
 
+    # Diagnóstico Generador
+    short_faithfulness_score = df_short['faithfulness'].mean() if not df_short.empty and 'faithfulness' in df_short.columns else 0.0
+
+    # Diagnóstico Recuperador (Retriever)
+    ctx_precision = get_safe_mean(df_short, 'context_precision')
+    ctx_recall = get_safe_mean(df_short, 'context_recall')
+    ctx_entity = get_safe_mean(df_short, 'context_entity_recall')
+    final_retriever = (ctx_precision + ctx_recall + ctx_entity) / 3.0 if not df_short.empty else 0.0
+    
+
     # Resumen
     summary_correctness_score = df_summ['answer_correctness'].mean() if not df_summ.empty and 'answer_correctness' in df_summ.columns else 0.0
-    summary_faithfulness_score = df_summ['faithfulness'].mean() if not df_summ.empty and 'faithfulness' in df_summ.columns else 0.0
     summary_summarization_score = df_summ['summary_score'].mean() if not df_summ.empty and 'summary_score' in df_summ.columns else 0.0
 
     summary_metrics_for_final = [summary_correctness_score, summary_summarization_score]
     final_summ = sum(summary_metrics_for_final) / float(len(summary_metrics_for_final)) if not df_summ.empty else 0.0
+
+    # Diagnóstico Generador
+    summary_faithfulness_score = df_summ['faithfulness'].mean() if not df_summ.empty and 'faithfulness' in df_summ.columns else 0.0
 
     # Global de métricas puras
     global_corr = df['answer_correctness'].mean(skipna=True) if 'answer_correctness' in df.columns else 0.0
@@ -113,8 +124,13 @@ def calculate_system_metrics(df, config_name):
 
     return {
         'Configuracion': config_name,
+        # Cortas
         'Sh_Corr': round(short_correctness_score, 3), 'Sh_Rel': round(short_relevancy_score, 3), 'Sh_Faith': round(short_faithfulness_score, 3), 'Final_Short': round(final_short, 3),
+        # Retriever
+        'Sh_Ctx_Prec': round(ctx_precision, 3), 'Sh_Ctx_Rec': round(ctx_recall, 3), 'Sh_Ctx_Ent': round(ctx_entity, 3), 'Final_Retriever': round(final_retriever, 3),
+        # Resumen
         'Su_Faith': round(summary_faithfulness_score, 3), 'Su_Summ': round(summary_summarization_score, 3), 'Su_Corr': round(summary_correctness_score, 3), 'Final_Summ': round(final_summ, 3),
+        # Globales
         'G_Corr': round(global_corr, 3), 'G_Rel': round(global_rel, 3), 'G_Faith': round(global_faith, 3), 'G_Summ': round(global_summ, 3),
         'Final_Global': round(final_global, 3)
     }
@@ -312,13 +328,30 @@ def generate_ragas_system_plots(df, output_dir): # TODO
     rects3 = ax.bar(x, df['G_Faith'], w, label='Faith. Global', color='#E1A95F')
     rects4 = ax.bar(x + w, df['G_Summ'], w, label='Summ. Global', color='#D25FE1')
     rects5 = ax.bar(x + 2*w, df['Final_Global'], w, label='Final Global', color='#C44E52')
+    rects6 = ax.bar(x + 2*w, df['Sh_Ctx_Rec'], w, label='Ctx Recall (Diag)', color='#64B5CD')
+    rects7 = ax.bar(x + 3*w, df['Final_Global'], w, label='Final Global', color='#C44E52')
     
     ax.set_ylabel('Puntuación (0.0 - 1.0)')
     ax.set_title('Ragas Sistema: Todas las Métricas Globales')
     ax.set_xticks(x); ax.set_xticklabels(labels, rotation=rot, ha=align); ax.set_ylim(0, 1.15)
     ax.legend(loc='upper right', ncol=5)
-    for r in [rects1, rects2, rects3, rects4, rects5]: ax.bar_label(r, padding=3, fmt='%.2f', fontsize=7)
+    for r in [rects1, rects2, rects3, rects4, rects5, rects6, rects7]: ax.bar_label(r, padding=3, fmt='%.2f', fontsize=7)
     fig.tight_layout(); plt.savefig(os.path.join(output_dir, '5d_ragas_sistema_completo.png'), dpi=300); plt.close()
+
+    # 5e Métricas de Contexto (Evaluación exclusiva del Retriever / FAISS)
+    fig, ax = plt.subplots(figsize=(11, 6))
+    w = 0.2
+    rects1 = ax.bar(x - 1.5*w, df['Sh_Ctx_Prec'], w, label='Context Precision', color='#8172B3')
+    rects2 = ax.bar(x - 0.5*w, df['Sh_Ctx_Rec'], w, label='Context Recall', color='#64B5CD')
+    rects3 = ax.bar(x + 0.5*w, df['Sh_Ctx_Ent'], w, label='Entity Recall', color='#E1A95F')
+    rects4 = ax.bar(x + 1.5*w, df['Final_Retriever'], w, label='Media Retriever', color='#C44E52')
+    
+    ax.set_ylabel('Puntuación (0.0 - 1.0)')
+    ax.set_title('Ragas Sistema: Calidad del Contexto Recuperado (Retriever)')
+    ax.set_xticks(x); ax.set_xticklabels(labels, rotation=rot, ha=align); ax.set_ylim(0, 1.15)
+    ax.legend(loc='upper right', ncol=4)
+    for r in [rects1, rects2, rects3, rects4]: ax.bar_label(r, padding=3, fmt='%.2f', fontsize=8)
+    fig.tight_layout(); plt.savefig(os.path.join(output_dir, '5e_ragas_sistema_retriever.png'), dpi=300); plt.close()
 
 def generate_ragas_perception_plot(df, output_dir):
     """Genera la gráfica clásica de 3 barras para los perceptores aislados"""

@@ -206,5 +206,18 @@
         "tiempo_total_ejecucion_segundos": 462.97,
         "caracteres_contexto_visual": 7291,
         "caracteres_informe_final": 0
+    },
+    {
+        "fecha": "2026-05-26 13:05:40.447514",
+        "nodo_ejecutor": "system_evaluator_node",
+        "evaluacion_nombre": "qwan3.5_reranker",
+        "total_imagenes_procesadas": 259,
+        "tiempo_percepcion_segundos": 588.67,
+        "tiempo_llm_segundos": 324.83,
+        "tiempo_inferencia_total_segundos": 0.0,
+        "tiempo_ragas_evaluacion_segundos": 0.0,
+        "tiempo_total_ejecucion_segundos": 4689.87,
+        "caracteres_contexto_visual": 24373,
+        "caracteres_informe_final": 0
     }
 ]
