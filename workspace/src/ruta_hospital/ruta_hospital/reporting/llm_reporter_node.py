@@ -9,6 +9,7 @@ from hospital_interfaces.action import GenerateReport
 from hospital_interfaces.srv import GetPatrolContext
 from ruta_hospital.reporting.base_reporter import BaseReporterNode
 from ruta_hospital.reporting.utils.recursive_summarizer import RecursiveSummarizer
+from ruta_hospital.utils.shared.vector_manager import VectorManager
 
 from ruta_hospital.reporting.utils.perception_strategies import (
     SequencePerceptionStrategy, 
@@ -24,6 +25,22 @@ class LLMReporterNode(BaseReporterNode):
         self.declare_parameter('perception_mode', DEFAULT_PERCEPTION_MODE) 
         self.perception_mode = self.get_parameter('perception_mode').get_parameter_value().string_value     
         self.vision_cli = self.create_client(AnalyzeActivity, 'analyze_image', callback_group=self.cb_group)
+        ollama_base_url = self.ollama_url.split('/api')[0] if '/api' in self.ollama_url else self.ollama_url
+
+        # Contador interno de vueltas para el Temporal RAG 
+        self.current_round = 0
+        
+        # Gestor de FAISS y LangChain
+        self.vector_manager = VectorManager(
+            base_dir=self.rag_dir,
+            ollama_url=ollama_base_url,
+            llm_model=self.llm_model,
+            max_stored_rounds=self.max_stored_rounds,
+            use_reranker=self.use_reranker,
+            logger=self.get_logger()
+        )
+
+        self.vector_manager.clear_all_data()
 
         self.context_srv = self.create_service(
             GetPatrolContext, 
@@ -62,7 +79,8 @@ class LLMReporterNode(BaseReporterNode):
             goal_handle.abort()
             return result
         
-        global_context_json = await self.process_each_image(zone_groups, goal_handle, result)
+        self.current_round += 1 
+        hospital_data_dict = await self.process_each_image(zone_groups, goal_handle, result)
         
         if goal_handle.is_cancel_requested:
             self.get_logger().warn("Proceso cancelado por el nodo patrulla")
@@ -71,40 +89,29 @@ class LLMReporterNode(BaseReporterNode):
             result.final_report = "Cancelado por el usuario"
             return result
             
-        if not global_context_json:
+        if not hospital_data_dict:
             goal_handle.abort()
             return result
         
         t_init_llm = time.time()
 
-        global_sum = self.generate_global_summary(global_context_json, result)
+        # Ingesta de datos crudos en la base de datos vectorial
+        self.vector_manager.ingest_and_update_index(self.current_round, hospital_data_dict)
+
+        # Generación del resumen global con LangChain
+        summary_text = self.vector_manager.generate_global_summary(self.current_round)
+        
+        result.success = True if "Error" not in summary_text else False
+        result.final_report = f"Informe generado:\n{summary_text}"
         
         self.current_metrics["tiempo_llm_segundos"] = round(time.time() - t_init_llm, 2)
         self.current_metrics["tiempo_total_segundos"] = round(time.time() - t_inicio_total, 2)
         self.save_metrics()
 
-        self.latest_global_context = global_context_json
-        self.latest_final_summary = global_sum.final_report if global_sum.success else ""
-
-        if self.bool_save_summ:
-            self.save_summary(global_context_json, global_sum)
-
+        self.get_logger().info(f"\n\n\tINFORME FINAL\n{summary_text}\n")
         goal_handle.succeed()
-        return global_sum
+        return result
         
-    def save_summary(self, global_context_json, global_sum):
-        try:
-            chatbot_data = {
-                "global_context": json.loads(global_context_json) if global_context_json else {},
-                "final_summary": global_sum.final_report if global_sum.success else "Error en la generación."
-            }
-            # Reusamos la carpeta de métricas para centralizar los JSON autogenerados
-            chatbot_file = os.path.join(self.metrics_dir, "latest_patrol_context.json")
-            with open(chatbot_file, "w", encoding="utf-8") as f:
-                json.dump(chatbot_data, f, ensure_ascii=False, indent=4)
-            self.get_logger().info(f"Contexto estructurado guardado en {chatbot_file} para el chatbot.")
-        except Exception as e:
-            self.get_logger().error(f"Error guardando contexto para el chatbot: {e}")
 
     def validate_data(self, folder_path, result):
         if not self.vision_cli.wait_for_service(timeout_sec=5.0):
@@ -139,11 +146,12 @@ class LLMReporterNode(BaseReporterNode):
             zona_dict = await self.process_zone(zone, images, goal_handle)
             hospital_data[zone] = zona_dict
 
-        global_context_json = json.dumps(hospital_data, ensure_ascii=False, indent=2)
+        # Serialización de prueba solo para extraer métricas de tamaño y mantener compatibilidad de logs
+        global_context_json = json.dumps(hospital_data, ensure_ascii=False)
 
         self.current_metrics["tiempo_percepcion_segundos"] = round(time.time() - t_init_perception, 2)
         self.current_metrics["caracteres_contexto_visual"] = len(global_context_json)
-        return global_context_json
+        return hospital_data
     
 
     async def process_zone(self, zone, images, goal_handle):
@@ -161,7 +169,7 @@ class LLMReporterNode(BaseReporterNode):
             "nombre_zona": zone,
             "tipo_zona": zone_info.get("tipo_zona", "Desconocida"),
             #"reglas_horarias": zona_info.get("reglas_horarias", "No hay reglas específicas."),
-            "rango_temporal": f"{min_time}s - {max_time}s",
+            #"rango_temporal": f"{min_time}s - {max_time}s",
             "eventos_recientes": []
         }
         
@@ -229,24 +237,24 @@ class LLMReporterNode(BaseReporterNode):
     def get_final_prompt(self, global_context):
         '''Devuelve el prompt final del llm'''
         return f"""
-            You are the security AI for a hospital patrol robot. 
-            Below are the individual mini-reports for each zone of the hospital during the last patrol.
-            Each zone includes temporal data and specific safety rules (RAG context).
+            Eres la IA de resumen de detección y actividades humanas en un hospital
+            A continuación se muestran los mini-informes individuales de cada zona del hospital durante la última patrulla.
+            Cada zona incluye datos temporales y reglas específicas de seguridad (contexto RAG).
 
-            Your task is to write a comprehensive and professional GLOBAL SUMMARY for the Floor Manager. 
+            Tu tarea es redactar un RESUMEN GLOBAL completo y profesional para el Responsable de Planta.
 
-            MINI REPORTES:
+            MINI-INFORMES:
             {global_context}
 
-            Focus specifically on anomalies, life-safety risks, and PROTOCOL VIOLATIONS based on the rules provided for each zone
-            (e.g., people in restricted areas, activities outside allowed hours, fires, overturned chairs).
-            You must analyze people activities and warn if someone is in need of help (like people who have fallen).
-            Say clearly where and WHEN (using the temporal range) each incident has happened.
+            Concéntrate específicamente en anomalías, riesgos para la seguridad vital y VIOLACIONES DE PROTOCOLO basadas en las reglas proporcionadas para cada zona
+            (por ejemplo, personas en áreas restringidas, actividades fuera del horario permitido).
+            Debes analizar las actividades de las personas y advertir si alguien necesita ayuda (como personas que se han caído).
+            Indica claramente dónde y CUÁNDO (utilizando el rango temporal) ha ocurrido cada incidente.
 
-            Do not hallucinate or invent any data, report only what is explicitly stated in the mini-reports. Give priority to 
-            people fallen on the ground.
+            No alucines ni inventes datos; informa únicamente de lo que se indique explícitamente en los mini-informes. Da prioridad a
+            las personas caídas en el suelo o en situaciones de peligro cuando la alerta esté activa.
 
-            Answer in spanish.
+            Responde en español.
             
             RESUMEN DE ACTIVIDADES EN EL HOSPITAL:
         """

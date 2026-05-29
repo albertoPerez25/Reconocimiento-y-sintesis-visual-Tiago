@@ -7,6 +7,7 @@ import subprocess # para lanzar el proceso del chatbot
 from nav2_simple_commander.robot_navigator import BasicNavigator, TaskResult
 from rclpy.action import ActionClient
 from hospital_interfaces.action import GenerateReport
+from chatbot import chatbot_web
 
 from rcl_interfaces.srv import SetParameters # Para cambiar el dir del photos_node
 from rcl_interfaces.msg import Parameter, ParameterValue, ParameterType
@@ -52,6 +53,7 @@ DEFAULT_WAYPOINTS_PATH = os.path.join(PKG_DIR, "config", "route_waypoints.json")
 DEFAULT_PHOTOS_DIR = "/home/alberto/tfg/Reconocimiento-y-sintesis-visual-Tiago/hospital_photos/"
 DEFAULT_KEEP_TEMP_FOLDERS = False
 DEFAULT_CAPTURER_NAME = "photos_node"
+DEFAULT_USE_RERANKER = False # también se puede configurar con una variable de entorno
 
 class PatrolNode(rclpy.node.Node):
     def __init__(self):
@@ -70,6 +72,9 @@ class PatrolNode(rclpy.node.Node):
 
         self.declare_parameter('capturer_node_name', DEFAULT_CAPTURER_NAME)
         self.capturer_node_name = self.get_parameter('capturer_node_name').get_parameter_value().string_value
+
+        self.declare_parameter('use_reranker', DEFAULT_USE_RERANKER)
+        self.use_reranker = self.get_parameter('use_reranker').get_parameter_value().bool_value
 
         self.path_points = load_route(self.route_file_path, DEFAULT_PATH_POINTS, self.get_logger())
 
@@ -207,14 +212,17 @@ class PatrolNode(rclpy.node.Node):
                     self.get_logger().warn("[Informe] Cancelado el informe en curso")
                     self.active_goal_handle.cancel_goal_async()
 
-                elif key == 'c':
-                    if self.report_completed:
-                        print("\n") # Salto de línea para no pisar el log
-                        self.get_logger().info("Abriendo terminal de Chatbot...")
-                        subprocess.Popen([
-                            'gnome-terminal', '--', 'bash', '-c', 
-                            'ros2 run ruta_hospital patrol_chatbot_node; exec bash'
-                        ])
+                elif key and key.lower() == 'c':
+                    print("\n") # Salto de línea para no pisar el log
+                    self.get_logger().info("Abriendo interfaz web del Chatbot (Streamlit)...")
+                    
+                    try:
+                        chatbot_script = chatbot_web.__file__
+                        env_config = os.environ.copy()
+                        env_config["USE_RERANKER"] = str(self.use_reranker)
+                        subprocess.Popen(['streamlit', 'run', chatbot_script], env=env_config)
+                    except ImportError:
+                        self.get_logger().warn(f"Error al lanzar el proceso del chatbot: No se pudo importar el proceso")
 
             result = self.navigator.getResult()
             

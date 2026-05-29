@@ -1,0 +1,76 @@
+---
+config:
+  look: classic
+---
+sequenceDiagram
+    participant P as PatrolNode
+    participant Cap as Capturadores (Foto/Vídeo)
+    participant R as LLMReporterNode
+    %% --- CAMBIO: Se añade la capa de abstracción de IA para visibilizar el flujo de LangChain ---
+    participant LC as VectorManager (LangChain)
+    participant V as PerceptionNode
+    participant O@{ "type": "entity" } as Ollama API
+    participant Disco@{ "type": "database" } as Disco Local
+
+    P->>Disco: clean_all_orphan_folders() (Borra basura previa)
+
+    P->>Disco: get_next_available_folder() (Crea ej. vuelta_A)
+    P->>Cap: Service SetParameters (current_save_dir = vuelta_A)
+
+    rect rgb(240, 248, 255)
+        loop Cada punto de ruta (Vuelta A)
+            P->>P: Navega hacia Waypoint
+            opt Usuario pulsa 'd'
+                P->>R: cancel_goal_async() (Aborta meta anterior)
+            end
+            opt Usuario pulsa 's'
+                P->>P: cancelTask() (Salta Waypoint actual)
+            end
+            Cap->>Cap: Escucha /odom y /head_front_camera
+            alt Si avanzó (MSE > umbral / FPS)
+                Cap->>Disco: Guarda archivo (jpg/avi) y metadata.csv en vuelta_A
+            end
+        end
+    end
+
+    loop Bucle Infinito (Pipeline Concurrente)
+        P-)R: Envía Meta Asíncrona (Analizar vuelta anterior)
+
+        par Proceso A: Robot ejecuta siguiente vuelta en físico
+            rect rgb(240, 255, 240)
+                P->>P: read_route_waypoints()
+                loop Cada punto de ruta
+                    P->>P: Navega y captura
+                    Cap->>Disco: Guarda datos de la nueva vuelta
+                end
+            end
+        and Proceso B: IA analiza vuelta anterior en 2º Plano
+            rect rgb(255, 245, 238)
+                R->>Disco: Lee datos de vuelta finalizada y hospital_metadata.json
+                loop Por cada zona
+                    R->>V: Llama /analyze_image(path, Contexto RAG)
+                    V->>O: Inferencia (VLM / YOLO)
+                    O-->>V: JSON {descripción, alerta}
+                    V-->>R: Devuelve actividades
+                    R-->>P: Publish Feedback (% completado, Zona actual)
+                end
+                
+                %% --- CAMBIO CRÍTICO SOTA: Eliminado bucle manual y sustituido por LangChain ---
+                Note over R, LC: Orquestación del Reporte e Ingesta RAG
+                R->>LC: Envía textos de las zonas procesadas
+                
+                activate LC
+                LC->>LC: Splitter divide textos de forma segura (RecursiveCharacterTextSplitter)
+                LC->>O: Invoca Summarize Chain (Map-Reduce interno de LangChain)
+                O-->>LC: Retorna resúmenes parciales y síntesis global combinada
+                
+                LC->>Disco: Genera Embeddings e inyecta Documentos en FAISS (/tmp/...)
+                LC-->>R: Devuelve Resumen Global Finalizado
+                deactivate LC
+                %% --------------------------------------------------------------------------
+                
+                R-->>P: Devuelve Result (Éxito y Reporte Final)
+                P->>Disco: delete_folder(Vuelta finalizada)
+            end
+        end
+    end

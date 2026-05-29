@@ -52,19 +52,19 @@ CATKIN_IGNORE
 #workspace/src/pal_gazebo_worlds
 
 workspace/log/*
-workspace/hospital_photos/*
-workspace/hospital_photos__/*
-workspace/hospital_photos_/*
-workspace/hospital_photos*
+workspace/datasets/hospital_photos/*
+workspace/datasets/hospital_photos__/*
+workspace/datasets/hospital_photos_/*
+workspace/datasets/hospital_photos*
 
-hospital_photos/*
-hospital_photos__/*
-hospital_photos_/*
-hospital_photos*
+datasets/hospital_photos/*
+datasets/hospital_photos__/*
+datasets/hospital_photos_/*
+datasets/hospital_photos*
 
 YOLO_tracking_debug/*
 YOLO_tracking_debug/tracking_*.jpg
 
-diagrams/*/png/*
-diagrams/*/svg/*
-diagrams/*/jpg/*
+docs/diagrams/*/png/*
+docs/diagrams/*/svg/*
+docs/diagrams/*/jpg/*

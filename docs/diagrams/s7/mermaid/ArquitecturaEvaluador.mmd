@@ -1,0 +1,44 @@
+---
+config:
+  layout: elk
+  theme: redux
+---
+flowchart TB
+ subgraph Sistema_ROS2_Hospital["Sistema_ROS2_Hospital"]
+        Reporter["Nodo: llm_reporter_node"]
+        Perceptor["Nodos de Percepción<br>(Hybrid, Video, Seq)"]
+        SysEval["Nodo: system_evaluator_node"]
+        PercEval["Nodo: perception_evaluator_node"]
+  end
+
+    Usuario(("Usuario")) -. "Evaluar sistema completo:\nService: /evaluate_patrol_system\n[generate_only / evaluate_only / full]" .-> SysEval
+    Usuario -. "Evaluar sólo visión:\nService: /evaluate_perception_model" .-> PercEval
+    
+    Reporter -- "Lee datos de vuelta y hospital_metadata.json (RAG)" --> Disco[("Disco Local<br>Metadatos, Datasets y Fotos")]
+    Reporter -- "Service: /analyze_image<br>+ Contexto RAG (Zona, Hora, Actividades)" --> Perceptor
+    Reporter -- Genera Síntesis Final (Llama3) --> Ollama(("Ollama API Local<br>http://localhost:11434"))
+    
+    SysEval -- Instancia y usa lógica interna --> Reporter
+    
+    %% --- CAMBIOS: Especificación del flujo de evaluación RAGAS y métricas ---
+    SysEval -- "Extrae Contextos" --> VectorStore[("VectorManager<br>(LangChain/FAISS)")]
+    SysEval -- "Evalúa (Context Precision/Recall, Faithfulness, Answer Relevancy)" --> Ollama
+    %% ------------------------------------------------------------------------
+    
+    SysEval -- "Savepoint: ragas_intermediate_answers.json\nLee quest.json y Guarda ragas_system_*.csv" --> Disco
+
+    PercEval -- "Lee perception_dataset.json, test_dataset y guarda ragas_eval_*.csv" --> Disco
+    PercEval -- "Service: /analyze_image<br>+ Contexto RAG (Zona, Hora, Actividades)" --> Perceptor
+    
+    %% --- CAMBIO: Aclaradas las métricas de percepción ---
+    PercEval -- "Evalúa agudeza visual (Faithfulness, Answer Correctness)" --> Ollama
+    
+    Perceptor -- "Tracking e Inferencia Visual" --> Ollama
+
+     Reporter:::ros
+     Perceptor:::ros
+     SysEval:::ros
+     PercEval:::ros
+     Ollama:::api
+    classDef ros fill:#e1f5fe,stroke:#01579b,stroke-width:2px
+    classDef api fill:#fff3e0,stroke:#e65100,stroke-width:2px

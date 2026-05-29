@@ -1,0 +1,122 @@
+[
+    {
+        "fecha": "2026-04-20 20:39:16.532509",
+        "modelo_reportero": "hybrid (actual)",
+        "total_imagenes_procesadas": 259,
+        "zonas_despejadas": 7,
+        "zonas_con_output": 14,
+        "tiempo_percepcion_segundos": 129.66,
+        "tiempo_llm_segundos": 314.43,
+        "tiempo_total_segundos": 444.11,
+        "caracteres_contexto_visual": 20825,
+        "caracteres_informe_final": 1552
+    },
+    {
+        "fecha": "2026-03-04 20:26:01.899593",
+        "modelo_reportero": "hybrid (yolo+moonlight)",
+        "total_imagenes_procesadas": 280,
+        "zonas_despejadas": 0,
+        "zonas_con_output": 43,
+        "tiempo_percepcion_segundos": 382.13,
+        "tiempo_llm_segundos": 18.09,
+        "tiempo_total_segundos": 400.23,
+        "caracteres_contexto_visual": 4227,
+        "caracteres_informe_final": 1040
+    },
+    {
+        "fecha": "2026-03-04 20:52:16.674297",
+        "modelo_reportero": "yolo",
+        "total_imagenes_procesadas": 280,
+        "zonas_despejadas": 0,
+        "zonas_con_output": 43,
+        "tiempo_percepcion_segundos": 50.03,
+        "tiempo_llm_segundos": 18.38,
+        "tiempo_total_segundos": 68.42,
+        "caracteres_contexto_visual": 3114,
+        "caracteres_informe_final": 1176
+    },
+    {
+        "fecha": "2026-03-04 20:12:30.880447",
+        "modelo_reportero": "sequence_moonlight",
+        "total_imagenes_procesadas": 280,
+        "zonas_despejadas": 41,
+        "zonas_con_output": 2,
+        "tiempo_percepcion_segundos": 56.14,
+        "tiempo_llm_segundos": 11.88,
+        "tiempo_total_segundos": 68.03,
+        "caracteres_contexto_visual": 2958,
+        "caracteres_informe_final": 671
+    },
+    {
+        "fecha": "2026-03-04 20:32:50.652937",
+        "modelo_reportero": "vlm_moonlight",
+        "total_imagenes_procesadas": 280,
+        "zonas_despejadas": 0,
+        "zonas_con_output": 43,
+        "tiempo_percepcion_segundos": 316.57,
+        "tiempo_llm_segundos": 19.35,
+        "tiempo_total_segundos": 335.92,
+        "caracteres_contexto_visual": 2891,
+        "caracteres_informe_final": 1476
+    },
+    {
+        "fecha": "2026-05-04 19:04:12.481352",
+        "modelo_reportero": "llm_reporter_node",
+        "total_imagenes_procesadas": 256,
+        "zonas_despejadas": 0,
+        "zonas_con_output": 21,
+        "tiempo_percepcion_segundos": 0.25,
+        "tiempo_llm_segundos": 198.69,
+        "tiempo_total_segundos": 198.95,
+        "caracteres_contexto_visual": 43267,
+        "caracteres_informe_final": 2404
+    },
+    {
+        "fecha": "2026-05-04 19:15:10.375454",
+        "modelo_reportero": "llm_reporter_node",
+        "total_imagenes_procesadas": 256,
+        "zonas_despejadas": 0,
+        "zonas_con_output": 21,
+        "tiempo_percepcion_segundos": 4.37,
+        "tiempo_llm_segundos": 176.61,
+        "tiempo_total_segundos": 180.98,
+        "caracteres_contexto_visual": 39427,
+        "caracteres_informe_final": 1431
+    },
+    {
+        "fecha": "2026-05-04 21:06:10.356556",
+        "modelo_reportero": "llm_reporter_node",
+        "total_imagenes_procesadas": 256,
+        "zonas_despejadas": 17,
+        "zonas_con_output": 4,
+        "tiempo_percepcion_segundos": 1919.14,
+        "tiempo_llm_segundos": 50.63,
+        "tiempo_total_segundos": 1969.77,
+        "caracteres_contexto_visual": 4217,
+        "caracteres_informe_final": 1165
+    },
+    {
+        "fecha": "2026-05-18 16:28:54.184846",
+        "modelo_reportero": "llm_reporter_node",
+        "total_imagenes_procesadas": 259,
+        "zonas_despejadas": 4,
+        "zonas_con_output": 17,
+        "tiempo_percepcion_segundos": 134.3,
+        "tiempo_llm_segundos": 286.87,
+        "tiempo_total_segundos": 421.18,
+        "caracteres_contexto_visual": 25509,
+        "caracteres_informe_final": 0
+    },
+    {
+        "fecha": "2026-05-18 18:31:48.395949",
+        "modelo_reportero": "llm_reporter_node",
+        "total_imagenes_procesadas": 259,
+        "zonas_despejadas": 4,
+        "zonas_con_output": 17,
+        "tiempo_percepcion_segundos": 136.41,
+        "tiempo_llm_segundos": 360.81,
+        "tiempo_total_segundos": 497.22,
+        "caracteres_contexto_visual": 25457,
+        "caracteres_informe_final": 0
+    }
+]
