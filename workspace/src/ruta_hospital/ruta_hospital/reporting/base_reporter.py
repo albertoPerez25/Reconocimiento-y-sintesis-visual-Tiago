@@ -21,7 +21,7 @@ import json
 PKG_DIR = get_package_share_directory('ruta_hospital')
 
 SEMANTIC_PATH_MAP = os.path.join(PKG_DIR, 'config', 'semantic_map.json')
-METRICS_DIR = "/home/alberto/tfg/Reconocimiento-y-sintesis-visual-Tiago/autogenerate_metrics/"
+METRICS_DIR = "/home/alberto/tfg/Reconocimiento-y-sintesis-visual-Tiago/docs/autogenerate_metrics/"
 DEFAULT_RAG_DIR = "/tmp/ruta_hospital_rag_data/"
 METADATA_PATH = os.path.join(PKG_DIR, 'config', 'hospital_metadata.json')
 DEFAULT_MODEL = "llama3"

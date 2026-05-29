@@ -19,7 +19,7 @@ DEFAULT_EVALUATION_NAME = "generic"
 DEFAULT_EVALUATION_MODE = "full" # "generate_only", "full", "evaluate_only"
 
 DEFAULT_ANSWERS_FILE = "/tmp/ragas_intermediate_answers.json"
-DEFAULT_METRICS_DIR = "/home/alberto/tfg/Reconocimiento-y-sintesis-visual-Tiago/autogenerate_metrics/"
+DEFAULT_METRICS_DIR = "/home/alberto/tfg/Reconocimiento-y-sintesis-visual-Tiago/docs/autogenerate_metrics/"
 
 DEFAULT_WORD_LIMIT = 300
 DEFAULT_MAX_STORED_ROUNDS = 5

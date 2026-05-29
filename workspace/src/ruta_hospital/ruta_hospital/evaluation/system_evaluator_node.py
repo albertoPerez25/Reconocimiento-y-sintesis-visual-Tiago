@@ -17,7 +17,7 @@ from hospital_interfaces.action import GenerateReport
 PKG_DIR = get_package_share_directory('ruta_hospital')
 
 DEFAULT_QUESTIONS_PATH = os.path.join(PKG_DIR, 'config', 'quest.json')
-DEFAULT_EVAL_FOLDER = "/home/alberto/tfg/Reconocimiento-y-sintesis-visual-Tiago/hospital_photos/vuelta_A/"
+DEFAULT_EVAL_FOLDER = "/home/alberto/tfg/Reconocimiento-y-sintesis-visual-Tiago/datasets/hospital_photos/vuelta_A/"
 DEFAULT_PERCEPTION_MODE = "image"
 DEFAULT_USE_RERANKER = False
 
