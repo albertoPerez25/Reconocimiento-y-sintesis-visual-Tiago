@@ -8,8 +8,8 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 logging.basicConfig(level=logging.INFO, format='%(levelname)s: %(message)s')
 
 # CONSTANTES DE CONFIGURACIÓN 
-DIAGRAMS_FOLDER = "diagrams/s6/mermaid/" 
-OUTPUT_FOLDER = "diagrams/s6"             
+DIAGRAMS_FOLDER = "diagrams/s7/mermaid/" 
+OUTPUT_FOLDER = "diagrams/s7"             
 DEFAULT_FORMAT = "png"                    # Formatos soportados por mmdc: png, svg, pdf
 CHROME_INSTALLATION = "/usr/bin/google-chrome-stable" # Como paquete es preferible a snap o flatpak
 
