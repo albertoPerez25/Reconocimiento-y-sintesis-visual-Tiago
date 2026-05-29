@@ -8,7 +8,7 @@ from ruta_hospital.perception.base_vlm_perception import BaseVLMPerceptionNode
 
 #DEFAULT_MODEL = 'moondream'
 #DEFAULT_MODEL = 'qwen2.5vl:3b'
-DEFAULT_MODEL = 'gemma4:e2b'
+#DEFAULT_MODEL = 'gemma4:e2b'
 DEFAULT_MODEL = 'qwen3.5:4b'
 
 class VLMPerceptionNode(BaseVLMPerceptionNode):
@@ -52,14 +52,20 @@ class VLMPerceptionNode(BaseVLMPerceptionNode):
         '''Crea el prompt y devuelve el payload completo para enviarle al modelo'''
         tracking_hist = getattr(context, 'tracking_history', '')
         prompt = f"""
-Actúa como un analizador de seguridad con IA para un hospital.
+Actúa como un analizador telegráfico de actividades humanas para un hospital.
 Estás dentro de un hospital en {context.zone_name}, que es una zona de tipo {context.zone_type}. 
 Aquí puedes ver personas {context.expected_activities}.
 
 INSTRUCCIONES:
-    - Describe brevemente las actividades que las personas en la imagen están realizando.
+    - Describe en un máximo de {self.word_limit} PALABRAS las actividades que las personas en la imagen están realizando.
+    - Dentro del límite incluye una MUY BREVE descripción de la persona o personas a las que te refieres.
     - Si ves una situación que amenaza la vida (como una caída), escribe "URGENTE" y descríbela brevemente.
     - Si no hay personas en la imagen, escribe "Despejado"
+
+EJEMPLO DE SALIDAS:
+    - "Una mujer con sombrero sentada en una silla."
+    - "Un niño con camiseta amarilla corriendo".
+    - "Varios médicos de pie al lado de una camilla con una persona tumbada, posiblemente una operación a un paciente".
 """
         
         if tracking_hist:
