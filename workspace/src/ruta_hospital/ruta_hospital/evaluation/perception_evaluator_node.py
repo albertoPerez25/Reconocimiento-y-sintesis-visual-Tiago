@@ -15,7 +15,7 @@ from ruta_hospital.evaluation.base_evaluator import InferencePipelineError
 
 PKG_DIR = get_package_share_directory('ruta_hospital')
 DEFAULT_DATASET_PATH = os.path.join(PKG_DIR, 'config', 'perception_dataset.json')
-DEFAULT_IMAGES_DIR = "/home/alberto/tfg/Reconocimiento-y-sintesis-visual-Tiago/test_dataset/"
+DEFAULT_IMAGES_DIR = "/home/alberto/tfg/Reconocimiento-y-sintesis-visual-Tiago/datasets/test_dataset/"
 
 class PerceptionEvaluatorNode(BaseEvaluatorNode):
     '''Nodo encargado de evaluar la agudeza visual de los modelos de percepción (YOLO/VLM) de forma aislada'''

@@ -1,0 +1,14 @@
+[
+    {
+        "fecha": "2026-05-19 09:09:48.554253",
+        "modelo_reportero": "llm_reporter_node",
+        "total_imagenes_procesadas": 259,
+        "zonas_despejadas": 4,
+        "zonas_con_output": 17,
+        "tiempo_percepcion_segundos": 136.77,
+        "tiempo_llm_segundos": 346.69,
+        "tiempo_total_segundos": 483.46,
+        "caracteres_contexto_visual": 25301,
+        "caracteres_informe_final": 0
+    }
+]

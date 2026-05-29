@@ -1,0 +1,27 @@
+flowchart LR
+    subgraph "Entradas de Datos (Generados por los nodos)"
+        M1[(comparativa_modelos.json Latencias y Verbosidad)]
+        %% --- CAMBIO: Actualizado texto descriptivo de las métricas RAGAS ---
+        M2[(ragas_*.csv SOTA Metrics: Context Precision/Recall, Faithfulness...)]
+    end
+
+    subgraph "generate_metrics.py (Procesamiento)"
+        P1[load_performance_data]
+        P2[load_ragas_data]
+        P3[Pandas: Agrupación por Eval_Category]
+        
+        M1 --> P1
+        M2 --> P2
+        P1 & P2 --> P3
+    end
+
+    subgraph "Salidas"
+        C1[1_performance_summary.csv]
+        C2[2_ragas_summary.csv]
+        G1{{"5_grafica_comparativa_ragas.png\n(Sistema)"}}
+        G2{{"6_grafica_ragas_percepcion.png\n(Percepción aislada)"}}
+        G3{{"Gráficos 3 y 4:\nBarras y Boxplots de Rendimiento"}}
+        
+        P3 --> C1 & C2
+        P3 --> G1 & G2 & G3
+    end

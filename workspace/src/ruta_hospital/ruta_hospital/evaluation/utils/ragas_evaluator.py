@@ -4,11 +4,21 @@ import re
 import pandas as pd
 from datasets import Dataset
 from ragas import evaluate
-from ragas.metrics import answer_correctness, answer_relevancy, faithfulness, summarization_score
+from ragas.metrics import (
+    answer_correctness, 
+    answer_relevancy, 
+    faithfulness, 
+    summarization_score,
+    context_precision,
+    context_recall,
+    context_entity_recall,
+    _noise_sensitivity
+)
 from langchain_ollama import ChatOllama, OllamaEmbeddings
 from ragas.run_config import RunConfig
-from workspace.src.ruta_hospital.ruta_hospital.utils.commons.api_utils import call_ollama_api 
+from ruta_hospital.utils.commons.api_utils import call_ollama_api 
 from ruta_hospital.utils.shared.rag_utils import format_context_for_ragas, get_relevant_context
+from ruta_hospital.utils.shared import vector_manager
 
 class OllamaParams:
     def __init__(self, ollama_url = "http://localhost:11434", evaluator_llm_model = "llama3", evaluator_embed_model = "nomic-embed-text"):
@@ -18,12 +28,13 @@ class OllamaParams:
         self.reporter_llm_model = None # TODO
 
 class EvaluatorRunParams:
-    def __init__(self, system_workers = 4, system_timeout = 420, perceptor_workers = 4, perceptors_timeout = 420, max_words = 300):
+    def __init__(self, system_workers = 4, system_timeout = 420, perceptor_workers = 4, perceptors_timeout = 420, max_words = 300, max_stored_rounds = 5):
         self.system_workers = system_workers
         self.system_timeout = system_timeout
         self.perceptors_workers = perceptor_workers
         self.perceptors_timeout = perceptors_timeout
         self.max_words = max_words
+        self.max_stored_rounds = max_stored_rounds
 
 class EvalContext:
     def __init__(self, global_json, natural_full, natural_filtered, pregenerated_summary=None, reduced_context=None):
@@ -57,9 +68,19 @@ class RagasEvaluator:
         results_dfs = []
         
         # Evaluar preguntas cortas
+        short_metrics = [
+            answer_correctness, 
+            answer_relevancy, 
+            faithfulness,
+            context_precision,
+            context_recall,
+            context_entity_recall,
+            #_noise_sensitivity # TODO: Comprobar si aumenta demasiado el tiempo de evaluación
+        ]
+        
         df_short = self.run_evaluation_subset(
             data_dict=short_dict,
-            metrics=[answer_correctness, answer_relevancy, faithfulness],
+            metrics=short_metrics,
             eval_type_name='short',
             config_name=config_name
         )
@@ -119,10 +140,14 @@ class RagasEvaluator:
         df['evaluation_name'] = config_name if config_name else eval_type_name
         return df
 
-    def generate_answers(self, global_context_json, pregenerated_summary=None, reduced_context=None):
+    def generate_answers(self, vector_manager, global_context_json, pregenerated_summary=None, reduced_context=None):
         '''Usa el LLM para responder a las preguntas basándose solo en la patrulla'''
         with open(self.quest_path, 'r', encoding='utf-8') as f:
             questions_data = json.load(f)
+        
+        # Si se puso un diccionario directamente, se envuelve en una lista
+        if isinstance(questions_data, dict):
+            questions_data = [questions_data]
 
         short_eval_data = {"question": [], "answer": [], "ground_truth": [], "contexts": []}
         summary_eval_data = {"question": [], "answer": [], "ground_truth": [], "contexts": [], "reference_contexts": []}
@@ -132,16 +157,22 @@ class RagasEvaluator:
             natural_full=format_context_for_ragas(global_context_json, filter_empty=False), # para poder evaluar correctamente el Faithfulness
             natural_filtered=format_context_for_ragas(global_context_json, filter_empty=True), # Para que Ragas o el LLM en resumen no se pierda 
             pregenerated_summary=pregenerated_summary,
-            reduced_context=reduced_context
+            reduced_context=pregenerated_summary
         )
 
+        rag_chain = vector_manager.get_conversational_chain()
+
         for item in questions_data:
+            if not isinstance(item, dict):
+                if self.logger:
+                    self.logger.warning(f"Elemento ignorado en quest.json (no es un objeto JSON válido): {item}")
+                continue
             question_type = item.get("type", "short") # asume short para retrocompatibilidad con archivos legacy
             
             if question_type == "summary":
                 self.process_summary_question(item, eval_context, summary_eval_data)
             else:
-                self.process_short_question(item, eval_context, short_eval_data)
+                self.process_short_question(item, short_eval_data, rag_chain)
                 
         return short_eval_data, summary_eval_data
     
@@ -172,38 +203,27 @@ class RagasEvaluator:
             self.logger.debug(f"Resumen generado: {llm_answer.strip()}")
             self.logger.debug(f"Contexto pasado a RAGAS: {context_to_use}")
 
-    def process_short_question(self, item, eval_context, short_eval_data):
-        '''Responde y empaqueta preguntas cortas usando RAG y Summary Trees'''
+    def process_short_question(self, item, short_eval_data, rag_chain):
+        '''Responde y empaqueta preguntas cortas usando RAG de LangChain'''
         question = item["question"]
         ground_truth = item["ground_truth"]
         
-        relevant_contexts = get_relevant_context(eval_context.natural_full, str(question).lower())
-        context_str = "\n".join(relevant_contexts)
-
-        if len(context_str.split()) > self.run_params.max_words: 
-            try:
-                from ruta_hospital.reporting.utils.recursive_summarizer import RecursiveSummarizer
-                summarizer = RecursiveSummarizer(
-                    ollama_url=self.ollama_params.ollama_url,
-                    model_name=self.ollama_params.evaluator_llm_model,
-                    logger=self.logger,
-                    max_words=self.run_params.max_words
-                )
-                def reduction_prompt(chunk):
-                    return f"Extrae de forma muy concisa los datos sobre actividades, personas o anomalías de este registro:\n{chunk}\nDatos extraídos:"
-                
-                context_str = summarizer.recursive_summarize(relevant_contexts, reduction_prompt)
-                relevant_contexts = [context_str] 
-            except Exception as e:
-                if self.logger: self.logger.error(f"Error en summary trees RAGAS: {e}")
-
-        llm_answer, question_for_ragas = self.generate_short_answer(context_str, question)
+        # LangChain gestiona la búsqueda en FAISS y el historial
+        result = rag_chain.invoke({"question": question})
+        answer = result.get("answer", "No hay información").strip()
         
+        # Contextos exactos que FAISS entregó al modelo para el prompt
+        source_documents = result.get("source_documents", [])
+        contexts = [doc.page_content for doc in source_documents]
+
+        if not contexts:
+            contexts = ["No se recuperó contexto de la base de datos vectorial"]
+
         self.add_record_to_dataset(short_eval_data, {
-            "question": question_for_ragas,
-            "answer": llm_answer.strip(),
+            "question": str(question),
+            "answer": answer,
             "ground_truth": ground_truth,
-            "contexts": relevant_contexts
+            "contexts": contexts
         })
     
     def generate_summary_answer(self, global_context_json, pregenerated_summary):

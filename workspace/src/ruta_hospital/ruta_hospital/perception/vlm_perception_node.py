@@ -1,41 +1,41 @@
 #!/usr/bin/env python3
 import rclpy
 import os
-import re
-import json
-from workspace.src.ruta_hospital.ruta_hospital.utils.commons.api_utils import encode_image_to_base64, call_ollama_api
+
+from ruta_hospital.utils.commons.api_utils import encode_image_to_base64, call_ollama_api, load_image_and_scale
 from ruta_hospital.perception.base_perception import BasePerceptionNode
+from ruta_hospital.perception.base_vlm_perception import BaseVLMPerceptionNode
 
-DEFAULT_MODEL = 'moondream'
-DEFAULT_OLLAMA_URL = 'http://localhost:11434/api/generate'
+#DEFAULT_MODEL = 'moondream'
+#DEFAULT_MODEL = 'qwen2.5vl:3b'
+#DEFAULT_MODEL = 'gemma4:e2b'
+DEFAULT_MODEL = 'qwen3.5:4b'
 
-class VLMPerceptionNode(BasePerceptionNode):
+class VLMPerceptionNode(BaseVLMPerceptionNode):
     def __init__(self,start_service=True):
-        super().__init__('vlm_perception_node',start_service=start_service)
+        super().__init__('vlm_perception_node', start_service=start_service, default_model=DEFAULT_MODEL)
         #self.declare_parameter('vlm_model', 'llava') # No tengo tanta VRAM
-        self.declare_parameter('vlm_model', DEFAULT_MODEL)
-        self.declare_parameter('ollama_url', DEFAULT_OLLAMA_URL)
-        
-        self.vlm_model = self.get_parameter('vlm_model').get_parameter_value().string_value
-        self.ollama_url = self.get_parameter('ollama_url').get_parameter_value().string_value
+        #self.ollama_url = self.ollama_url.replace("generate", "chat")
 
     def process_image(self, image_path, context):
         '''Interactua con el modelo y devuelve el reporte en forma de string'''
         payload = self.get_payload(image_path, context)
         try:
             vlm_text = call_ollama_api(self.ollama_url, payload).strip()
+
+            alert = False
             
-            if any(term in vlm_text.lower() for term in ["despejado", "empty", "no people"]):
-                descripcion = "Despejado"
-                alerta = False
+            if any(term in vlm_text.lower() for term in ["despejado", "empty", "no people", "vacio", "sin personas", "no hay personas"]):
+                descripcion = "Despejado" # Si dijo cualquier otra cosa, se asume que hay personas
             else:
                 descripcion = vlm_text
-                alerta = True # Si dijo cualquier otra cosa, es que hay personas
+                if any(term in vlm_text.lower() for term in ["urgente"]): #["caída","ayuda","urgente","alerta"]):
+                    alert = True 
             
-            json_str = json.dumps({
+            json_str = {
                 "descripcion_vlm": descripcion,
-                "alerta": alerta
-            }, ensure_ascii=False)
+                "alerta": alert
+            }
 
             self.get_logger().debug(f"RESPUESTA DEL VLM: {json_str}")
             return json_str
@@ -46,36 +46,67 @@ class VLMPerceptionNode(BasePerceptionNode):
                 "descripcion_vlm": f"Error de inferencia VLM: {e}", 
                 "alerta": False
             }
-            return json.dumps(error_json, ensure_ascii=False)
+            return error_json
         
     def get_payload(self, image_path, context):
         '''Crea el prompt y devuelve el payload completo para enviarle al modelo'''
         tracking_hist = getattr(context, 'tracking_history', '')
         prompt = f"""
-        Estás en {context.zone_name} dentro de un hospital. Es una zona de tipo {context.zone_type}. 
-        En esta zona puede que veas gente {context.expected_activities}.
-        """
+Actúa como un analizador telegráfico de actividades humanas para un hospital.
+Estás dentro de un hospital en {context.zone_name}, que es una zona de tipo {context.zone_type}. 
+Aquí puedes ver personas {context.expected_activities}.
+
+INSTRUCCIONES:
+    - Describe en un máximo de {self.word_limit} PALABRAS las actividades que las personas en la imagen están realizando.
+    - Dentro del límite incluye una MUY BREVE descripción de la persona o personas a las que te refieres.
+    - Si ves una situación que amenaza la vida (como una caída), escribe "URGENTE" y descríbela brevemente.
+    - Si no hay personas en la imagen, escribe "Despejado"
+
+EJEMPLO DE SALIDAS:
+    - "Una mujer con sombrero sentada en una silla."
+    - "Un niño con camiseta amarilla corriendo".
+    - "Varios médicos de pie al lado de una camilla con una persona tumbada, posiblemente una operación a un paciente".
+"""
         
         if tracking_hist:
             prompt += f"""
-            [MEMORIA A CORTO PLAZO]:
-            {tracking_hist}
-            
-            Instrucciones críticas:
-            Fíjate en las cajas de colores dibujadas en la imagen para identificar a los sujetos. 
-            Describe BREVEMENTE QUÉ HACEN y cómo interactúan, basándote en la memoria reciente.
-            """
+DATOS DEL TRACKING YOLO:
+---
+    {tracking_hist}
+---
+        
+RESPONDE SOLO EN ESPAÑOL
+"""
             #TODO: Pasarle también el número de personas detectadas por YOLO, id, posicion...
         else:
-            prompt += """
-            Describe BREVEMENTE QUÉ HACEN las personas de la imagen. 
-            Si no ves personas responde única y exactamente con "Despejado."
-            """
-        
+            prompt += f"""
+RESPONDE SOLO EN ESPAÑOL
+"""
+    
     
         self.get_logger().debug(f"PROMPT AL VLM: {prompt}")
-        base64_img = encode_image_to_base64(image_path)
-        payload = {"model": self.vlm_model, "prompt": prompt, "images": [base64_img], "stream": False}
+        base64_img = load_image_and_scale(image_path, self.get_logger())
+        payload = {
+            "model": self.vlm_model, 
+            "prompt": prompt, 
+            "images": [base64_img],
+            "think": False, 
+            "stream": False,
+            "keep_alive": "30s",
+            "options": {
+                "num_predict": self.word_limit * 2,
+                "temperature": 0.01,  
+                "num_ctx": 1024,
+                #"num_gpu": 99  no es un parámetro estándar
+                "stop": [
+                    "Sujeto ID_", 
+                    "Historial", 
+                    "[DATOS", 
+                    "Caja AZUL", 
+                    "Caja VERDE"
+                ]
+            }   
+        }
 
         return payload
     

@@ -1,0 +1,21 @@
+// generated from rosidl_adapter/resource/srv.idl.em
+// with input from hospital_interfaces/srv/GetPatrolContext.srv
+// generated code does not contain a copyright notice
+
+
+module hospital_interfaces {
+  module srv {
+    @verbatim (language="comment", text=
+      "Request vacía")
+    struct GetPatrolContext_Request {
+      uint8 structure_needs_at_least_one_member;
+    };
+    struct GetPatrolContext_Response {
+      boolean success;
+
+      string global_context;
+
+      string final_summary;
+    };
+  };
+};

@@ -3,78 +3,153 @@ import rclpy
 import os
 import json
 import cv2
-from ruta_hospital.perception.base_perception import BasePerceptionNode
-from .yolo_perception_node import YoloPerceptionNode
-from .vlm_perception_node import VLMPerceptionNode
+import importlib
 from dataclasses import dataclass
+
+from ruta_hospital.perception.base_perception import BasePerceptionNode, RagContext
+#from .yolo_perception_node import YoloPerceptionNode
+#from .vlm_perception_node import VLMPerceptionNode
 
 DEFAULT_ANNOTATED_IMG_PATH = "/tmp/annotated_vlm_frame.jpg"
 DEFAULT_DELETE_ANNOTATED_IMG = True
+
+DEFAULT_POSITION_ESTIMATORS = ['ruta_hospital.perception.yolo_perception_node.YoloPerceptionNode']
+DEFAULT_VLM_ESTIMATORS = ['ruta_hospital.perception.vlm_perception_node.VLMPerceptionNode']
 
 @dataclass
 class model_atr:
     desc: str
     alert: bool
 
+def load_node_class(class_path):
+    '''Importa y devuelve una clase dinámicamente desde un string de ruta (Patrón SOTA)'''
+    module_path, class_name = class_path.rsplit('.', 1)
+    module = importlib.import_module(module_path)
+    return getattr(module, class_name)
+
 class HybridPerceptionNode(BasePerceptionNode):
     def __init__(self):
         super().__init__('hybrid_perception_node')
         
-        # Apaga servicios que podrian hacer una condicion de carrera con este
-        self.yolo_logic = YoloPerceptionNode(start_service=False)
-        self.vlm_logic = VLMPerceptionNode(start_service=False)
-
         # Memoria a corto plazo
         self.tracking_memory = {}
 
-        # Parametros
+        # parametros
         self.declare_parameter('annotated_image_path', DEFAULT_ANNOTATED_IMG_PATH)
         self.declare_parameter('delete_annotated_image', DEFAULT_DELETE_ANNOTATED_IMG)
 
+        self.declare_parameter('position_estimators', DEFAULT_POSITION_ESTIMATORS)
+        self.declare_parameter('vlm_estimators', DEFAULT_VLM_ESTIMATORS)
+
         self.annotated_image_path = self.get_parameter('annotated_image_path').get_parameter_value().string_value
         self.delete_annotated_image = self.get_parameter('delete_annotated_image').get_parameter_value().bool_value
+        
+        pos_classes = self.get_parameter('position_estimators').get_parameter_value().string_array_value
+        vlm_classes = self.get_parameter('vlm_estimators').get_parameter_value().string_array_value
+
+        self.pos_models = []
+        self.vlm_models = []
+
+        # Instanciación en tiempo de ejecución
+        for cls_path in pos_classes:
+            try:
+                cls = load_node_class(cls_path)
+                self.pos_models.append(cls(start_service=False))
+                self.get_logger().debug(f"Estimador de posición acoplado: {cls_path}")
+            except Exception as e:
+                self.get_logger().error(f"Error acoplando {cls_path}: {e}")
+
+        for cls_path in vlm_classes:
+            try:
+                cls = load_node_class(cls_path)
+                self.vlm_models.append(cls(start_service=False))
+                self.get_logger().debug(f"Modelo VLM acoplado: {cls_path}")
+            except Exception as e:
+                self.get_logger().error(f"Error acoplando {cls_path}: {e}")
+        
         self.saved_image_counter = 0
         
         self.get_logger().info("Nodo percepcion con YOLO y VLM iniciado")
 
-    def process_image(self, image_path, context):
-        '''Combina los reportes de YOLO y VLM'''
 
-        self.get_logger().info(f"Procesamiento híbrido iniciado para: {image_path}")
+    def analyze_callback(self, request, response):
+        '''Se ejecuta cada vez que recibe una petición del reportero por el servicio'''
+        if not self.check_path(request.image_path):
+            self.get_logger().error(f"Formato no soportado por los perceptores o ruta inválida: {request.image_path}")
+            # Devolvemos un JSON de error válido para que el reportero no crashee al parsearlo
+            response.report = json.dumps({"descripcion_vlm": "Error: Ruta o formato inválido.", "alerta": False}, ensure_ascii=False)
+            return response 
+                    
+        self.get_logger().info(f"Analizando imagen: {os.path.basename(request.image_path)}...")
+        
+        # Contexto de la zona (reglas RAG, historial) para dárselo a los VLMs
+        context = RagContext(request)
+        report_dict = self.process_image(request.image_path, context)
+        response.report = json.dumps(report_dict, ensure_ascii=False)
+        return response
+
+
+    def process_image(self, image_path, context):
+        '''Combina los resultados de la inferencia delegando en los perceptores compatibles'''
+
+        self.get_logger().debug(f"Procesamiento híbrido iniciado para: {image_path}")
         self.get_logger().debug(f"zone_name:{context.zone_name} | time_str:{context.time_str} | expected_activities:{context.expected_activities} | zone_type:{context.zone_type}")
 
-        # Posiciones, conteo exacto y tracking
-        yolo_json_str = self.yolo_logic.process_image(image_path, None)
+        pos_data_list = []
+        all_detections = []
+        # Generar imagen anotada
+        image_to_vlm = image_path
+
+        # Ejecutar modelos de posición (posiciones, conteo exacto y tracking)
+        for model in self.pos_models:
+            if model.check_path(image_path):
+                # Retorno crudo (include_raw_detections=True)
+                parsed_data = model.process_image(image_path, include_raw_detections=True)
+                pos_data_list.append(parsed_data)
+
+                # Detecciones para el renderizado visual
+                if "detecciones" in parsed_data:
+                    all_detections.extend(parsed_data["detecciones"])
+                if "ruta_anotada" in parsed_data:
+                    # El estimador ya provee el archivo con tracking
+                    image_to_vlm = parsed_data["ruta_anotada"]
         
-        try:
-            yolo_data = json.loads(yolo_json_str)
-        except json.JSONDecodeError:
-            yolo_data = {"descripcion_vlm": "Error de formato YOLO", "alerta": False}
+        
+        # comentar el bloque 'if all_detections:' para que sea image_to_vlm = image_path (imagen limpia)
+        if all_detections and image_to_vlm == image_path: 
+            self.get_logger().debug("Generando imagen anotada con detecciones para el VLM...")
+            annotated_img = self.get_image_with_tracking_data(all_detections, image_path, context)
+            if annotated_img: # Seguridad por si cv2 falla al escribir
+                image_to_vlm = annotated_img
 
-        detections = yolo_data.get("detecciones", [])
-        if detections:
-            self.get_logger().debug("Se han detectado personas por YOLO")
-            image_to_vlm = self.get_image_with_tracking_data(detections, image_path, context)
-            self.get_logger().debug(f"Las detecciones se le pasarán al VLM así: {context.tracking_history}")
-        else:
-            image_to_vlm = image_path
-
-        # Contexto, peligros y descripción
-        vlm_json_str = self.vlm_logic.process_image(image_to_vlm, context)
+        # Ejecutar modelos VLM (contexto, peligros y descripción)
+        vlm_data_list = []
+        for model in self.vlm_models:
+            if model.check_path(image_to_vlm):
+                parsed_report = model.process_image(image_to_vlm, context)
+                vlm_data_list.append(parsed_report)
 
         # Limpiaer frame temporal
         if self.delete_annotated_image and image_to_vlm == self.annotated_image_path and os.path.exists(image_to_vlm):
             os.remove(image_to_vlm)
 
-        try:
-            vlm_data = json.loads(vlm_json_str)
-        except json.JSONDecodeError:
-            vlm_data = {"descripcion_vlm": "Error de formato VLM", "alerta": False}
-
-        json_response = self.get_json_response(yolo_data, vlm_data)
+        # Si el reportero envió un formato que no tiene modelos compatibles
+        if not pos_data_list and not vlm_data_list:
+            return {"descripcion_vlm": "Formato ignorado por los perceptores acoplados.", "alerta": False}
+        
+        json_response = self.get_json_response(pos_data_list, vlm_data_list)
         self.get_logger().debug(f"{json_response}")
-        return json.dumps(json_response, ensure_ascii=False)
+        return json_response
     
+        
+    def check_path(self, path):
+        '''Metodo para comprobar que el input sea compatible con alguno de los modelos'''
+        for model in self.pos_models + self.vlm_models:
+            if model.check_path(path):
+                return True
+        return False
+    
+
     def get_image_with_tracking_data(self, detections, image_path, context):
         '''Devuelve la imagen con un recuadrado señalando el trackeo hecho por YOLO'''
         final_image_path = image_path
@@ -87,14 +162,12 @@ class HybridPerceptionNode(BasePerceptionNode):
             for det in detections:
                 trk_id = det["id"]
                 bbox = det["bbox"]
-                
-                # Limpiar la postura de YOLO para intentar no saturar al VLM
-                clean_posture = det["posture"].replace("(ignorar) Todo correcto. ", "").replace("ATENCIÓN ", "")
+                posture = det["posture"]
                 
                 # Sliding Window (Memoria FIFO de 3 frames)
                 if trk_id not in self.tracking_memory:
                     self.tracking_memory[trk_id] = []
-                self.tracking_memory[trk_id].append(clean_posture)
+                self.tracking_memory[trk_id].append(posture)
                 if len(self.tracking_memory[trk_id]) > 3:
                     self.tracking_memory[trk_id].pop(0)
                     
@@ -123,46 +196,56 @@ class HybridPerceptionNode(BasePerceptionNode):
             self.get_logger().error(f"img_cv es None. Path: {image_path}")
             return None
     
-    def get_combined_json(self, yolo, vlm):
+
+    def get_combined_json(self, pos_atr_list, vlm_atr_list):
         '''Devuelve la descripcion y alertas finales teniendo en cuenta los json de yolo y del vlm'''
-        final_alert = yolo.alert or vlm.alert
-
-        if "despejado" in yolo.desc.lower() and "despejado" in vlm.desc.lower():
-            combined_desc = "Despejado"
-        else:
-            combined_desc = f"[YOLO]: {yolo.desc} | [VLM]: {vlm.desc}"
+        final_alert = any(m.alert for m in pos_atr_list + vlm_atr_list)
+        prefix = "ALERTA: " if final_alert else ""
+        
+        # Deduplicación y formateo limpio (Estilo Log)
+        position_texts = [m.desc.strip() for m in pos_atr_list if m.desc.strip()]
+        vlm_texts = [m.desc.strip() for m in vlm_atr_list if m.desc.strip()]
+        
+        # Filtrar los perceptores que no detectan nada
+        empty_tokens = ["despejado", "despejada"]
+        useful_vlms = [t for t in vlm_texts if not any(term in t.lower() for term in empty_tokens) and t != "."]
             
-            # confianza en base a lo que detecto cada modelo
-            if yolo.alert and vlm.alert:
-                combined_desc += " ALTA FIABILIDAD: Presencia humana confirmada por ambos modelos."
-            elif yolo.alert and not vlm.alert:
-                combined_desc += " FIABLE: Presencia humana detectada por YOLO (posible falso negativo del VLM)."
-            elif vlm.alert and not yolo.alert:
-                combined_desc += " PRECAUCIÓN: Detección exclusiva del VLM (posible falso positivo)."
+        # Caso base: Todos los modelos de posición ven 0 personas (o no hay) y no hay descripciones VLM útiles
+        empty_position_models = all("0 p." in t for t in position_texts) or not position_texts
+        if empty_position_models and not useful_vlms:
+            return f"{prefix}Despejado.", final_alert
 
-        return combined_desc,final_alert
+        # Unir descripciones usando un punto como separador limpio
+        parts = position_texts + useful_vlms
+        combined_desc = f"{prefix}{'| '.join(parts)}"
+
+        return combined_desc, final_alert
     
-    def get_json_response(self, yolo_data, vlm_data):
+
+    def get_json_response(self, pos_data_list, vlm_data_list):
         '''Devuelve la respuesta final a la petición en formato json'''
-        yolo_desc = str(yolo_data.get("descripcion_vlm", "")) 
-        yolo_alert = bool(yolo_data.get("alerta", False)) # TODO: cambiar nombre a algo más descriptivo (atención)
-        yolo = model_atr(yolo_desc,yolo_alert) # TODO: La falta de una persona puede ser información relevante
+        pos_atr_list = []
+        for data in pos_data_list:
+            desc = str(data.get("descripcion_vlm", "")).strip()
+            alert = bool(data.get("alerta", False))
+            pos_atr_list.append(model_atr(desc, alert)) 
+            # TODO: La falta de una persona puede ser información relevante
 
-        vlm_desc = str(vlm_data.get("descripcion_vlm", "")) # Convierto a str o bool para evitar que crashe si el vlm alucina pero devuelve un formato json "valido"
-        vlm_alert = bool(vlm_data.get("alerta", False))
-        vlm = model_atr(vlm_desc,vlm_alert)
+        vlm_atr_list = []
+        for data in vlm_data_list:
+            desc = str(data.get("descripcion_vlm", "")).strip()
+            alert = bool(data.get("alerta", False))
+            # Convierto a str o bool para evitar que crashe si el vlm alucina 
+            # pero devuelve un formato json "valido"
+            vlm_atr_list.append(model_atr(desc, alert))
 
-        final_desc,final_alert = self.get_combined_json(yolo,vlm)
+        final_desc, final_alert = self.get_combined_json(pos_atr_list, vlm_atr_list)
 
         json_response = {
             "descripcion_vlm": final_desc,
             "alerta": final_alert
         }
         return json_response
-    
-    def check_path(self, path):
-        '''Metodo para comprobar que el path es de una imagen que exista'''
-        return os.path.isfile(path)
     
 
 def main(args=None):

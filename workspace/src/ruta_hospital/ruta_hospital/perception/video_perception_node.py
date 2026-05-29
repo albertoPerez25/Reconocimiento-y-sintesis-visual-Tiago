@@ -3,25 +3,23 @@ import rclpy
 import os
 import cv2
 import base64
-from workspace.src.ruta_hospital.ruta_hospital.utils.commons.api_utils import call_ollama_api
-from ruta_hospital.perception.base_perception import BasePerceptionNode
+from ruta_hospital.utils.commons.api_utils import call_ollama_api
+from ruta_hospital.perception.base_vlm_perception import BaseVLMPerceptionNode
 
 # modelo con capacidades nativas de vídeo 
 DEFAULT_MODEL = 'nemotron-3-nano:4b' 
 DEFAULT_OLLAMA_URL = 'http://localhost:11434/api/generate'
 DEFAULT_SAMPLED_FRAMES = 5
 
-class VideoPerceptionNode(BasePerceptionNode):
+class VideoPerceptionNode(BaseVLMPerceptionNode):
     '''Nodo que analiza un clip de vídeo usando un VLM extrayendo frames clave'''
     def __init__(self, start_service=True):
-        super().__init__('video_perception_node', start_service=start_service)
+        super().__init__('video_perception_node', 
+                         start_service=start_service, 
+                         default_model=DEFAULT_MODEL
+                        )
         
-        self.declare_parameter('vlm_model', DEFAULT_MODEL)
-        self.declare_parameter('ollama_url', DEFAULT_OLLAMA_URL)
         self.declare_parameter('sampled_frames', DEFAULT_SAMPLED_FRAMES)
-        
-        self.vlm_model = self.get_parameter('vlm_model').get_parameter_value().string_value
-        self.ollama_url = self.get_parameter('ollama_url').get_parameter_value().string_value
         self.sampled_frames = self.get_parameter('sampled_frames').value
 
     def process_image(self, file_path, context): 
@@ -33,11 +31,17 @@ class VideoPerceptionNode(BasePerceptionNode):
             return "Error extrayendo frames del clip de vídeo"
 
         prompt = f"""
-        Eres un sistema analizador de actividades humanas analizando un clip corto de vídeo del hospital.
-        Observa la evolución temporal en el clip e indica BREVEMENTE QUÉ HACEN las personas.
-        Contexto (Zona: {context.zone_name}, Tipo: {context.zone_type}).
+        Actúa como una IA analizadora de seguridad de un hospital.
+        Analiza este clip de vídeo de la zona {context.zone_name} ({context.zone_type}).
         Actividades esperadas aquí: {context.expected_activities}.
-        Si no ves personas en ninguna parte del clip, responde única y exactamente con "Despejado."
+        
+        INSTRUCCIONES CRÍTICAS:
+        1. Describe la acción principal observada en MÁXIMO {self.word_limit} PALABRAS.
+        2. Usa formato de log directo (ej: 'Personal médico moviendo camilla').
+        3. Si ves a alguien sufriendo una caída o tirado en el suelo, escribe la palabra "URGENTE".
+        4. ESTÁ PROHIBIDO copiar o repetir el contexto. Úsalo solo para confirmar la acción.
+        
+        DESCRIPCIÓN DE LA ESCENA (en español):
         """
         
         self.get_logger().debug(f"PROMPT AL VLM DE VÍDEO: {prompt}")
@@ -48,7 +52,18 @@ class VideoPerceptionNode(BasePerceptionNode):
             "model": self.vlm_model, 
             "prompt": prompt, 
             "images": base64_images,  
-            "stream": False
+            "stream": False,
+            "options": {
+                "num_predict": self.word_limit * 2,
+                "temperature": 0.0,  # Hace las respuestas menos creativas y más predecibles
+                "stop": [
+                    "Sujeto ID_", 
+                    "Historial", 
+                    "[DATOS", 
+                    "Caja AZUL", 
+                    "Caja VERDE"
+                ]
+            }
         }
         
         try:
