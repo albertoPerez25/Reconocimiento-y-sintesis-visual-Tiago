@@ -45,6 +45,8 @@ setup(
 
             'system_evaluator_node = ruta_hospital.evaluation.system_evaluator_node:main',
             'perception_evaluator_node = ruta_hospital.evaluation.perception_evaluator_node:main',
+
+            'alarm_notifier_node = ruta_hospital.alarm.alarm_notifier_node:main',
         ],
     },
 )

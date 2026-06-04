@@ -2,7 +2,7 @@
 import cv2
 import rclpy
 import os
-import json
+import uuid
 from ultralytics import YOLO
 from dataclasses import dataclass, field
 
@@ -17,7 +17,7 @@ DEFAULT_MIN_CONFIDENCE = 0.5
 class TemporalRenderState:
     is_hybrid: bool
     is_video: bool
-    output_video_path: str = "/tmp/yolo_annotated_video.avi"
+    output_video_path: str = field(default_factory=lambda: f"/tmp/yolo_video_{uuid.uuid4().hex[:8]}.avi")
     video_writer: object = None
     sequence_paths: list = field(default_factory=list)
 
@@ -33,7 +33,7 @@ class YoloPerceptionNode(BasePositionPerceptionNode):
         self.model = YOLO(selected_yolo_model)
         self.get_logger().info(f"Modelo {selected_yolo_model} cargado")
 
-    def process_image(self, image_path, include_raw_detections=False):
+    def process_image(self, image_path, include_raw_detections=False): # TODO: Dividir
         '''Procesa la imagen y devuelve el reporte en forma de string '''
         is_video = image_path.lower().endswith('.avi')
         is_sequence = ',' in image_path
@@ -52,21 +52,34 @@ class YoloPerceptionNode(BasePositionPerceptionNode):
             return {"descripcion_vlm": "Despejado", "alerta": False}
         
         if result.keypoints is None:
-            return {"descripcion_vlm": f"{len(result.boxes)} p. (Ocultos/Sin posturas)", "alerta": False}
+            return {"descripcion_vlm": f"{len(result.boxes)} personas. (Ocultos/Sin posturas)", "alerta": False}
 
         track_history = {}
         detections = []
         alert = False
+
+        img_height, img_width = image.shape[:2]
+        total_area = img_width * img_height
 
         ids = result.boxes.id.int().cpu().tolist() if result.boxes.id is not None else [i+1 for i in range(len(result.boxes))]
 
         for box, keypoints, track_id in zip(result.boxes, result.keypoints, ids):
             x1, y1, x2, y2 = box.xyxy[0].tolist()
             width, height = x2 - x1, y2 - y1 
+
+            if (width * height) < (total_area * self.min_area_ratio):
+                continue
+
             pts = keypoints.xy[0].tolist()
             confs = keypoints.conf[0].tolist()
             
-            posture,is_alert = self.calculate_posture(width, height, pts, confs)
+            posture,is_alert = self.calculate_posture(width, 
+                                                      height, 
+                                                      pts, 
+                                                      confs, 
+                                                      y2, 
+                                                      img_height
+                                                    )
 
             if is_alert:
                 alert = True
@@ -88,12 +101,12 @@ class YoloPerceptionNode(BasePositionPerceptionNode):
 
         return json_response
 
-    def calculate_posture(self, width, height, pts, confs):
-        '''Calcula las posturas en base a los puntos devueltos por YOLO'''
-        if width > (height * 1.2): 
-            return "Caída URGENTE",True
+    def calculate_posture(self, width, height, pts, confs, y2, img_height): # TODO: Dividir
+        '''Calcula posturas usando relaciones biomecánicas y conciencia espacial'''
         
         nose_y, nose_c = pts[0][1], confs[0]
+        
+        # Eje Y en imágenes crece hacia abajo. (Valores mayores = más cerca del suelo)
         hip_y = (pts[11][1] + pts[12][1]) / 2.0
         hip_c = (confs[11] + confs[12]) / 2.0
 
@@ -103,21 +116,56 @@ class YoloPerceptionNode(BasePositionPerceptionNode):
         ankle_y = (pts[15][1] + pts[16][1]) / 2.0 
         ankle_c = (confs[15] + confs[16]) / 2.0
 
+        # DETECCIÓN DE ESTADO HORIZONTAL
+        is_horizontal = False
+        
+        # Biomecánica: cabeza a la altura de la cadera o más baja
+        if nose_c > self.min_confidence and hip_c > self.min_confidence:
+            if nose_y > (hip_y - height * 0.15): 
+                is_horizontal = True
+                
+        # Aspect Ratio: Caja muy ancha (con confirmación de puntos si los hay)
+        elif width > (height * 1.3):
+            if nose_c > self.min_confidence and hip_c > self.min_confidence:
+                if abs(nose_y - hip_y) < (height * 0.3):
+                    is_horizontal = True
+            elif width > (height * 1.8): # Oclusión severa pero extremadamente horizontal
+                is_horizontal = True
+
+        # DIFERENCIADOR CAMILLA VS SUELO
+        if is_horizontal:
+            # Ratio vertical: 0.0 es el techo, 1.0 es el suelo de la imagen
+            vertical_ratio = y2 / img_height
+            
+            # Si YOLO no ve las piernas, asumimos que están bajo sábanas
+            legs_occluded = (knee_c < self.min_confidence and ankle_c < self.min_confidence)
+            
+            # REGLA DE SEGURIDAD (Priorizar falsos positivos de caídas a falsos negativos):
+            # - Si y2 < 0.5: Es imposible que sea el suelo salvo que esté a 30m (Es camilla)
+            # - Si y2 < 0.7 y las piernas están ocultas (Seguro es camilla)
+            if (vertical_ratio < 0.5) or (vertical_ratio < 0.7 and legs_occluded):
+                return "Tumbada en camilla", False
+            else:
+                return "Caída URGENTE", True
+
+        # POSTURAS VERTICALES
+        # Heurística: Sentada (Rodillas a la altura de la cadera)
         if hip_c > self.min_confidence and knee_c > self.min_confidence:
-            if abs(hip_y - knee_y) < (height * 0.2) or (width > height * 0.6 and width < height * 1.2):
-                return "Sentada",False
+            if abs(hip_y - knee_y) < (height * 0.25):
+                return "Sentada", False
+
+        # Heurística: De pie (Cabeza alta y caja vertical)
+        if nose_c > self.min_confidence and hip_c > self.min_confidence:
+            if height > (width * 1.1) and nose_y < (hip_y - height * 0.2):
+                return "De pie o caminando", False
+
+        # FALLBACKS (Si fallan los puntos por recortes de la cámara)
+        if height > (width * 1.2): 
+            return "Postura indeterminada", False # "De pie (?)"
+        elif width > height:
+            return "Postura indeterminada", False # "Sentada (?)"
             
-        if nose_c > self.min_confidence and ankle_c > self.min_confidence:
-            if abs(ankle_y - nose_y) < (width * 0.6): 
-                return "Caída URGENTE",True # (cabeza y pies a altura similar)
-            
-            elif height > (width * 1.5): 
-                return "De pie o caminando",False
-        
-        if height > (width * 1.3): 
-            return "De pie (?)",False # piernas parcialmente ocultas 
-        
-        return "Sentada (?)",False # piernas parcialmente ocultas 
+        return "Postura indeterminada", False
     
     def process_temporal_data(self, image_path, is_video, include_raw_detections):
         '''Procesa vídeo o secuencias orquestando el renderizado y el análisis'''
@@ -159,7 +207,8 @@ class YoloPerceptionNode(BasePositionPerceptionNode):
                 state.video_writer = cv2.VideoWriter(state.output_video_path, fourcc, 30, (width, height))
             state.video_writer.write(annotated_frame)
         else:
-            frame_path = f"/tmp/yolo_seq_{index}.jpg"
+            unique_id = uuid.uuid4().hex[:8]
+            frame_path = f"/tmp/yolo_seq_{unique_id}_{index}.jpg"
             cv2.imwrite(frame_path, annotated_frame)
             state.sequence_paths.append(frame_path)
 
@@ -169,19 +218,35 @@ class YoloPerceptionNode(BasePositionPerceptionNode):
         
         if result.boxes is None or len(result.boxes) == 0 or result.keypoints is None:
             return frame_alert
+        
+        # Obtener dimensiones originales (height, width) del objeto Ultralytics
+        img_height, img_width = result.orig_shape
+        total_area = img_width * img_height
             
         ids = result.boxes.id.int().cpu().tolist() if result.boxes.id is not None else [i+1 for i in range(len(result.boxes))]
         
         for box, keypoints, track_id in zip(result.boxes, result.keypoints, ids):
             x1, y1, x2, y2 = box.xyxy[0].tolist()
             width, height = x2 - x1, y2 - y1
+
+            # Filtro de profundidad por área (Ignorar personas en otras salas)
+            if (width * height) < (total_area * self.min_area_ratio):
+                continue
+
             pts = keypoints.xy[0].tolist()
             confs = keypoints.conf[0].tolist()
             
-            posture, is_alert = self.calculate_posture(width, height, pts, confs)
+            posture, is_alert = self.calculate_posture(width, 
+                                                       height, 
+                                                       pts, 
+                                                       confs, 
+                                                       y2, 
+                                                       img_height
+                                                    )
+            if len(pts) < 17:
+                return "Postura desconocida", False
             if is_alert:
                 frame_alert = True
-            
             if track_id not in track_history:
                 track_history[track_id] = set()
             track_history[track_id].add(posture)
@@ -191,18 +256,18 @@ class YoloPerceptionNode(BasePositionPerceptionNode):
     def build_response(self, track_history, global_alert, state=None, detections=None):
         '''Construye el JSON final con el resumen de la escena, integrando imagen estática y temporal'''
         if not track_history:
-            return {"descripcion_vlm": "Despejado", "alerta": False}
+            json_response = {"descripcion_vlm": "Despejado", "alerta": False}
+        else:
+            descriptions = []
+            for tid, postures in track_history.items():
+                descriptions.append(f"Persona Nº {tid}: {' -> '.join(list(postures))}")
+                
+            final_description = f"{len(track_history)} personas. ({', '.join(descriptions)})"
             
-        descriptions = []
-        for tid, postures in track_history.items():
-            descriptions.append(f"Persona Nº {tid}: {' -> '.join(list(postures))}")
-            
-        final_description = f"{len(track_history)} personas. ({', '.join(descriptions)})"
-        
-        json_response = {
-            "descripcion_vlm": final_description,
-            "alerta": global_alert
-        }
+            json_response = {
+                "descripcion_vlm": final_description,
+                "alerta": global_alert
+            }
         
         # Inyección para flujos temporales (vídeo/secuencia)
         if state and state.is_hybrid:

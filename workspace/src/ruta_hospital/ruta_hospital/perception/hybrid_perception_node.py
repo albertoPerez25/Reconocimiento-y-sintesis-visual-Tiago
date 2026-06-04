@@ -81,6 +81,7 @@ class HybridPerceptionNode(BasePerceptionNode):
             return response 
                     
         self.get_logger().info(f"Analizando imagen: {os.path.basename(request.image_path)}...")
+        self.tracking_memory.clear() # Limpiar memoria de tracking entre llamadas estáticas
         
         # Contexto de la zona (reglas RAG, historial) para dárselo a los VLMs
         context = RagContext(request)
@@ -89,7 +90,7 @@ class HybridPerceptionNode(BasePerceptionNode):
         return response
 
 
-    def process_image(self, image_path, context):
+    def process_image(self, image_path, context): # TODO: Dividir
         '''Combina los resultados de la inferencia delegando en los perceptores compatibles'''
 
         self.get_logger().debug(f"Procesamiento híbrido iniciado para: {image_path}")
@@ -99,12 +100,19 @@ class HybridPerceptionNode(BasePerceptionNode):
         all_detections = []
         # Generar imagen anotada
         image_to_vlm = image_path
+        requiere_vlm = len(self.pos_models) == 0 # si no hay modelo pose iniciado, se requiere vlm
 
         # Ejecutar modelos de posición (posiciones, conteo exacto y tracking)
         for model in self.pos_models:
             if model.check_path(image_path):
                 # Retorno crudo (include_raw_detections=True)
                 parsed_data = model.process_image(image_path, include_raw_detections=True)
+                if isinstance(parsed_data, str):
+                    try:
+                        parsed_json = json.loads(parsed_data)
+                        parsed_data = parsed_json if isinstance(parsed_json, dict) else {"descripcion_vlm": str(parsed_json), "alerta": False}
+                    except Exception:
+                        parsed_data = {"descripcion_vlm": parsed_data, "alerta": False}
                 pos_data_list.append(parsed_data)
 
                 # Detecciones para el renderizado visual
@@ -113,29 +121,50 @@ class HybridPerceptionNode(BasePerceptionNode):
                 if "ruta_anotada" in parsed_data:
                     # El estimador ya provee el archivo con tracking
                     image_to_vlm = parsed_data["ruta_anotada"]
+
+                desc_lower = str(parsed_data.get("descripcion_vlm", "")).lower()
+                if "despejado" not in desc_lower and "0 personas" not in desc_lower:
+                    # Con que al menos uno de los modelos de pose encuentre hay que pasarsela al VLM
+                    requiere_vlm = True         
         
-        
-        # comentar el bloque 'if all_detections:' para que sea image_to_vlm = image_path (imagen limpia)
+        # comentar el bloque 'if annotated_img:' para que sea image_to_vlm = image_path (imagen limpia)
         if all_detections and image_to_vlm == image_path: 
             self.get_logger().debug("Generando imagen anotada con detecciones para el VLM...")
             annotated_img = self.get_image_with_tracking_data(all_detections, image_path, context)
-            if annotated_img: # Seguridad por si cv2 falla al escribir
-                image_to_vlm = annotated_img
+            '''if annotated_img: # Seguridad por si cv2 falla al escribir
+                image_to_vlm = annotated_img'''
 
         # Ejecutar modelos VLM (contexto, peligros y descripción)
         vlm_data_list = []
-        for model in self.vlm_models:
-            if model.check_path(image_to_vlm):
-                parsed_report = model.process_image(image_to_vlm, context)
-                vlm_data_list.append(parsed_report)
+        if requiere_vlm:
+            for model in self.vlm_models:
+                if model.check_path(image_to_vlm):
+                    parsed_report = model.process_image(image_to_vlm, context)
+                    if isinstance(parsed_report, str):
+                        try:
+                            parsed_json = json.loads(parsed_report)
+                            parsed_report = parsed_json if isinstance(parsed_json, dict) else {"descripcion_vlm": str(parsed_json), "alerta": False}
+                        except Exception:
+                            parsed_report = {"descripcion_vlm": parsed_report, "alerta": False}
+                    vlm_data_list.append(parsed_report)
 
         # Limpiaer frame temporal
-        if self.delete_annotated_image and image_to_vlm == self.annotated_image_path and os.path.exists(image_to_vlm):
-            os.remove(image_to_vlm)
+        if self.delete_annotated_image and image_to_vlm != image_path:
+            # Separar por comas por si es una secuencia, o iterar una sola ruta si es foto/vídeo
+            for path_to_delete in image_to_vlm.split(','):
+                clean_path = path_to_delete.strip()
+                if os.path.exists(clean_path):
+                    try:
+                        os.remove(clean_path)
+                    except OSError as e:
+                        self.get_logger().error(f"Error borrando temporal {clean_path}: {e}")
 
         # Si el reportero envió un formato que no tiene modelos compatibles
         if not pos_data_list and not vlm_data_list:
             return {"descripcion_vlm": "Formato ignorado por los perceptores acoplados.", "alerta": False}
+        
+        self.get_logger().error(f"\n[DEBUG POS] Tipo: {type(pos_data_list)} | Contenido: {pos_data_list}")
+        self.get_logger().error(f"[DEBUG VLM] Tipo: {type(vlm_data_list)} | Contenido: {vlm_data_list}")
         
         json_response = self.get_json_response(pos_data_list, vlm_data_list)
         self.get_logger().debug(f"{json_response}")
@@ -155,7 +184,7 @@ class HybridPerceptionNode(BasePerceptionNode):
         final_image_path = image_path
         img_cv = cv2.imread(image_path)
         if img_cv is not None:
-            history_str = ""
+            history_str = f"Número de personas detectadas: {len(detections)}\n"
             COLORS = [(0, 0, 255), (255, 0, 0), (0, 255, 0), (0, 255, 255), (255, 0, 255)]
             COLOR_NAMES = ["ROJA", "AZUL", "VERDE", "AMARILLA", "MAGENTA"]
             
@@ -211,7 +240,7 @@ class HybridPerceptionNode(BasePerceptionNode):
         useful_vlms = [t for t in vlm_texts if not any(term in t.lower() for term in empty_tokens) and t != "."]
             
         # Caso base: Todos los modelos de posición ven 0 personas (o no hay) y no hay descripciones VLM útiles
-        empty_position_models = all("0 p." in t for t in position_texts) or not position_texts
+        empty_position_models = all("0 personas" in t for t in position_texts) or not position_texts
         if empty_position_models and not useful_vlms:
             return f"{prefix}Despejado.", final_alert
 

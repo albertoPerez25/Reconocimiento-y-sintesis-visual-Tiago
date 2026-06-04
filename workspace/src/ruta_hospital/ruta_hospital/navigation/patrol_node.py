@@ -7,16 +7,19 @@ import subprocess # para lanzar el proceso del chatbot
 from nav2_simple_commander.robot_navigator import BasicNavigator, TaskResult
 from rclpy.action import ActionClient
 from hospital_interfaces.action import GenerateReport
-from chatbot import chatbot_web
+from ruta_hospital.chatbot import chatbot_web
 
 from rcl_interfaces.srv import SetParameters # Para cambiar el dir del photos_node
 from rcl_interfaces.msg import Parameter, ParameterValue, ParameterType
 
 from ruta_hospital.navigation.utils.route_parser_utils import load_route,list_to_pose
 from ruta_hospital.navigation.utils.file_utils import clean_all_orphan_folders, get_next_available_folder
-from workspace.src.ruta_hospital.ruta_hospital.utils.commons.file_utils import delete_folder
-from workspace.src.ruta_hospital.ruta_hospital.utils.commons.terminal_utils import get_key_non_blocking
+from ruta_hospital.utils.commons.file_utils import delete_folder
+from ruta_hospital.utils.commons.terminal_utils import get_key_non_blocking
 from ament_index_python.packages import get_package_share_directory
+
+from hospital_interfaces.srv import FlushZoneData
+from ruta_hospital.utils.shared.semantic_map_utils import get_zone_name, load_semantic_map
 
 DEFAULT_PATH_POINTS = [
     [4.83898, 8.27372],
@@ -50,7 +53,7 @@ DEFAULT_PATH_POINTS = [
 PKG_DIR = get_package_share_directory('ruta_hospital')
 
 DEFAULT_WAYPOINTS_PATH = os.path.join(PKG_DIR, "config", "route_waypoints.json")
-DEFAULT_PHOTOS_DIR = "/home/alberto/tfg/Reconocimiento-y-sintesis-visual-Tiago/hospital_photos/"
+DEFAULT_PHOTOS_DIR = "/home/alberto/tfg/Reconocimiento-y-sintesis-visual-Tiago/datasets/hospital_photos/"
 DEFAULT_KEEP_TEMP_FOLDERS = False
 DEFAULT_CAPTURER_NAME = "photos_node"
 DEFAULT_USE_RERANKER = False # también se puede configurar con una variable de entorno
@@ -83,10 +86,42 @@ class PatrolNode(rclpy.node.Node):
         self.get_logger().info("Nodo patrulla iniciado")
         self.route_poses = list_to_pose(self.path_points, self.navigator.get_clock())
 
-        self.report_completed = False        
         self.report_action_client = ActionClient(self, GenerateReport, 'generate_patrol_report')     
         self.param_client = self.create_client(SetParameters, f'/{self.capturer_node_name}/set_parameters')
+        self.flush_cli = self.create_client(FlushZoneData, '/capturer/flush_zone')
         self.current_folder_path = ""
+        self.current_zone = "Desconocida"
+        self.last_zone_change_time = 0.0
+        self.debounce_duration = 2.0 # Segundos de "ceguera" temporal tras un cambio de zona para evitar ping-pong
+        self.chatbot_process = None
+
+        default_map_path = os.path.join(PKG_DIR, 'config', 'semantic_map.json')
+        self.hospital_zones, self.reception_zone = load_semantic_map(default_map_path, self.get_logger())
+
+    def set_capturer_zone(self, zone_name):
+        '''Avisa al nodo capturador de la zona actual en tiempo real para el modo imagen'''
+        if not self.param_client.wait_for_service(timeout_sec=1.0):
+            return
+            
+        req = SetParameters.Request()
+        param = Parameter()
+        param.name = "current_zone"
+        param.value = ParameterValue(type=ParameterType.PARAMETER_STRING, string_value=zone_name)
+        req.parameters.append(param)
+        self.param_client.call_async(req)
+
+    def trigger_zone_flush(self, zone_name):
+        '''Llama al capturador asíncronamente para que envíe sus buffers de la zona indicada'''
+        if not self.flush_cli.wait_for_service(timeout_sec=1.0):
+            self.get_logger().warn("Servicio de flush no disponible. Ignorando...")
+            return
+
+        req = FlushZoneData.Request()
+        req.zone_name = zone_name
+        
+        # Llamada asíncrona (Fire-and-Forget) controlada semánticamente
+        self.flush_cli.call_async(req)
+        self.get_logger().debug(f"Trigger de fin de zona enviado para: {zone_name}")
 
     def set_capturer_folder(self, folder_path):
         '''Avisa al photos_node de la nueva carpeta usando SetParameters'''
@@ -148,7 +183,6 @@ class PatrolNode(rclpy.node.Node):
         # Estado 4 (SUCCEEDED) en rclpy.action significa éxito
         if status == 4 and result.success:
             self.get_logger().info(f"\nINFORME COMPLETADO \n{result.final_report}\n")
-            self.report_completed = True
         else:
             self.get_logger().error("ERROR generando el informe en el reportero: {result.final_report}")
             
@@ -193,14 +227,31 @@ class PatrolNode(rclpy.node.Node):
             self.navigator.goToPose(pose)
 
             while not self.navigator.isTaskComplete():
+
+                feedback = self.navigator.getFeedback()
+                if feedback:
+                    x = feedback.current_pose.pose.position.x
+                    y = feedback.current_pose.pose.position.y
+                    new_zone = get_zone_name([x, y], self.hospital_zones, self.reception_zone)
+                    
+                    if new_zone != self.current_zone and new_zone != "Desconocida":
+                        if time.time() - self.last_zone_change_time > self.debounce_duration:
+                            if self.current_zone != "Desconocida":
+                                # Añadido \n para que no pise la barra de tu interfaz de terminal
+                                self.get_logger().info(f"\nTransición detectada: Abandonando {self.current_zone} -> Entrando a {new_zone}")
+                                self.trigger_zone_flush(self.current_zone)
+                            
+                            self.current_zone = new_zone
+                            self.last_zone_change_time = time.time()
+                            self.set_capturer_zone(new_zone)
+
                 # El feedback de goToPose no tiene current_waypoint
-                if self.report_completed:
-                    nav_msg = f"Punto actual: {current_index}/{total_points} | Intento: {it + 1}/{max_retries} | (s) Saltar | (d) Detener informe | (q) Salir | (c) Abrir Chatbot"
-                else:
-                    nav_msg = f"Punto actual: {current_index}/{total_points} | Intento: {it + 1}/{max_retries} | (s) Saltar | (d) Detener informe | (q) Salir | (c) Abrir Chatbot"
-                print(f"{nav_msg}   ", end='\r')
+                nav_msg = f"Ruta: {current_index}/{total_points} | Intento: {it + 1}/{max_retries} | [s] Saltar [d] Cancelar inf. [c] Chat"
+                
+                print(f"\r\033[K{nav_msg}", end='', flush=True)
 
                 key = get_key_non_blocking()
+                time.sleep(0.01)
                 if key and key.lower() == 's':
                     self.get_logger().warn(f"\n [Salto] Punto {current_index} omitido por el usuario")
                     self.navigator.cancelTask()
@@ -216,14 +267,19 @@ class PatrolNode(rclpy.node.Node):
                     print("\n") # Salto de línea para no pisar el log
                     self.get_logger().info("Abriendo interfaz web del Chatbot (Streamlit)...")
                     
-                    try:
-                        chatbot_script = chatbot_web.__file__
-                        env_config = os.environ.copy()
-                        env_config["USE_RERANKER"] = str(self.use_reranker)
-                        subprocess.Popen(['streamlit', 'run', chatbot_script], env=env_config)
-                    except ImportError:
-                        self.get_logger().warn(f"Error al lanzar el proceso del chatbot: No se pudo importar el proceso")
-
+                    if not hasattr(self, 'chatbot_process') \
+                        or self.chatbot_process is None \
+                        or self.chatbot_process.poll() is not None:
+                        try:
+                            chatbot_script = chatbot_web.__file__
+                            env_config = os.environ.copy()
+                            env_config["USE_RERANKER"] = str(self.use_reranker)
+                            self.chatbot_process = subprocess.Popen(['streamlit', 'run', chatbot_script], env=env_config)
+                        except ImportError:
+                            self.get_logger().warn(f"Error al lanzar el proceso del chatbot: No se pudo importar el proceso")
+                    else:
+                        self.get_logger().warn("El chatbot ya se está ejecutando")
+                        
             result = self.navigator.getResult()
             
             if self.state_check(result,current_index,it):
@@ -241,17 +297,29 @@ class PatrolNode(rclpy.node.Node):
     def do_patrol_iteration(self):
         '''Reemplaza followWaypoints por un bucle iterativo para intercalar la marcha atrás y manejo de atascos'''
         total_points = len(self.route_poses)
+
+        # Reiniciar el estado para evitar arrastrar la última zona de la vuelta anterior
+        self.current_zone = "Desconocida"
+        self.last_zone_change_time = 0.0 #time.time()
         
         for i, pose in enumerate(self.route_poses):
             current_index = i + 1
             
-            self.navigate_to_waypoint(pose, current_index, total_points, max_retries=2) 
+            success = self.navigate_to_waypoint(pose, current_index, total_points, max_retries=2) 
+
             #self.trigger_report()
+        
+        # Un último flush explícito de la zona 
+        # en la que el robot se haya detenido para que no se pierdan esos datos.
+        if self.current_zone != "Desconocida":
+            self.get_logger().info(f"\nRuta terminada. Vaciando buffers de la última zona ({self.current_zone}).")
+            self.trigger_zone_flush(self.current_zone)
 
     def run_patrol(self):
         '''Bucle infinito de iteraciones de patrullas al hospital'''
         self.get_logger().info(f"Ruta cargada con {len(self.route_poses)} puntos")
         iteration = 1
+        
         if not self.keep_temp_folders:
             clean_all_orphan_folders(self.base_photos_dir, self.get_logger())
         else:
@@ -286,3 +354,9 @@ def main(args=None):
 
 if __name__ == '__main__':
     main()
+
+# TODO LIST
+# Testear hacer varias vueltas -> hecho
+# Rehacer datasets (grande imagen y video) -> hecho
+# Testear imagen, secuencia y video -> falta imagen y secuencia ig, testar con evaluador, más rapido
+# memoria

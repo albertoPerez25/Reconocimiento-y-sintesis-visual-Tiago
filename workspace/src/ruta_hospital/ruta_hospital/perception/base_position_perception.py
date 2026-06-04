@@ -3,10 +3,15 @@ import json
 from abc import abstractmethod
 from ruta_hospital.perception.base_perception import BasePerceptionNode
 
+DEFAULT_MIN_AREA_RATIO = 0.03
+
 class BasePositionPerceptionNode(BasePerceptionNode):
     '''Clase abstracta para los estimadores de posición (YOLO, PoseNet, etc.)'''
     def __init__(self, node_name, start_service=True):
         super().__init__(node_name, start_service=start_service)
+        
+        self.declare_parameter('min_area_ratio', DEFAULT_MIN_AREA_RATIO)
+        self.min_area_ratio = self.get_parameter('min_area_ratio').get_parameter_value().double_value
 
     def analyze_callback(self, request, response):
         '''Sobreescribe el callback porque los estimadores de posición no usan RagContext'''

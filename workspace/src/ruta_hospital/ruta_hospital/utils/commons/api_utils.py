@@ -16,7 +16,7 @@ def load_image_and_scale(image_path: str, logger) -> str:
         base64_img = ""
     else:
         # Estrategia de conservación de memoria: Limitar lado máximo a 224px
-        max_size = 224
+        max_size = 480
         h, w = img.shape[:2]
         if max(h, w) > max_size:
             scale = max_size / max(h, w)

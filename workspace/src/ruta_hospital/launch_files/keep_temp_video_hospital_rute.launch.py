@@ -4,6 +4,7 @@ from launch import LaunchDescription
 from launch.actions import IncludeLaunchDescription, TimerAction
 from launch.launch_description_sources import PythonLaunchDescriptionSource
 from launch_ros.actions import Node
+from launch.actions import IncludeLaunchDescription, TimerAction, ExecuteProcess
 
 def generate_launch_description():
     # Ruta donde está este paquete
@@ -22,7 +23,8 @@ def generate_launch_description():
         launch_arguments={
             'is_public_sim': 'True',
             'world_name': 'hospital',
-            'arm_type': 'no-arm'
+            'arm_type': 'no-arm',
+            'gui': 'False'
         }.items()
     )
 
@@ -78,7 +80,8 @@ def generate_launch_description():
                 parameters=[{
                     'use_sim_time': True,
                     'keep_temp_folders': True,
-                    'capturer_node_name': 'video_capturer_node' 
+                    'capturer_node_name': 'video_capturer_node',
+                    'use_reranker': True
                 }],
                 output='screen',
                 prefix='gnome-terminal -- ' # para que salga en otra terminal
@@ -94,9 +97,25 @@ def generate_launch_description():
                 package='ruta_hospital',
                 executable='video_capturer_node', 
                 name='video_capturer_node', 
-                parameters=[{'use_sim_time': True}],
+                parameters=[{'use_sim_time': True,
+                             'capture_mode':'video'}],
                 output='screen',
                 prefix='gnome-terminal -- ' 
+            )
+        ]
+    )
+
+
+    # Como PAL Robotics filtra el argumento 'gui', gzclient se abrirá.
+    # Esta rutina lo detecta y lo mata a los 8 segundos de arrancar, 
+    # liberando de 1 a 2 GB de VRAM instantáneamente, pero dejando 
+    # a gzserver intacto para que las cámaras del robot sigan viendo.
+    headless_enforcer = TimerAction(
+        period=8.0, 
+        actions=[
+            ExecuteProcess(
+                cmd=['killall', '-9', 'gzclient'],
+                output='screen'
             )
         ]
     )
@@ -104,6 +123,7 @@ def generate_launch_description():
     # Descripcion del Launch
     ld = LaunchDescription()
     ld.add_action(gazebo_cmd)
+    #ld.add_action(headless_enforcer)
     ld.add_action(relay_cmd)
     ld.add_action(ekf_cmd)
     ld.add_action(nav2_cmd)

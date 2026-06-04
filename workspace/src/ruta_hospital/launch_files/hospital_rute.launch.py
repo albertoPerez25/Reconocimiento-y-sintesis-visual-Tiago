@@ -75,7 +75,8 @@ def generate_launch_description():
                 package='ruta_hospital',
                 executable='patrulla',
                 name='patrol_node',
-                parameters=[{'use_sim_time': True}],
+                parameters=[{'use_sim_time': True,
+                    'use_reranker': True}],
                 output='screen',
                 prefix='gnome-terminal -- ' # para que salga en otra terminal
             )

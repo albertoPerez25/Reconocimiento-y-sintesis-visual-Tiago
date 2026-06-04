@@ -7,7 +7,8 @@ from ruta_hospital.utils.commons.api_utils import call_ollama_api
 from ruta_hospital.perception.base_vlm_perception import BaseVLMPerceptionNode
 
 # modelo con capacidades nativas de vídeo 
-DEFAULT_MODEL = 'nemotron-3-nano:4b' 
+#DEFAULT_MODEL = 'nemotron-3-nano:4b' 
+DEFAULT_MODEL = 'qwen3.5:4b'
 DEFAULT_OLLAMA_URL = 'http://localhost:11434/api/generate'
 DEFAULT_SAMPLED_FRAMES = 5
 
@@ -22,27 +23,47 @@ class VideoPerceptionNode(BaseVLMPerceptionNode):
         self.declare_parameter('sampled_frames', DEFAULT_SAMPLED_FRAMES)
         self.sampled_frames = self.get_parameter('sampled_frames').value
 
-    def process_image(self, file_path, context): 
+    def process_image(self, file_path, context): # TODO: Dividir
         '''Mantiene el nombre por herencia de BasePerceptionNode, pero recibe el video'''
         
         base64_images = self.extract_frames(file_path, self.sampled_frames)
         
         if not base64_images:
             return "Error extrayendo frames del clip de vídeo"
+        
+        tracking_hist = getattr(context, 'tracking_history', '')
 
         prompt = f"""
-        Actúa como una IA analizadora de seguridad de un hospital.
-        Analiza este clip de vídeo de la zona {context.zone_name} ({context.zone_type}).
-        Actividades esperadas aquí: {context.expected_activities}.
+Actúa como un analizador telegráfico de actividades humanas para un hospital
+Estás dentro de un hospital en {context.zone_name}, que es una zona de tipo {context.zone_type}.
+Aquí puedes ver personas {context.expected_activities}
+
+INSTRUCCIONES:
+    - Describe en un máximo de {self.word_limit} PALABRAS las actividades que las personas en el clip de vídeo están realizando
+    - Dentro del límite incluye una MUY BREVE descripción de la persona o personas a las que te refieres
+    - Si ves una situación que amenaza la vida (como una caída o alguien fumando), escribe "URGENTE" y descríbela brevemente
+    - IGNORA a cualquier persona que se vea a lo lejos a través de una puerta o cristal. Describe ÚNICAMENTE lo que esté físicamente DENTRO de tu misma habitación
+    - Si no hay personas en el clip de vídeo, escribe "Despejado"
+
+EJEMPLO DE SALIDAS:
+    - "Una mujer con sombrero sentada en una silla"
+    - "Un niño con camiseta amarilla corriendo"
+    - "Varios médicos de pie al lado de una camilla con una persona tumbada, posiblemente una operación a un paciente"
+"""
         
-        INSTRUCCIONES CRÍTICAS:
-        1. Describe la acción principal observada en MÁXIMO {self.word_limit} PALABRAS.
-        2. Usa formato de log directo (ej: 'Personal médico moviendo camilla').
-        3. Si ves a alguien sufriendo una caída o tirado en el suelo, escribe la palabra "URGENTE".
-        4. ESTÁ PROHIBIDO copiar o repetir el contexto. Úsalo solo para confirmar la acción.
+        if tracking_hist:
+            prompt += f"""
+DATOS DE TRACKING YOLO:
+---
+    {tracking_hist}
+---
         
-        DESCRIPCIÓN DE LA ESCENA (en español):
-        """
+RESPONDE SOLO EN ESPAÑOL
+"""
+        else:
+            prompt += f"""
+RESPONDE SOLO EN ESPAÑOL
+"""
         
         self.get_logger().debug(f"PROMPT AL VLM DE VÍDEO: {prompt}")
         
@@ -52,10 +73,13 @@ class VideoPerceptionNode(BaseVLMPerceptionNode):
             "model": self.vlm_model, 
             "prompt": prompt, 
             "images": base64_images,  
+            "think": False,
             "stream": False,
+            "keep_alive": "30s",
             "options": {
                 "num_predict": self.word_limit * 2,
-                "temperature": 0.0,  # Hace las respuestas menos creativas y más predecibles
+                "temperature": 0.01,  # respuestas menos creativas y mas predecibles
+                "num_ctx": 1024,
                 "stop": [
                     "Sujeto ID_", 
                     "Historial", 
@@ -69,13 +93,27 @@ class VideoPerceptionNode(BaseVLMPerceptionNode):
         try:
             vlm_text = call_ollama_api(self.ollama_url, payload).strip()
             
+            alert = False
             if any(term in vlm_text.lower() for term in ["despejado", "empty", "no people"]):
-                return "Despejado."
-                
-            return vlm_text
+                descripcion = "Despejado."
+            else:
+                descripcion = vlm_text
+                # Evaluar alerta de seguridad según la instrucción del prompt
+                if "urgente" in vlm_text.lower():
+                    alert = True
+            self.get_logger().error(f"Output video: {descripcion}")
+                    
+            return {
+                "descripcion_vlm": descripcion,
+                "alerta": alert
+            }
+            
         except Exception as e:
             self.get_logger().error(f"Error llamando a la API: {e}")
-            return "Error de inferencia en el modelo de vídeo"
+            return {
+                "descripcion_vlm": f"Error de inferencia VLM de vídeo: {e}",
+                "alerta": False
+            }
         
     def extract_frames(self, video_path, num_frames):
         '''Lee el archivo de vídeo y devuelve una lista de imágenes en base64 equiespaciadas'''
@@ -95,9 +133,11 @@ class VideoPerceptionNode(BaseVLMPerceptionNode):
             cap.set(cv2.CAP_PROP_POS_FRAMES, idx)
             ret, frame = cap.read()
             if ret:
+                # Escalar imagen
+                frame = cv2.resize(frame, (640, 480))
                 # Comprimimos en JPEG para reducir el payload
-                _, buffer = cv2.imencode('.jpg', frame)
-                b64_str = base64.b64encode(buffer).decode('utf-8')
+                _, buffer = cv2.imencode('.jpg', frame, [int(cv2.IMWRITE_JPEG_QUALITY), 70])
+                b64_str = base64.b64encode(buffer.tobytes()).decode('utf-8')
                 frames_b64.append(b64_str)
                 
         cap.release()
