@@ -1,7 +1,1 @@
-<?xml version="1.0" ?>
-<robot xmlns:xacro="http://ros.org/wiki/xacro">
-    <xacro:property name="end_effector_name" value="custom" />
-    <xacro:macro name="define_end_effector" params="arm name">
-
-    </xacro:macro>
-</robot>
+/home/alberto/tfg/Reconocimiento-y-sintesis-visual-Tiago/workspace/src/tiago_moveit_config/config/srdf/end_effectors/custom.srdf.xacro

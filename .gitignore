@@ -62,6 +62,8 @@ datasets/hospital_photos__/*
 datasets/hospital_photos_/*
 datasets/hospital_photos*
 
+datasets/*
+
 YOLO_tracking_debug/*
 YOLO_tracking_debug/tracking_*.jpg
 

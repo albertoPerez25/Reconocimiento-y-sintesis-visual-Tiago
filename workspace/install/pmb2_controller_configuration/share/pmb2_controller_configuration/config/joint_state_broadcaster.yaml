@@ -1,4 +1,1 @@
-/**/joint_state_broadcaster:
-  ros__parameters:
-    type: joint_state_broadcaster/JointStateBroadcaster
-    update_rate: 50
+/home/alberto/tfg/Reconocimiento-y-sintesis-visual-Tiago/workspace/src/pmb2_robot/pmb2_controller_configuration/config/joint_state_broadcaster.yaml

@@ -1,5 +1,1 @@
-gripper_left_current_limit_controller:
-  type: "pal_ros_controllers/CurrentLimitController"
-  actuators:
-    - gripper_left_left_finger_motor
-    - gripper_left_right_finger_motor
+/home/alberto/tfg/Reconocimiento-y-sintesis-visual-Tiago/workspace/src/pal_gripper/pal_gripper_controller_configuration/config/current_limit_controllers_left.yaml

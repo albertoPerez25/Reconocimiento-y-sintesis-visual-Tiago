@@ -1,14 +1,1 @@
-material Aruco/marker26_8cm
-{
-	technique
-	{
-		pass
-		{
-			texture_unit
-			{
-				texture aruco-26_8cm.png
-			}
-		}
-	}
-}
-
+/home/alberto/tfg/Reconocimiento-y-sintesis-visual-Tiago/workspace/src/pal_gazebo_worlds/models/marker26_8cm/material/scripts/marker26_8cm.material

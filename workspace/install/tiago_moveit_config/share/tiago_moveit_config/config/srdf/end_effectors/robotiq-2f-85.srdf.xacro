@@ -1,4 +1,1 @@
-<?xml version="1.0" ?>
-<robot xmlns:xacro="http://ros.org/wiki/xacro">
-  <xacro:include filename="$(find tiago_moveit_config)/config/srdf/end_effectors/shared/robotiq-2f.srdf.xacro" />
-</robot>
+/home/alberto/tfg/Reconocimiento-y-sintesis-visual-Tiago/workspace/src/tiago_moveit_config/config/srdf/end_effectors/robotiq-2f-85.srdf.xacro
