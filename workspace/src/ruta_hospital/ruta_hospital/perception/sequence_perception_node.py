@@ -11,7 +11,8 @@ DEFAULT_MODEL = 'moondream'
 
 class SequencePerceptionNode(BaseVLMPerceptionNode):
     def __init__(self):
-        super().__init__('sequence_perception_node', default_model=DEFAULT_MODEL)        
+        super().__init__('sequence_perception_node', default_model=DEFAULT_MODEL)    
+        self.perception_metrics["modelo_usado"] = self.vlm_model    
 
     def process_image(self, image_paths_str, context):
         '''Recibe múltiples rutas de frames separadas por coma y los manda al VLM'''

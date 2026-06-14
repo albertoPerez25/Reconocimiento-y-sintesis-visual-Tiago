@@ -5,6 +5,7 @@ import json
 import cv2
 import importlib
 from dataclasses import dataclass
+import time
 
 from ruta_hospital.perception.base_perception import BasePerceptionNode, RagContext
 #from .yolo_perception_node import YoloPerceptionNode
@@ -50,6 +51,15 @@ class HybridPerceptionNode(BasePerceptionNode):
         self.pos_models = []
         self.vlm_models = []
 
+        pose_names = [cls_path.rsplit('.', 1)[-1] for cls_path in pos_classes]
+        vlm_names = [cls_path.rsplit('.', 1)[-1] for cls_path in vlm_classes]
+        
+        self.perception_metrics["modelo_usado"] = "hybrid_model"
+        self.perception_metrics["modelos_acoplados"] = {
+            "pose": pose_names,
+            "vlm": vlm_names
+        }
+
         # Instanciación en tiempo de ejecución
         for cls_path in pos_classes:
             try:
@@ -86,21 +96,67 @@ class HybridPerceptionNode(BasePerceptionNode):
         # Contexto de la zona (reglas RAG, historial) para dárselo a los VLMs
         context = RagContext(request)
         report_dict = self.process_image(request.image_path, context)
+        self.save_perception_metrics()
         response.report = json.dumps(report_dict, ensure_ascii=False)
         return response
 
 
-    def process_image(self, image_path, context): # TODO: Dividir
+    def process_image(self, image_path, context):
         '''Combina los resultados de la inferencia delegando en los perceptores compatibles'''
-
         self.get_logger().debug(f"Procesamiento híbrido iniciado para: {image_path}")
         self.get_logger().debug(f"zone_name:{context.zone_name} | time_str:{context.time_str} | expected_activities:{context.expected_activities} | zone_type:{context.zone_type}")
 
+        t_total_start = time.time()
+
+        # 1. Ejecutar modelos de pose/posición
+        pos_data_list, all_detections, image_to_vlm, requiere_vlm, yolo_duration = self._process_pose_models(image_path)
+
+        # 2. Generar imagen anotada (si corresponde)
+        image_to_vlm = self._prepare_vlm_image(all_detections, image_to_vlm, image_path, context)
+
+        # 3. Ejecutar modelos VLM
+        vlm_data_list, vlm_duration = self._process_vlm_models(requiere_vlm, image_to_vlm, context)
+
+        # 4. Limpieza de temporales
+        self._cleanup_temp_files(image_to_vlm, image_path)
+
+        # Si el reportero envió un formato que no tiene modelos compatibles
+        if not pos_data_list and not vlm_data_list:
+            return {"descripcion_vlm": "Formato ignorado por los perceptores acoplados.", "alerta": False}
+        
+        self.get_logger().error(f"\n[DEBUG POS] Tipo: {type(pos_data_list)} | Contenido: {pos_data_list}")
+        self.get_logger().error(f"[DEBUG VLM] Tipo: {type(vlm_data_list)} | Contenido: {vlm_data_list}")
+        
+        json_response = self.get_json_response(pos_data_list, vlm_data_list)
+        self.get_logger().debug(f"{json_response}")
+
+        total_duration = time.time() - t_total_start
+
+        time_metrics = {
+            "yolo_seconds": round(yolo_duration, 3),
+            "vlm_seconds": round(vlm_duration, 3),
+            "total_seconds": round(total_duration, 3)
+        }
+        self.perception_metrics["tiempos_procesado"].append(time_metrics)
+        
+        '''self.get_logger().info(
+            f"\n{'='*45}\n"
+            f"TIEMPOS DE PERCEPCIÓN ({os.path.basename(image_path)}):\n"
+            f"   - YOLO (Espacial):  {yolo_duration:.2f} s\n"
+            f"   - VLM (Semántico):  {vlm_duration:.2f} s\n"
+            f"   - Total Pipeline:   {total_duration:.2f} s\n"
+            f"{'='*45}"
+        )'''
+        return json_response
+    
+    def _process_pose_models(self, image_path):
+        '''Ejecuta los modelos espaciales (YOLO) y recolecta las detecciones'''
         pos_data_list = []
         all_detections = []
-        # Generar imagen anotada
         image_to_vlm = image_path
         requiere_vlm = len(self.pos_models) == 0 # si no hay modelo pose iniciado, se requiere vlm
+
+        t_yolo_start = time.time()
 
         # Ejecutar modelos de posición (posiciones, conteo exacto y tracking)
         for model in self.pos_models:
@@ -125,18 +181,29 @@ class HybridPerceptionNode(BasePerceptionNode):
                 desc_lower = str(parsed_data.get("descripcion_vlm", "")).lower()
                 if "despejado" not in desc_lower and "0 personas" not in desc_lower:
                     # Con que al menos uno de los modelos de pose encuentre hay que pasarsela al VLM
-                    requiere_vlm = True         
-        
+                    requiere_vlm = True    
+
+        yolo_duration = time.time() - t_yolo_start
+        return pos_data_list, all_detections, image_to_vlm, requiere_vlm, yolo_duration
+    
+    def _prepare_vlm_image(self, all_detections, image_to_vlm, image_path, context):
+        '''Dibuja las cajas delimitadoras de YOLO en la imagen si es necesario'''
         # comentar el bloque 'if annotated_img:' para que sea image_to_vlm = image_path (imagen limpia)
         if all_detections and image_to_vlm == image_path: 
             self.get_logger().debug("Generando imagen anotada con detecciones para el VLM...")
             annotated_img = self.get_image_with_tracking_data(all_detections, image_path, context)
             '''if annotated_img: # Seguridad por si cv2 falla al escribir
                 image_to_vlm = annotated_img'''
+        return image_to_vlm
 
-        # Ejecutar modelos VLM (contexto, peligros y descripción)
+
+    def _process_vlm_models(self, requiere_vlm, image_to_vlm, context):
+        '''Ejecuta los Modelos de Lenguaje Visual solo si es necesario'''
         vlm_data_list = []
+        vlm_duration = 0.0
+        
         if requiere_vlm:
+            t_vlm_start = time.time()
             for model in self.vlm_models:
                 if model.check_path(image_to_vlm):
                     parsed_report = model.process_image(image_to_vlm, context)
@@ -147,7 +214,13 @@ class HybridPerceptionNode(BasePerceptionNode):
                         except Exception:
                             parsed_report = {"descripcion_vlm": parsed_report, "alerta": False}
                     vlm_data_list.append(parsed_report)
+            vlm_duration = time.time() - t_vlm_start
+            
+        return vlm_data_list, vlm_duration
 
+
+    def _cleanup_temp_files(self, image_to_vlm, image_path):
+        '''Libera espacio eliminando las imágenes anotadas temporales'''
         # Limpiaer frame temporal
         if self.delete_annotated_image and image_to_vlm != image_path:
             # Separar por comas por si es una secuencia, o iterar una sola ruta si es foto/vídeo
@@ -158,17 +231,6 @@ class HybridPerceptionNode(BasePerceptionNode):
                         os.remove(clean_path)
                     except OSError as e:
                         self.get_logger().error(f"Error borrando temporal {clean_path}: {e}")
-
-        # Si el reportero envió un formato que no tiene modelos compatibles
-        if not pos_data_list and not vlm_data_list:
-            return {"descripcion_vlm": "Formato ignorado por los perceptores acoplados.", "alerta": False}
-        
-        self.get_logger().error(f"\n[DEBUG POS] Tipo: {type(pos_data_list)} | Contenido: {pos_data_list}")
-        self.get_logger().error(f"[DEBUG VLM] Tipo: {type(vlm_data_list)} | Contenido: {vlm_data_list}")
-        
-        json_response = self.get_json_response(pos_data_list, vlm_data_list)
-        self.get_logger().debug(f"{json_response}")
-        return json_response
     
         
     def check_path(self, path):

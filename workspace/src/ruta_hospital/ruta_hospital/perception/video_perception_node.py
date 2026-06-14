@@ -22,6 +22,7 @@ class VideoPerceptionNode(BaseVLMPerceptionNode):
         
         self.declare_parameter('sampled_frames', DEFAULT_SAMPLED_FRAMES)
         self.sampled_frames = self.get_parameter('sampled_frames').value
+        self.perception_metrics["modelo_usado"] = self.vlm_model
 
     def process_image(self, file_path, context): # TODO: Dividir
         '''Mantiene el nombre por herencia de BasePerceptionNode, pero recibe el video'''
@@ -134,7 +135,7 @@ RESPONDE SOLO EN ESPAÑOL
             ret, frame = cap.read()
             if ret:
                 # Escalar imagen
-                frame = cv2.resize(frame, (640, 480))
+                frame = cv2.resize(frame, (640, 480)) # TODO: Cambiarlo a la funcion estándar de utilidades
                 # Comprimimos en JPEG para reducir el payload
                 _, buffer = cv2.imencode('.jpg', frame, [int(cv2.IMWRITE_JPEG_QUALITY), 70])
                 b64_str = base64.b64encode(buffer.tobytes()).decode('utf-8')

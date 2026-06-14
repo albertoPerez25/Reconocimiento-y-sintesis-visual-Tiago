@@ -3,6 +3,8 @@ import json
 import datetime
 import os
 from rclpy.node import Node
+from rclpy.action import CancelResponse, GoalResponse
+from hospital_interfaces.action import GenerateReport
 from ruta_hospital.evaluation.utils.ragas_evaluator import OllamaParams, EvaluatorRunParams
 from ruta_hospital.utils.commons.metrics_utils import save_metrics_to_file
 
@@ -130,6 +132,16 @@ class BaseEvaluatorNode(Node, ABC):
             self.get_logger().error(f"Error cargando respuestas intermedias: {e}")
             return None
         
+    def goal_callback(self, goal_request):
+        '''Acepta la petición de evaluación al instante de forma genérica'''
+        self.get_logger().info("Recibida petición de evaluación a través de Acción.")
+        return GoalResponse.ACCEPT
+
+    def cancel_callback(self, goal_handle):
+        '''Permite cancelar la evaluación de forma genérica si se solicita'''
+        self.get_logger().info("Petición de cancelación de evaluación recibida.")
+        return CancelResponse.ACCEPT
+        
     @abstractmethod
-    async def evaluate_callback(self, request, response):
+    async def evaluate_callback(self, goal_handle):
         pass

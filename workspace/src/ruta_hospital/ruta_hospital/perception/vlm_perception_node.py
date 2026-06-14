@@ -16,6 +16,7 @@ class VLMPerceptionNode(BaseVLMPerceptionNode):
         super().__init__('vlm_perception_node', start_service=start_service, default_model=DEFAULT_MODEL)
         #self.declare_parameter('vlm_model', 'llava') # No tengo tanta VRAM
         #self.ollama_url = self.ollama_url.replace("generate", "chat")
+        self.perception_metrics["modelo_usado"] = self.vlm_model
 
     def process_image(self, image_path, context):
         '''Interactua con el modelo y devuelve el reporte en forma de string'''

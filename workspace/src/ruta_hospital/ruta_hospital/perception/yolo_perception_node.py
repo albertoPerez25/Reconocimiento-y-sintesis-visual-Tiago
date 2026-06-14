@@ -31,6 +31,7 @@ class YoloPerceptionNode(BasePositionPerceptionNode):
         self.min_confidence = self.get_parameter('min_confidence').get_parameter_value().double_value
 
         self.model = YOLO(selected_yolo_model)
+        self.perception_metrics["modelo_usado"] = selected_yolo_model
         self.get_logger().info(f"Modelo {selected_yolo_model} cargado")
 
     def process_image(self, image_path, include_raw_detections=False): # TODO: Dividir
@@ -73,11 +74,10 @@ class YoloPerceptionNode(BasePositionPerceptionNode):
             pts = keypoints.xy[0].tolist()
             confs = keypoints.conf[0].tolist()
             
-            posture,is_alert = self.calculate_posture(width, 
-                                                      height, 
+            box_dims = (width, height, y2)
+            posture,is_alert = self.calculate_posture(box_dims, 
                                                       pts, 
                                                       confs, 
-                                                      y2, 
                                                       img_height
                                                     )
 
@@ -101,9 +101,20 @@ class YoloPerceptionNode(BasePositionPerceptionNode):
 
         return json_response
 
-    def calculate_posture(self, width, height, pts, confs, y2, img_height): # TODO: Dividir
+    def calculate_posture(self, box_dims, pts, confs, img_height):
         '''Calcula posturas usando relaciones biomecánicas y conciencia espacial'''
-        
+        width, height, y2 = box_dims
+        body = self._extract_body_parts(pts, confs)
+
+        horizontal_result = self._evaluate_horizontal_posture(body, box_dims, img_height)
+        if horizontal_result is not None:
+            return horizontal_result
+
+        return self._evaluate_vertical_posture(body, box_dims)
+
+
+    def _extract_body_parts(self, pts, confs):
+        '''Aisla la extracción de índices de YOLO y calcula las medias de las articulaciones'''
         nose_y, nose_c = pts[0][1], confs[0]
         
         # Eje Y en imágenes crece hacia abajo. (Valores mayores = más cerca del suelo)
@@ -116,18 +127,30 @@ class YoloPerceptionNode(BasePositionPerceptionNode):
         ankle_y = (pts[15][1] + pts[16][1]) / 2.0 
         ankle_c = (confs[15] + confs[16]) / 2.0
 
+        return {
+            "nose_y": nose_y, "nose_c": nose_c,
+            "hip_y": hip_y, "hip_c": hip_c,
+            "knee_y": knee_y, "knee_c": knee_c,
+            "ankle_y": ankle_y, "ankle_c": ankle_c
+        }
+
+
+    def _evaluate_horizontal_posture(self, body, box_dims, img_height):
+        '''Comprueba si la persona está tumbada y decide si es emergencia o camilla'''
+        width, height, y2 = box_dims
+
         # DETECCIÓN DE ESTADO HORIZONTAL
         is_horizontal = False
         
         # Biomecánica: cabeza a la altura de la cadera o más baja
-        if nose_c > self.min_confidence and hip_c > self.min_confidence:
-            if nose_y > (hip_y - height * 0.15): 
+        if body["nose_c"] > self.min_confidence and body["hip_c"] > self.min_confidence:
+            if body["nose_y"] > (body["hip_y"] - height * 0.15): 
                 is_horizontal = True
                 
         # Aspect Ratio: Caja muy ancha (con confirmación de puntos si los hay)
         elif width > (height * 1.3):
-            if nose_c > self.min_confidence and hip_c > self.min_confidence:
-                if abs(nose_y - hip_y) < (height * 0.3):
+            if body["nose_c"] > self.min_confidence and body["hip_c"] > self.min_confidence:
+                if abs(body["nose_y"] - body["hip_y"]) < (height * 0.3):
                     is_horizontal = True
             elif width > (height * 1.8): # Oclusión severa pero extremadamente horizontal
                 is_horizontal = True
@@ -138,25 +161,32 @@ class YoloPerceptionNode(BasePositionPerceptionNode):
             vertical_ratio = y2 / img_height
             
             # Si YOLO no ve las piernas, asumimos que están bajo sábanas
-            legs_occluded = (knee_c < self.min_confidence and ankle_c < self.min_confidence)
+            legs_occluded = (body["knee_c"] < self.min_confidence and body["ankle_c"] < self.min_confidence)
             
-            # REGLA DE SEGURIDAD (Priorizar falsos positivos de caídas a falsos negativos):
-            # - Si y2 < 0.5: Es imposible que sea el suelo salvo que esté a 30m (Es camilla)
+            # Priorizar falsos positivos de caídas a falsos negativos
+            # - Si y2 < 0.5: Es imposible que sea el suelo salvo que esté muy lejos (Es camilla)
             # - Si y2 < 0.7 y las piernas están ocultas (Seguro es camilla)
             if (vertical_ratio < 0.5) or (vertical_ratio < 0.7 and legs_occluded):
                 return "Tumbada en camilla", False
             else:
                 return "Caída URGENTE", True
 
+        return None
+
+
+    def _evaluate_vertical_posture(self, body, box_dims):
+        '''Evalúa si está sentado, de pie o aplica los fallbacks de seguridad'''
+        width, height, y2 = box_dims
+
         # POSTURAS VERTICALES
-        # Heurística: Sentada (Rodillas a la altura de la cadera)
-        if hip_c > self.min_confidence and knee_c > self.min_confidence:
-            if abs(hip_y - knee_y) < (height * 0.25):
+        # Sentada (Rodillas a la altura de la cadera)
+        if body["hip_c"] > self.min_confidence and body["knee_c"] > self.min_confidence:
+            if abs(body["hip_y"] - body["knee_y"]) < (height * 0.25):
                 return "Sentada", False
 
-        # Heurística: De pie (Cabeza alta y caja vertical)
-        if nose_c > self.min_confidence and hip_c > self.min_confidence:
-            if height > (width * 1.1) and nose_y < (hip_y - height * 0.2):
+        # De pie (Cabeza alta y caja vertical)
+        if body["nose_c"] > self.min_confidence and body["hip_c"] > self.min_confidence:
+            if height > (width * 1.1) and body["nose_y"] < (body["hip_y"] - height * 0.2):
                 return "De pie o caminando", False
 
         # FALLBACKS (Si fallan los puntos por recortes de la cámara)
@@ -236,11 +266,10 @@ class YoloPerceptionNode(BasePositionPerceptionNode):
             pts = keypoints.xy[0].tolist()
             confs = keypoints.conf[0].tolist()
             
-            posture, is_alert = self.calculate_posture(width, 
-                                                       height, 
+            box_dims = (width, height, y2)
+            posture, is_alert = self.calculate_posture(box_dims, 
                                                        pts, 
                                                        confs, 
-                                                       y2, 
                                                        img_height
                                                     )
             if len(pts) < 17:

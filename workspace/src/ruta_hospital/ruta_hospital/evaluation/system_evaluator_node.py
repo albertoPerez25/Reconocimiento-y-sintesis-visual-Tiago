@@ -8,6 +8,8 @@ import csv
 from dataclasses import dataclass
 from rclpy.executors import MultiThreadedExecutor
 from std_srvs.srv import Trigger
+from rclpy.action import ActionServer, CancelResponse, GoalResponse
+from rclpy.callback_groups import ReentrantCallbackGroup, MutuallyExclusiveCallbackGroup
 from ament_index_python.packages import get_package_share_directory
 
 from ruta_hospital.reporting.llm_reporter_node import LLMReporterNode
@@ -92,17 +94,20 @@ class SystemEvaluatorNode(BaseEvaluatorNode):
             self.run_params, 
             self.get_logger()
         )
+
+        self.action_cb_group = ReentrantCallbackGroup()
         
-        # Servicio distinto para la evaluación
-        self.eval_srv = self.create_service(
-            Trigger, 
-            'evaluate_patrol_system', 
-            self.evaluate_callback,
-            callback_group=self.reporter_logic.cb_group # Evita Deadlocks rehusando el grupo del reportero
+        self._action_server = ActionServer(
+            self,
+            GenerateReport,
+            '/evaluate_patrol_system',
+            execute_callback=self.evaluate_callback, 
+            callback_group=self.action_cb_group
         )
+        
         self.get_logger().info("Nodo Evaluador listo. Llama al servicio '/evaluate_patrol_system'")
 
-    async def evaluate_callback(self, request, response):
+    async def evaluate_callback(self, goal_handle):
         '''Orquesta el flujo de evaluación completo: obtención de datos (inferencia o lectura de disco), 
         ejecución de RAGAS y actualización de métricas'''
         
@@ -111,21 +116,24 @@ class SystemEvaluatorNode(BaseEvaluatorNode):
         inference_time = 0.0
         ragas_time = 0.0
 
+        # Instanciar el objeto de retorno oficial que exige la Acción
+        result = GenerateReport.Result()
+
         try:
             if self.evaluation_mode == "evaluate_only":
-                short_dict, summary_dict = self.get_data_for_evaluate_only(request, response)
+                short_dict, summary_dict = self.get_data_for_evaluate_only()
             else:
                 t_start_inference = time.time()
-                short_dict, summary_dict = await self.get_data_for_inference_and_evaluate(request, response)
+                short_dict, summary_dict = await self.get_data_for_inference_and_evaluate()
 
                 if self.evaluation_mode == "generate_only":
-                    response.success = True
-                    response.message = f"Generación completada. Respuestas guardadas en {self.answers_file}"
                     inference_time = time.time() - t_start_inference
-                    
                     self.sync_metrics_from_reporter(inference_time, 0.0, total_init_time)
                     self.save_metrics()
-                    return response
+
+                    goal_handle.succeed()
+                    result.summary = f"Generación completada. Respuestas guardadas en {self.answers_file}"
+                    return result
 
             t_start_ragas = time.time()
             self.ragas_evaluator.evaluate_system(
@@ -134,25 +142,26 @@ class SystemEvaluatorNode(BaseEvaluatorNode):
                 config_name=self.evaluation_name
             )       
             ragas_time = time.time() - t_start_ragas
-
-            response.success = True
-            response.message = f"Evaluación Ragas completada con éxito. Guardado en: {self.metrics_dir}"
         
             self.sync_metrics_from_reporter(inference_time, ragas_time, total_init_time)
             self.save_metrics()
+
+            goal_handle.succeed()
+            result.summary = f"Evaluación Ragas completada con éxito. Guardado en: {self.metrics_dir}"
+            return result
             
         except InferencePipelineError as e:
             self.get_logger().error(str(e))
-            response.success = False
-            response.message = str(e)
+            goal_handle.abort()
+            result.summary = str(e)
+            return result
         
         except Exception as e:
             self.get_logger().error(f"Error inesperado durante la evaluación: {e}")
-            response.success = False
-            response.message = f"Fallo del sistema: {e}"
-            
-        return response
-    
+            goal_handle.abort()
+            result.summary = f"Fallo del sistema: {e}"
+            return result
+                
     def sync_metrics_from_reporter(self, inference_time, ragas_time, total_init_time):
         '''Sincroniza y consolida las métricas de rendimiento y ejecución obtenidas desde el nodo reportero 
         instanciado.'''
@@ -172,7 +181,7 @@ class SystemEvaluatorNode(BaseEvaluatorNode):
         self.current_metrics["tiempo_ragas_evaluacion_segundos"] = ragas_time
         self.current_metrics["tiempo_total_ejecucion_segundos"] = round(time.time() - total_init_time, 2)
     
-    def get_data_for_evaluate_only(self, request, response):
+    def get_data_for_evaluate_only(self):
         '''Carga y devuelve los diccionarios de evaluación intermedios desde el disco para una ejecución rápida 
         de métricas RAGAS sin inferencia'''
 
@@ -185,18 +194,39 @@ class SystemEvaluatorNode(BaseEvaluatorNode):
 
         return short_dict,summary_dict
     
-    async def get_data_for_inference_and_evaluate(self, request, response): # TODO: Dividir esta función en varias, es mu larga
+    async def get_data_for_inference_and_evaluate(self): 
         '''Simula el ciclo completo inyectando eventos en tiempo real al reportero de producción'''
         
-        mock_goal_handle = MockGoalHandle()
-        
+        faiss_index_file = os.path.join(self.reporter_logic.vector_manager.faiss_path, "index.faiss")
+        existe_faiss = os.path.exists(faiss_index_file)
+        skip_inference = self.reporter_logic.resume_session and existe_faiss
+
+        if not skip_inference:
+            summary_text = await self._run_patrol_simulation()
+        else:
+            self.get_logger().info("Resume Session activo y FAISS detectado. Saltando simulación de perceptores...")
+            # Forzar carga de FAISS a la RAM
+            self.reporter_logic.vector_manager.get_highest_round_in_disk()
+            summary_text = self.reporter_logic.latest_final_summary
+
+        return self._generate_ragas_answers(summary_text)
+    
+
+    async def _run_patrol_simulation(self):
+        '''Sub-orquestador: Prepara el entorno, inyecta los eventos y consolida el informe.'''
+        valid_rows = self._prepare_and_read_dataset()
+        await self._inject_dataset_events(valid_rows)
+        return await self._consolidate_patrol_report()
+    
+
+    def _prepare_and_read_dataset(self):
+        '''Prepara el entorno limpiando la caché y lee las filas válidas del CSV.'''
         self.get_logger().info("Limpiando base vectorial para garantizar una evaluación aislada...")
         self.reporter_logic.vector_manager.clear_all_data()
         
         # El reportero en producción empieza en 0 y suma 1 al consolidar. Lo alineamos.
         self.reporter_logic.current_round = 0 
             
-        # SIMULACIÓN DE LA PATRULLA EN TIEMPO REAL (Streaming RAG)
         self.get_logger().info(f"Simulando patrulla leyendo dataset: {self.eval_folder_path}")
         if not os.path.exists(self.eval_folder_path):
             raise InferencePipelineError(f"Directorio de evaluación no encontrado: {self.eval_folder_path}")
@@ -205,19 +235,24 @@ class SystemEvaluatorNode(BaseEvaluatorNode):
         if not os.path.exists(csv_path):
             raise InferencePipelineError(f"Falta el archivo metadata.csv en {self.eval_folder_path}. Es necesario para ubicar las fotos en el mapa.")
 
-        timestamp_counter = 0.0
-        processed_files = 0
-        
-        # Leer el archivo CSV del capturador
         with open(csv_path, mode='r') as file:
             reader = csv.reader(file)
             valid_rows = [row for row in reader if row and len(row) >= 5]
-        n_files = len(valid_rows)
-        if n_files == 0:
-            raise InferencePipelineError(f"El archivo {csv_path} no contiene datos válidos.")
-        for row in valid_rows:
             
-            #BARRA DE PROGRESO
+        if not valid_rows:
+            raise InferencePipelineError(f"El archivo {csv_path} no contiene datos válidos.")
+            
+        return valid_rows
+    
+
+    async def _inject_dataset_events(self, valid_rows):
+        '''Itera sobre las filas del CSV, simula las capturas y las inyecta en el reportero.'''
+        timestamp_counter = 0.0
+        processed_files = 0
+        n_files = len(valid_rows)
+        
+        for row in valid_rows:
+            # BARRA DE PROGRESO
             percent = processed_files / n_files
             chunks = int(percent * 30) # Tamaño de la barra (30 caracteres)
             bar = '█' * chunks + '-' * (30 - chunks)
@@ -225,9 +260,6 @@ class SystemEvaluatorNode(BaseEvaluatorNode):
             # print con \r para sobrescribir la misma línea en la terminal
             print(f'\r\033[94mImágenes Procesadas\033[0m |{bar}| {processed_files}/{n_files} ({(percent*100):.1f}%)', end='', flush=True)
 
-            if not row or len(row) < 5:
-                continue # Línea vacía o corrupta
-            
             file_name = row[0]
             try:
                 # Extraer coordenadas de la fila (Formato: nombre, t_sec, t_nano, pos_x, pos_y...)
@@ -242,20 +274,23 @@ class SystemEvaluatorNode(BaseEvaluatorNode):
                 continue
             
             zone_name = get_zone_name([x, y], self.hospital_zones, self.reception_zone)
-            
             mock_msg = MockLiveCapture(file_path=img_path, zone_name=zone_name, timestamp=timestamp_counter)
             
             await self.reporter_logic.async_live_capture_callback(mock_msg)
-            #time.sleep(0.01)
             timestamp_counter += 1.0
             processed_files += 1
 
         if processed_files == 0:
             raise InferencePipelineError(f"No se procesó ninguna imagen/vídeo del CSV en: {self.eval_folder_path}.")
         
+        print() # Salto de línea para no pisar la barra de progreso
         self.get_logger().info(f"Se han inyectado {processed_files} eventos en FAISS exitosamente.")
-                
-        # SIMULACIÓN DE FIN DE VUELTA Y CONSOLIDACIÓN
+
+
+    async def _consolidate_patrol_report(self):
+        '''Simula el fin de la vuelta llamando al callback del reportero y mide tiempos.'''
+        mock_goal_handle = MockGoalHandle()
+        
         self.get_logger().debug("Fin de patrulla simulado. Consolidando informe y volcando a disco...")
         t_init_llm = time.time()
         
@@ -267,10 +302,13 @@ class SystemEvaluatorNode(BaseEvaluatorNode):
         if not result.success:
             raise InferencePipelineError("Fallo al generar el resumen global por lotes")
             
-        summary_text = result.final_report
+        return result.final_report
+
+
+    def _generate_ragas_answers(self, summary_text):
+        '''Prepara el contexto limpio y ejecuta la generación de respuestas de RAGAS.'''
         pregenerated_summary = summary_text.replace("Informe generado:\n", "").strip()
 
-        # PREPARACIÓN DE DATOS PARA RAGAS
         self.get_logger().info("Generando respuestas LLM para evaluación RAGAS...")
         
         # Recuperamos la "foto en RAM" exacta que usó el LLM

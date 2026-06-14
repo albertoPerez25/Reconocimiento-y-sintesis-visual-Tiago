@@ -15,8 +15,8 @@ def load_image_and_scale(image_path: str, logger) -> str:
         logger.error(f"CV2 Error: No se pudo leer la imagen en {image_path}")
         base64_img = ""
     else:
-        # Estrategia de conservación de memoria: Limitar lado máximo a 224px
-        max_size = 480
+        # Reescalar para ahorrar recursos
+        max_size = 480 # TODO: poner ancho y alto distintos
         h, w = img.shape[:2]
         if max(h, w) > max_size:
             scale = max_size / max(h, w)

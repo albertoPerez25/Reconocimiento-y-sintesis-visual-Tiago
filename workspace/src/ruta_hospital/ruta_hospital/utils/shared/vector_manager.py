@@ -69,10 +69,13 @@ class VectorManager:
                 # Modelo ultraligero especializado en relevancia de pares (Pregunta -> Contexto)
                 self.reranker_model = HuggingFaceCrossEncoder(model_name=CROSS_ENCODER_MODEL_NAME)
                 if self.logger:
-                    self.logger.info("Modelo Cross-Encoder cargado en memoria")
+                    self.log_debug("Modelo Cross-Encoder cargado en memoria")
             except Exception as e:
-                if self.logger:
-                    self.logger.error(f"Fallo cargando el Cross-Encoder: {e}")
+                self.log_error(f"Fallo crítico cargando el Cross-Encoder: {e}")
+                self.log_error("Desactivando Reranker por seguridad. Usando búsqueda Híbrida Estándar.")
+            
+                # Fallback al modo normal
+                self.use_reranker = False
 
     
     def atomic_save_faiss(self, vectorstore):
@@ -247,7 +250,7 @@ class VectorManager:
 
 
     # INTERFAZ CHATBOT Y EVALUADOR (LangChain RAG)
-    def get_conversational_chain(self, memory_k=5, top_k_docs=3): # TODO: Dividir
+    def get_conversational_chain(self, memory_k=5, top_k_docs=3):
         '''Construye la cadena RAG con memoria de ventana y SelfQuerying para el Chatbot'''
         if not os.path.exists(self.faiss_path):
             self.log_error("No se encontró el índice FAISS. Necesitas completar una patrulla primero.")
@@ -256,6 +259,35 @@ class VectorManager:
         # allow_dangerous_deserialization=True es requerido por FAISS en versiones modernas para cargar archivos locales
         vectorstore = FAISS.load_local(self.faiss_path, self.embeddings, allow_dangerous_deserialization=True)
 
+        base_retriever = self._build_hybrid_retriever(vectorstore, top_k_docs)
+        retriever = self._apply_reranker_if_configured(base_retriever, top_k_docs)
+        
+        zones_str = self._get_valid_zones_string()
+        CONDENSE_QUESTION_PROMPT, qa_prompt = self._create_chain_prompts(zones_str)
+
+        # Configuración de la memoria
+        memory = ConversationBufferWindowMemory(
+            k=memory_k,
+            memory_key="chat_history",
+            return_messages=True,
+            output_key="answer" # Crítico para que LangChain guarde solo la respuesta final y no los documentos fuente
+        )
+
+        # Ensamblaje de la cadena
+        chain = ConversationalRetrievalChain.from_llm(
+            llm=self.llm,
+            retriever=retriever,
+            memory=memory,
+            return_source_documents=True, #para que RAGAS pueda evaluar la fidelidad exacta
+            combine_docs_chain_kwargs={"prompt": qa_prompt},
+            condense_question_prompt=CONDENSE_QUESTION_PROMPT
+        )
+        
+        return chain
+
+
+    def _build_hybrid_retriever(self, vectorstore, top_k_docs):
+        '''Configura la Fusión de Rango Recíproco uniendo búsqueda semántica (FAISS) y léxica (BM25)'''
         # Con reranker (opcional) usar el doble o 9, pues se filtrara luego
         initial_k = max(9, top_k_docs * 2) if self.use_reranker else top_k_docs
         
@@ -275,15 +307,11 @@ class VectorManager:
             retrievers=[lexic_retriever, semantic_retriever],
             weights=[0.5, 0.5]
         )
+        return base_retriever
 
-        # Configuración de la memoria
-        memory = ConversationBufferWindowMemory(
-            k=memory_k,
-            memory_key="chat_history",
-            return_messages=True,
-            output_key="answer" # Crítico para que LangChain guarde solo la respuesta final y no los documentos fuente
-        )
 
+    def _apply_reranker_if_configured(self, base_retriever, top_k_docs):
+        '''Envuelve el buscador base con el modelo Cross-Encoder si está activado'''
         # Compresión y Re-Clasificación (Cross-Encoder)
         if self.use_reranker:
             # Importación Lazy: No consume memoria ni tiempo si el nodo lo tiene desactivado   
@@ -298,7 +326,12 @@ class VectorManager:
         else:
             retriever = base_retriever
             self.log_debug("Retriever configurado: Híbrido Estándar")
+            
+        return retriever
 
+
+    def _get_valid_zones_string(self):
+        '''Lee las carpetas de la patrulla para inyectarle al LLM las zonas que realmente existen'''
         valid_zones = set()
         if os.path.exists(self.docs_dir):
             for folder in os.listdir(self.docs_dir):
@@ -308,7 +341,11 @@ class VectorManager:
                         if f.endswith(".txt"):
                             valid_zones.add(f.replace(".txt", ""))
         zones_str = ", ".join(valid_zones) if valid_zones else "Zonas desconocidas"
+        return zones_str
 
+
+    def _create_chain_prompts(self, zones_str):
+        '''Centraliza los textos en lenguaje natural y la configuración de plantillas de LangChain'''
         condense_template = f"""Dada la siguiente conversación y una nueva pregunta, reformula la nueva pregunta para que sea una búsqueda independiente en ESPAÑOL.
         
         IMPORTANTE: El mapa del sistema tiene EXACTAMENTE estas zonas válidas: [{zones_str}].
@@ -334,18 +371,8 @@ CONTEXTO DE SENSORES RECUPERADO:
             SystemMessagePromptTemplate.from_template(system_template),
             HumanMessagePromptTemplate.from_template("{question}")
         ])
-
-        # Ensamblaje de la cadena
-        chain = ConversationalRetrievalChain.from_llm(
-            llm=self.llm,
-            retriever=retriever,
-            memory=memory,
-            return_source_documents=True, #para que RAGAS pueda evaluar la fidelidad exacta
-            combine_docs_chain_kwargs={"prompt": qa_prompt},
-            condense_question_prompt=CONDENSE_QUESTION_PROMPT
-        )
         
-        return chain
+        return CONDENSE_QUESTION_PROMPT, qa_prompt
     
     def add_single_event_to_index(self, zone_name, event_data, round_num):
         '''
@@ -426,6 +453,44 @@ CONTEXTO DE SENSORES RECUPERADO:
         # Limpieza de carpetas antiguas para no saturar el disco y FAISS
         self.apply_file_retention_policy()
         self.apply_faiss_retention_policy(round_number)
+
+    def load_round_data_from_disk(self, round_number):
+        '''
+        Lee los archivos .txt de una vuelta específica, extrae los bloques JSON
+        ignorando las cabeceras de texto, y reconstruye el hospital_data_dict completo.
+        '''
+        rehydrated_data = {}
+        round_dir = os.path.join(self.docs_dir, f"vuelta_{round_number}")
+        
+        if not os.path.exists(round_dir):
+            self.log_error(f"No se pudo rehidratar: Carpeta {round_dir} no encontrada.")
+            return rehydrated_data
+            
+        self.log_info(f"Rehidratando contexto global desde el disco para la vuelta {round_number}...")
+        
+        for filename in os.listdir(round_dir):
+            # Ignoramos el resumen porque ese no contiene el JSON crudo de la zona
+            if filename.endswith(".txt") and filename != "resumen.txt":
+                zone_name = filename.replace(".txt", "")
+                file_path = os.path.join(round_dir, filename)
+                
+                try:
+                    with open(file_path, 'r', encoding='utf-8') as f:
+                        content = f.read()
+                        
+                    # Buscar dónde empieza exactamente la estructura JSON
+                    json_start = content.find('{')
+                    if json_start != -1:
+                        json_str = content[json_start:]
+                        zone_data = json.loads(json_str)
+                        rehydrated_data[zone_name] = zone_data
+                    else:
+                        self.log_debug(f"Saltando {filename}: No se detectó formato JSON.")
+                        
+                except Exception as e:
+                    self.log_error(f"Error rehidratando zona desde {filename}: {e}")
+                    
+        return rehydrated_data
 
     def apply_file_retention_policy(self):
         '''Elimina las carpetas txt antiguas si superan max_stored_rounds'''

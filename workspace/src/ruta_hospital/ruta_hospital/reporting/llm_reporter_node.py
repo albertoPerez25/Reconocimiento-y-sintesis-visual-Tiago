@@ -85,8 +85,9 @@ class LLMReporterNode(BaseReporterNode):
             # Cargar el último resumen si existe
             self.latest_final_summary = self.vector_manager.get_latest_summary()
             
-            if "No hay un resumen" not in self.latest_final_summary:
-                self.latest_global_context = '{"estado": "Sesión reanudada desde disco"}'
+            if "No hay un resumen" not in self.latest_final_summary and self.current_round > 0:
+                recovered_data = self.vector_manager.load_round_data_from_disk(self.current_round)
+                self.latest_global_context = json.dumps(recovered_data, ensure_ascii=False)
             else:
                 self.latest_global_context = ""
         else:
@@ -187,29 +188,14 @@ class LLMReporterNode(BaseReporterNode):
         else:
             self.get_logger().error("No se encontró un executor para lanzar la tarea asíncrona.")
     
-    async def async_live_capture_callback(self, msg): # TODO: Dividir?
+    async def async_live_capture_callback(self, msg):
         '''Procesa una imagen/evento en el instante en que el robot la publica'''
         try:
             image_path = msg.file_path
             zone_name = msg.zone_name
             timestamp = msg.timestamp
 
-            # Obtención de metadatos fuera del lock (evita bloqueos si hace llamadas E/S de ROS 2)
-            zone_info = self.get_zone_metadata(zone_name)
-            zone_type = zone_info.get("tipo_zona", "Desconocida")
-
-            # Asegurar la existencia de la zona en memoria viva de forma thread-safe
-            with self.data_lock:
-                if zone_name not in self.live_patrol_data:
-                    self.live_patrol_data[zone_name] = {
-                        "nombre_zona": zone_name,
-                        "tipo_zona": zone_type,
-                        "eventos_recientes": []
-                    }
-                # Snapshot: Pasamos el historial intacto al VLM para que mantenga el contexto RAG temporal,
-                # pero nos desvinculamos del diccionario original mutable.
-                local_zone_data = json.loads(json.dumps(self.live_patrol_data[zone_name]))
-                captured_round = self.current_round + 1
+            zone_type, local_zone_data, captured_round = self._prepare_local_zone_data(zone_name)
 
             # Empaquetar como mock para respetar la firma de las estrategias SOTA
             images_mock = [{'path': image_path, 'time': timestamp}]
@@ -221,31 +207,58 @@ class LLMReporterNode(BaseReporterNode):
 
             # Evaluación de alarmas críticas inmediatas
             if has_activity and local_zone_data["eventos_recientes"]:
-                # La estrategia siempre adjunta el nuevo evento al final de la lista proporcionada
-                last_event = local_zone_data["eventos_recientes"][-1]
-
-                with self.data_lock:
-                    # Si execute_report_callback vació la memoria general durante el await, 
-                    # se reinicializa limpiamente para la nueva vuelta
-                    if zone_name not in self.live_patrol_data:
-                        self.live_patrol_data[zone_name] = {
-                            "nombre_zona": zone_name,
-                            "tipo_zona": zone_type,
-                            "eventos_recientes": []
-                        }
-                    
-                    # añadir ÚNICAMENTE el evento nuevo a la memoria global
-                    self.live_patrol_data[zone_name]["eventos_recientes"].append(last_event)
-                    
-                    # Ingesta en FAISS Sincronizada (previene corromper index.faiss)
-                    self.vector_manager.add_single_event_to_index(zone_name, last_event, captured_round)
-
-                # PUBLICACIÓN DE ALARMAS fuera del lock para mantener baja la latencia de hilos
-                if last_event.get("alerta"):
-                    self.publish_alarm(zone_name, last_event)
+                self._register_and_evaluate_event(zone_name, zone_type, local_zone_data, captured_round)
 
         except Exception as e:
             self.get_logger().error(f"Error procesando captura en tiempo real: {e}")
+
+
+    def _prepare_local_zone_data(self, zone_name):
+        '''Obtiene metadatos y prepara el contexto thread-safe para la zona'''
+        # Obtención de metadatos fuera del lock (evita bloqueos si hace llamadas E/S de ROS 2)
+        zone_info = self.get_zone_metadata(zone_name)
+        zone_type = zone_info.get("tipo_zona", "Desconocida")
+
+        # Asegurar la existencia de la zona en memoria viva de forma thread-safe
+        with self.data_lock:
+            if zone_name not in self.live_patrol_data:
+                self.live_patrol_data[zone_name] = {
+                    "nombre_zona": zone_name,
+                    "tipo_zona": zone_type,
+                    "eventos_recientes": []
+                }
+            # Snapshot: Pasamos el historial intacto al VLM para que mantenga el contexto RAG temporal,
+            # pero nos desvinculamos del diccionario original mutable.
+            local_zone_data = json.loads(json.dumps(self.live_patrol_data[zone_name]))
+            captured_round = self.current_round + 1
+
+        return zone_type, local_zone_data, captured_round
+
+
+    def _register_and_evaluate_event(self, zone_name, zone_type, local_zone_data, captured_round):
+        '''Extrae el evento, lo guarda en memoria y FAISS, y dispara alarmas si es crítico'''
+        # La estrategia siempre adjunta el nuevo evento al final de la lista proporcionada
+        last_event = local_zone_data["eventos_recientes"][-1]
+
+        with self.data_lock:
+            # Si execute_report_callback vació la memoria general durante el await, 
+            # se reinicializa limpiamente para la nueva vuelta
+            if zone_name not in self.live_patrol_data:
+                self.live_patrol_data[zone_name] = {
+                    "nombre_zona": zone_name,
+                    "tipo_zona": zone_type,
+                    "eventos_recientes": []
+                }
+            
+            # añadir solo el evento nuevo a la memoria global
+            self.live_patrol_data[zone_name]["eventos_recientes"].append(last_event)
+            
+            # Ingesta en FAISS Sincronizada (previene corromper index.faiss)
+            self.vector_manager.add_single_event_to_index(zone_name, last_event, captured_round)
+
+        # PUBLICACIÓN DE ALARMAS fuera del lock para mantener baja la latencia de hilos
+        if last_event.get("alerta"):
+            self.publish_alarm(zone_name, last_event)
 
     def get_next_alarm_id(self, round_num):
         '''Genera un ID secuencial (1, 2, 3...) para las carpetas de alarma de cada vuelta'''
