@@ -1,7 +1,8 @@
 import json
 import re
 
-def format_context_for_ragas(json_context, filter_empty=False):
+def format_context_for_ragas(json_context, filter_empty=False): # NO USADA, eliminado su uso en la estandarización de RAG. 
+                                                                # TODO: Puede ser interesante comparar contexto RAW vs natural
     '''Convierte el JSON de los perceptores en lenguaje natural para que RAGAS lo entienda'''
     try:
         data = json.loads(json_context)

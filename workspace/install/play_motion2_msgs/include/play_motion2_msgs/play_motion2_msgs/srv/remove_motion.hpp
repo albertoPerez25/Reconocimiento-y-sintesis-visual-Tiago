@@ -1,12 +1,1 @@
-// generated from rosidl_generator_cpp/resource/idl.hpp.em
-// generated code does not contain a copyright notice
-
-#ifndef PLAY_MOTION2_MSGS__SRV__REMOVE_MOTION_HPP_
-#define PLAY_MOTION2_MSGS__SRV__REMOVE_MOTION_HPP_
-
-#include "play_motion2_msgs/srv/detail/remove_motion__struct.hpp"
-#include "play_motion2_msgs/srv/detail/remove_motion__builder.hpp"
-#include "play_motion2_msgs/srv/detail/remove_motion__traits.hpp"
-#include "play_motion2_msgs/srv/detail/remove_motion__type_support.hpp"
-
-#endif  // PLAY_MOTION2_MSGS__SRV__REMOVE_MOTION_HPP_
+/home/alberto/tfg/Reconocimiento-y-sintesis-visual-Tiago/workspace/build/play_motion2_msgs/rosidl_generator_cpp/play_motion2_msgs/srv/remove_motion.hpp

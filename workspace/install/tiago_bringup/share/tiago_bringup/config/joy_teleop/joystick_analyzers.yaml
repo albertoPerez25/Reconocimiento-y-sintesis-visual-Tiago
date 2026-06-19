@@ -1,12 +1,1 @@
-/joystick/add_analyzer_node:
-  ros__parameters:
-    path: Diagnostics
-    hardware:
-      type: 'diagnostic_aggregator/AnalyzerGroup'
-      path: Hardware
-      analyzers:
-        gamepad:
-          type: diagnostic_aggregator/GenericAnalyzer
-          path: "Gamepad"
-          find_and_remove_prefix: ["joystick: ", "gamepad: "]
-          contains: ['safe_command_node: ']
+/home/alberto/tfg/Reconocimiento-y-sintesis-visual-Tiago/workspace/src/tiago_robot/tiago_bringup/config/joy_teleop/joystick_analyzers.yaml

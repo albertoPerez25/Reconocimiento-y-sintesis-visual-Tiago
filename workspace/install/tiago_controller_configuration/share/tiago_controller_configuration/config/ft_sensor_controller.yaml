@@ -1,5 +1,1 @@
-ft_sensor_controller:
-  ros__parameters:
-    type: force_torque_sensor_broadcaster/ForceTorqueSensorBroadcaster
-    frame_id: wrist_ft_link
-    sensor_name: wrist_ft_sensor
+/home/alberto/tfg/Reconocimiento-y-sintesis-visual-Tiago/workspace/src/tiago_robot/tiago_controller_configuration/config/ft_sensor_controller.yaml

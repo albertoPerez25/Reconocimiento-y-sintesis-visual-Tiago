@@ -219,5 +219,18 @@
         "tiempo_total_ejecucion_segundos": 4689.87,
         "caracteres_contexto_visual": 24373,
         "caracteres_informe_final": 0
+    },
+    {
+        "fecha": "2026-06-03 19:10:44.133639",
+        "nodo_ejecutor": "system_evaluator_node",
+        "evaluacion_nombre": "video_2m",
+        "total_imagenes_procesadas": 0,
+        "tiempo_percepcion_segundos": 0.0,
+        "tiempo_llm_segundos": 197.51,
+        "tiempo_inferencia_total_segundos": 0.0,
+        "tiempo_ragas_evaluacion_segundos": 2060.9613614082336,
+        "tiempo_total_ejecucion_segundos": 3432.06,
+        "caracteres_contexto_visual": 0,
+        "caracteres_informe_final": 0
     }
 ]

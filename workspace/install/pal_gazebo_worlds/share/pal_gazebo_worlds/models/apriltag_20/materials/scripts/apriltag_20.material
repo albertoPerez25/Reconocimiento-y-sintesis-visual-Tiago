@@ -1,14 +1,1 @@
-material Apriltag/ID20
-{
-    receive_shadows off
-    technique
-    {
-        pass
-        {
-            texture_unit
-            {
-                texture tag41_12_00020.png
-            }
-        }
-    }
-}
+/home/alberto/tfg/Reconocimiento-y-sintesis-visual-Tiago/workspace/src/pal_gazebo_worlds/models/apriltag_20/materials/scripts/apriltag_20.material

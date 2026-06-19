@@ -82,6 +82,46 @@ def load_ragas_data(ragas_dir):
         
     return pd.concat(all_data, ignore_index=True) if all_data else pd.DataFrame()
 
+def load_aggregated_perception_data(directory):
+    """Carga los datos agregados de los perceptores desde los archivos JSON"""
+    json_files = glob.glob(os.path.join(directory, 'aggregated_*_metrics.json'))
+    data_list = []
+    
+    for file in json_files:
+        try:
+            with open(file, 'r', encoding='utf-8') as f:
+                data = json.load(f)
+            
+            is_hybrid = data.get("modelo_usado") == "Modelo Híbrido Acoplado"
+            stats_key = "estadisticas_totales" if is_hybrid else "estadisticas_globales"
+            
+            if stats_key in data:
+                stats = data[stats_key]
+                etiqueta = data.get("nodo_ejecutor", "Híbrido") if is_hybrid else data.get("modelo_usado", "Desconocido")
+                
+                row = {
+                    "etiqueta": etiqueta,
+                    "media_segundos": stats.get("media_segundos", 0.0),
+                    "percentil_99": stats.get("percentil_99", 0.0),
+                    "fps_equivalente": stats.get("fps_equivalente", 0.0),
+                    "desviacion_tipica": stats.get("desviacion_tipica", 0.0),
+                    "is_hybrid": is_hybrid
+                }
+                
+                if is_hybrid:
+                    stats_yolo = data.get("estadisticas_yolo", {})
+                    stats_vlm = data.get("estadisticas_vlm", {})
+                    row["yolo_media"] = stats_yolo.get("media_segundos", 0.0)
+                    row["vlm_media"] = stats_vlm.get("media_segundos", 0.0)
+                    cuello = stats.get("cuello_de_botella_vlm_porcentaje", "0%")
+                    row["vlm_porcentaje"] = float(str(cuello).replace('%', ''))
+                    
+                data_list.append(row)
+        except Exception as e:
+            print(f"Error cargando {file}: {e}")
+            
+    return pd.DataFrame(data_list)
+
 def calculate_system_metrics(df, config_name):
     """Extrae la lógica de cálculo de métricas para el evaluador del sistema"""
     df_short = df[df['eval_type'] == 'short']
@@ -386,6 +426,71 @@ def generate_ragas_perception_plot(df, output_dir):
     plt.savefig(os.path.join(output_dir, '6_grafica_ragas_percepcion.png'), dpi=300)
     plt.close()
 
+def generate_aggregated_perception_plots(df, output_dir):
+    """Genera gráficas para las métricas agregadas de los perceptores"""
+    if df.empty:
+        return
+
+    labels = df['etiqueta'].tolist()
+    rot, align = get_dynamic_rotation(labels)
+    x = np.arange(len(labels))
+    
+    # Gráfica A (7_percepcion_latencia_extrema.png): Media vs P99
+    fig, ax = plt.subplots(figsize=(10, 6))
+    w = 0.35
+    rects1 = ax.bar(x - w/2, df['media_segundos'], w, label='Media (s)', color='#4C72B0')
+    rects2 = ax.bar(x + w/2, df['percentil_99'], w, label='P99 (s)', color='#C44E52')
+    
+    ax.set_ylabel('Segundos')
+    ax.set_title('Latencia de Percepción: Media vs Caso Extremo (P99)')
+    ax.set_xticks(x)
+    ax.set_xticklabels(labels, rotation=rot, ha=align)
+    ax.legend(loc='upper right')
+    for r in [rects1, rects2]: ax.bar_label(r, padding=3, fmt='%.2f', fontsize=8)
+    fig.tight_layout()
+    plt.savefig(os.path.join(output_dir, '7_percepcion_latencia_extrema.png'), dpi=300)
+    plt.close()
+
+    # Gráfica B (8_percepcion_fps.png): FPS Equivalente
+    df_fps = df.sort_values(by='fps_equivalente', ascending=False)
+    labels_fps = df_fps['etiqueta'].tolist()
+    x_fps = np.arange(len(labels_fps))
+    
+    fig, ax = plt.subplots(figsize=(10, 6))
+    rects = ax.bar(x_fps, df_fps['fps_equivalente'], 0.5, color='#55A868')
+    ax.set_ylabel('Frames Por Segundo (FPS)')
+    ax.set_title('Rendimiento en FPS Equivalente')
+    ax.set_xticks(x_fps)
+    ax.set_xticklabels(labels_fps, rotation=get_dynamic_rotation(labels_fps)[0], ha=get_dynamic_rotation(labels_fps)[1])
+    ax.bar_label(rects, padding=3, fmt='%.2f', fontsize=9)
+    fig.tight_layout()
+    plt.savefig(os.path.join(output_dir, '8_percepcion_fps.png'), dpi=300)
+    plt.close()
+
+    # Gráfica C (9_hibrido_cuello_botella.png): Desglose Híbrido
+    df_hybrid = df[df['is_hybrid'] == True]
+    if not df_hybrid.empty:
+        h_labels = df_hybrid['etiqueta'].tolist()
+        hx = np.arange(len(h_labels))
+        
+        fig, ax = plt.subplots(figsize=(8, 6))
+        ax.bar(hx, df_hybrid['yolo_media'], 0.5, label='YOLO (Espacial)', color='#4C72B0')
+        ax.bar(hx, df_hybrid['vlm_media'], 0.5, bottom=df_hybrid['yolo_media'], label='VLM (Semántico)', color='#E1A95F')
+        
+        ax.set_ylabel('Segundos (Media)')
+        ax.set_title('Desglose de Cuello de Botella (Nodo Híbrido)')
+        ax.set_xticks(hx)
+        ax.set_xticklabels(h_labels, rotation=get_dynamic_rotation(h_labels)[0], ha=get_dynamic_rotation(h_labels)[1])
+        ax.legend(loc='upper right')
+        
+        # Anotar porcentaje
+        for i, row in enumerate(df_hybrid.itertuples()):
+            ax.text(i, row.yolo_media + row.vlm_media/2, f"{row.vlm_porcentaje:.1f}%", ha='center', va='center', color='black', fontsize=9, fontweight='bold')
+
+        fig.tight_layout()
+        plt.savefig(os.path.join(output_dir, '9_hibrido_cuello_botella.png'), dpi=300)
+        plt.close()
+
 def aggregate_metrics(df, calc_function):
     """
     Agrupa un DataFrame de RAGAS por 'Configuracion' y aplica 
@@ -427,6 +532,12 @@ def main():
             generate_ragas_perception_plot(df_perception_agg, OUTPUT_DIR)
 
         print("- Gráficos de evaluación Ragas generados (5 y 6).")
+
+    # Datos de Percepción Agregada
+    df_aggregated = load_aggregated_perception_data(OUTPUT_DIR)
+    if df_aggregated is not None and not df_aggregated.empty:
+        generate_aggregated_perception_plots(df_aggregated, OUTPUT_DIR)
+        print("- Gráficos de perceptores agregados generados (7 al 9).")
 
 if __name__ == "__main__":
     main()

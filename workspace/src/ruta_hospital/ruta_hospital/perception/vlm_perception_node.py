@@ -16,6 +16,7 @@ class VLMPerceptionNode(BaseVLMPerceptionNode):
         super().__init__('vlm_perception_node', start_service=start_service, default_model=DEFAULT_MODEL)
         #self.declare_parameter('vlm_model', 'llava') # No tengo tanta VRAM
         #self.ollama_url = self.ollama_url.replace("generate", "chat")
+        self.perception_metrics["modelo_usado"] = self.vlm_model
 
     def process_image(self, image_path, context):
         '''Interactua con el modelo y devuelve el reporte en forma de string'''
@@ -52,32 +53,32 @@ class VLMPerceptionNode(BaseVLMPerceptionNode):
         '''Crea el prompt y devuelve el payload completo para enviarle al modelo'''
         tracking_hist = getattr(context, 'tracking_history', '')
         prompt = f"""
-Actúa como un analizador telegráfico de actividades humanas para un hospital.
-Estás dentro de un hospital en {context.zone_name}, que es una zona de tipo {context.zone_type}. 
-Aquí puedes ver personas {context.expected_activities}.
+Actúa como un analizador telegráfico de actividades humanas para un hospital
+Estás dentro de un hospital en {context.zone_name}, que es una zona de tipo {context.zone_type}.
+Aquí puedes ver personas {context.expected_activities}
 
 INSTRUCCIONES:
-    - Describe en un máximo de {self.word_limit} PALABRAS las actividades que las personas en la imagen están realizando.
-    - Dentro del límite incluye una MUY BREVE descripción de la persona o personas a las que te refieres.
-    - Si ves una situación que amenaza la vida (como una caída), escribe "URGENTE" y descríbela brevemente.
+    - Describe en un máximo de {self.word_limit} PALABRAS las actividades que las personas en la imagen están realizando
+    - Dentro del límite incluye una MUY BREVE descripción de la persona o personas a las que te refieres
+    - Si ves una situación que amenaza la vida (como una caída o alguien fumando), escribe "URGENTE" y descríbela brevemente
+    - IGNORA a cualquier persona que se vea a lo lejos a través de una puerta o cristal. Describe ÚNICAMENTE lo que esté físicamente DENTRO de tu misma habitación
     - Si no hay personas en la imagen, escribe "Despejado"
 
 EJEMPLO DE SALIDAS:
-    - "Una mujer con sombrero sentada en una silla."
-    - "Un niño con camiseta amarilla corriendo".
-    - "Varios médicos de pie al lado de una camilla con una persona tumbada, posiblemente una operación a un paciente".
+    - "Una mujer con sombrero sentada en una silla"
+    - "Un niño con camiseta amarilla corriendo"
+    - "Varios médicos de pie al lado de una camilla con una persona tumbada, posiblemente una operación a un paciente"
 """
         
         if tracking_hist:
             prompt += f"""
-DATOS DEL TRACKING YOLO:
+DATOS DE TRACKING YOLO:
 ---
     {tracking_hist}
 ---
         
 RESPONDE SOLO EN ESPAÑOL
 """
-            #TODO: Pasarle también el número de personas detectadas por YOLO, id, posicion...
         else:
             prompt += f"""
 RESPONDE SOLO EN ESPAÑOL

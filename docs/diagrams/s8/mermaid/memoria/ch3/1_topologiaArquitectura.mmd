@@ -1,0 +1,47 @@
+---
+config:
+  layout: elk
+---
+flowchart TB
+    %% --- DEFINICIÓN DE ENTIDADES ---
+    Entorno[("Entorno Físico\n(Sensores)")]
+    Nav["Módulo Navegador\n(Control espacial y de rutas)"]
+    Cap["Módulo Capturador\n(Adquisición multimedia local)"]
+    Perc["Percepción Cognitiva\n(Modelos de extracción semántica)"]
+    Orq["Orquestador Central\n(Razonamiento y Memoria Vectorial)"]
+    Alerta["Subsistema de Alerta"]
+    Eval["Evaluación\n(Validación sistémica aislada)"]
+    UI(("Interfaz de Usuario\nWeb"))
+
+    %% CONEXIONES CONCEPTUALES
+    Nav -- "Coordina ciclos de captura" --> Cap
+    Entorno -. "Lectura de datos crudos" .-> Cap
+    
+    Cap -- "Flujo multimedia en bruto" --> Perc
+    Perc -- "Eventos semánticos y espaciales" --> Orq
+    
+    Orq -- "Disparo de notificaciones críticas" --> Alerta
+    Alerta -- "Alertas visuales inmediatas" --> UI
+    
+    UI -- "Consultas interactivas\n(Asistente RAG)" --> Orq
+    UI -. "Lectura pasiva de resúmenes" .-> Orq
+    
+    %% Evaluadores actuando desde el exterior
+    Eval -. "Inyección de datasets de prueba" .-> Perc
+    Eval -. "Extracción de contexto\npara evaluación" .-> Orq
+
+    %% ESTILOS PASTEL 
+    classDef core fill:#B3CDE3,stroke:#333,stroke-width:1px,color:#333;
+    classDef ui fill:#CCEBC5,stroke:#333,stroke-width:1px,color:#333;
+    classDef alert fill:#FBB4AE,stroke:#333,stroke-width:1px,color:#333;
+    classDef eval fill:#FED9A6,stroke:#333,stroke-width:1px,color:#333;
+    classDef env fill:#E5D8BD,stroke:#333,stroke-width:1px,color:#333,stroke-dasharray: 5 5;
+
+    Nav:::core
+    Cap:::core
+    Perc:::core
+    Orq:::core
+    Alerta:::alert
+    UI:::ui
+    Eval:::eval
+    Entorno:::env

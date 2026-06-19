@@ -1,14 +1,1 @@
-material Custom/sprite
-{
-	technique
-	{
-		pass
-		{
-			texture_unit
-			{
-				texture sprite.jpg
-			}
-		}
-	}
-}
-
+/home/alberto/tfg/Reconocimiento-y-sintesis-visual-Tiago/workspace/src/pal_gazebo_worlds/models/sprite/material/scripts/sprite.material

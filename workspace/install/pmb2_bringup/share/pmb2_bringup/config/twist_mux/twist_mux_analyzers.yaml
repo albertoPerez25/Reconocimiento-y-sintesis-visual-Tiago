@@ -1,11 +1,1 @@
-/twist_mux/add_analyzer_node:
-  ros__parameters:
-    path: Diagnostics
-    navigation:
-      type: 'diagnostic_aggregator/AnalyzerGroup'
-      path: Navigation
-      analyzers:
-        twist_mux:
-          type: diagnostic_aggregator/GenericAnalyzer
-          path: Twist Mux
-          find_and_remove_prefix: [ 'twist_mux: ' ]
+/home/alberto/tfg/Reconocimiento-y-sintesis-visual-Tiago/workspace/src/pmb2_robot/pmb2_bringup/config/twist_mux/twist_mux_analyzers.yaml

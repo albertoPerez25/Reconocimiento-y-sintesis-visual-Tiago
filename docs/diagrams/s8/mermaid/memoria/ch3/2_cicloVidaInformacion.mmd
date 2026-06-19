@@ -1,0 +1,47 @@
+flowchart TB
+    %% DEFINICIÓN DE ENTIDADES 
+    Ingesta["Ingesta de Datos\n(Captura multimedia en memoria temporal)"]
+    Inferencia["Extracción Semántica\n(Procesamiento local mediante IA)"]
+    Rombo{"Evaluación\nde Criticidad\n(¿Alerta médica o seguridad?)"}
+    
+    RamaRutina["Procesamiento Rutinario\n(Actividad normal o zona despejada)"]
+    Destruccion(("Destrucción Inmediata\ndel archivo multimedia"))
+    Indexacion["Indexación Semántica\n(Transformación a texto en memoria efímera)"]
+    
+    RamaAlerta["Protocolo de Emergencia\n(Ej. Caídas, comportamientos de riesgo)"]
+    Evidencia[/"Preservación de Evidencia\n(Temporal para auditoría humana)"/]
+    
+    Purga(("Purga Automática\n(Borrado por obsolescencia\ndel dato)"))
+
+    %%CONEXIONES CONCEPTUALES 
+    Ingesta --> Inferencia
+    Inferencia --> Rombo
+    
+    %% Flujo normal (se prioriza el borrado)
+    Rombo -- "Sin riesgo" --> RamaRutina
+    RamaRutina --> Indexacion
+    RamaRutina --> Destruccion
+    
+    %% Flujo de emergencia (se salva la prueba)
+    Rombo -- "Emergencia vital" --> RamaAlerta
+    RamaAlerta --> Indexacion
+    RamaAlerta --> Evidencia
+    
+    %% Limpieza general por ventana de contexto
+    Indexacion -. "El conocimiento caduca\ncon el paso de las rondas" .-> Purga
+
+    %% ESTILOS PASTEL
+    classDef process fill:#B3CDE3,stroke:#333,stroke-width:1px,color:#333;
+    classDef decision fill:#FED9A6,stroke:#333,stroke-width:1px,color:#333;
+    classDef delete fill:#CCEBC5,stroke:#333,stroke-width:1px,color:#333;
+    classDef alert fill:#FBB4AE,stroke:#333,stroke-width:1px,color:#333;
+
+    Ingesta:::process
+    Inferencia:::process
+    RamaRutina:::process
+    Indexacion:::process
+    Rombo:::decision
+    Destruccion:::delete
+    Purga:::delete
+    RamaAlerta:::alert
+    Evidencia:::alert

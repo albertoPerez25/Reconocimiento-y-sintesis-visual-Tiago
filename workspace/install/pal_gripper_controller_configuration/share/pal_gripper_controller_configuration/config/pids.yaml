@@ -1,3 +1,1 @@
-gains:
-  gripper_left_finger_joint: &gripper_finger_gains {p: 2000,  d: 0,  i: 0, p_gain: 2000}
-  gripper_right_finger_joint: *gripper_finger_gains
+/home/alberto/tfg/Reconocimiento-y-sintesis-visual-Tiago/workspace/src/pal_gripper/pal_gripper_controller_configuration/config/pids.yaml
