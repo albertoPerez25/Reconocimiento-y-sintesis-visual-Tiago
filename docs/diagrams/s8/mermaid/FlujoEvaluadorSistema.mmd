@@ -1,0 +1,75 @@
+---
+config:
+  look: classic
+---
+sequenceDiagram
+    participant Terminal as Terminal / Usuario
+    participant E as SystemEvaluatorNode
+    participant R as Lógica: LLMReporterNode
+    participant V as Nodo: PerceptionNode
+    participant Ragas as RagasEvaluator
+    participant O@{ "type": "entity" } as Ollama API
+    participant Disco@{ "type": "database" } as Disco Local
+
+    Note over Terminal, Disco: Fase Inicial: El usuario inicia perceptores y evaluador
+    
+    %% Transición de Service a Action con Feedback 
+    Terminal->>E: Action: /evaluate_patrol_system [Mode]
+    
+    %% Aclaración del Mock (Inyección de dependencias) 
+    E->>E: Instancia MockGoalHandle (Aísla Action Server) y Result
+    
+    rect rgb(240, 248, 255)
+        opt Si Mode != 'evaluate_only'
+            Note right of E: Fase 1: Extracción de Contexto Visual
+            E->>R: validate_data(eval_folder_path, mock_result)
+            R->>Disco: Lee metadata.csv e imágenes del test_dataset
+            
+            E->>R: process_each_image(zone_groups)
+            loop Por cada zona e imagen/secuencia del dataset
+                R->>V: Llama /analyze_image(path, Contexto RAG)
+                %% --- CAMBIOS: Uso de interfaces segregadas ---
+                alt BasePositionPerceptionNode (Ej: YOLO)
+                    V->>V: Inferencia local de posiciones/cajas
+                else BaseVLMPerceptionNode (Ej: Moondream, Video, Híbrido)
+                    V->>O: Prompt semántico + Datos Espaciales
+                    O-->>V: Respuesta descriptiva
+                end
+                %% ---------------------------------------------
+                V-->>R: Retorna JSON {descripcion, alerta}
+                E-->>Terminal: Publish Feedback (Progreso de imágenes procesadas)
+            end
+            R-->>E: Devuelve global_context_json
+        end
+    end
+    
+    %% Estados Intermedios y Transparenciaa
+    alt Si Mode == 'evaluate_only'
+        E->>Disco: Lee /tmp/ragas_intermediate_answers.json (Evita repetir inferencia costosa)
+    else Si Mode == 'full' OR Mode == 'generate_only'
+        E->>Ragas: generate_answers(vector_manager, global_context_json)
+        Note over E, Ragas: Transparencia: Exporta de forma transparente la respuesta final\ny los fragmentos exactos de texto que recuperó FAISS
+        E->>Disco: Guarda Savepoint: ragas_intermediate_answers.json
+    end
+    
+    rect rgb(255, 245, 238)
+        Note right of E: Fase 2: Evaluación Ragas
+        opt Si Mode != 'generate_only'   
+            E->>Ragas: evaluate_system()
+
+            Ragas->>Disco: Lee quest.json (Preguntas y Ground Truth)
+            
+            loop Por cada pregunta en quest.json
+                Ragas->>O: Prompt + pregunta y contexto extraído del FAISS
+                O-->>Ragas: Respuesta generada por LLM Juez
+            end
+            
+            Ragas->>O: ragas.evaluate() (HuggingFace Dataset)
+            %% --- CAMBIO: División bidimensional de métricas ---
+            O-->>Ragas: Retorna métricas bidimensionales: Answer Correctness/Relevancy + Summarization (Llama3) y Context Prec/Rec/Entity Recall (FAISS)
+            %% ---------------------------------------------
+            
+            Ragas->>Disco: Guarda ragas_system_*.csv
+            E-->>Terminal: Devuelve Result (Éxito y ubicación de CSVs)
+        end
+    end

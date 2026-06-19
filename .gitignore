@@ -67,6 +67,6 @@ datasets/*
 YOLO_tracking_debug/*
 YOLO_tracking_debug/tracking_*.jpg
 
-docs/diagrams/*/png/*
-docs/diagrams/*/svg/*
-docs/diagrams/*/jpg/*
+docs/diagrams/*.png/*
+docs/diagrams/*.svg/*
+docs/diagrams/*.jpg/*

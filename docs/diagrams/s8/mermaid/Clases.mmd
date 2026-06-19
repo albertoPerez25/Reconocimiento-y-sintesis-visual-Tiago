@@ -1,0 +1,166 @@
+---
+config:
+  look: neo
+---
+classDiagram
+
+    %% --- NIVEL SUPERIOR: ORQUESTADOR ---
+    namespace Nivel_Superior_Orquestador {
+        class BaseReporterNode {
+            <<abstract>>
+            +semantic_map: dict
+            +metrics: dict
+            +hospital_metadata: dict
+            +metadata_path: str
+            +report_action_server: ActionServer
+            +execute_report_callback(goal_handle)*
+            +get_zone_name(x, y)
+            +get_images_grouped_by_zone(photos_dir)
+            +save_metrics()
+            +load_hospital_metadata()
+            +get_zone_metadata(zone_name)
+        }
+        
+        class LLMReporterNode {
+            +perception_mode: str
+            +vision_cli: Client
+            +perception_strategy: BasePerceptionStrategy
+            +vector_manager: VectorManager
+            +execute_report_callback(goal_handle)
+            +generate_global_summary(global_context, result)
+        }
+
+        class VectorManager {
+            +add_single_event_to_index(zone, event, round)
+            +apply_faiss_retention_policy(current_round)
+            +get_conversational_chain()
+        }
+
+        class BasePerceptionStrategy {
+            <<abstract>>
+            +vision_cli: Client
+            +reporter: LLMReporterNode
+            +get_expected_activities(zone)
+            +parse_and_append_event(report, time, zone_data)
+            +process(files, zone, zone_data, goal_handle)*
+        }
+
+        class SequencePerceptionStrategy { +process(...) }
+        class VideoPerceptionStrategy { +process(...) }
+        class ImagePerceptionStrategy { +process(...) }
+    }
+
+    BaseReporterNode <|-- LLMReporterNode
+    BasePerceptionStrategy <|-- SequencePerceptionStrategy
+    BasePerceptionStrategy <|-- VideoPerceptionStrategy
+    BasePerceptionStrategy <|-- ImagePerceptionStrategy
+
+    %% --- NIVEL INTERMEDIO: PERCEPTORES ---
+    namespace Nivel_Intermedio_Perceptores {
+        class RagContext {
+            +zone_name: str
+            +time_str: str
+            +expected_activities: str
+            +zone_type: str
+        }
+
+        class BasePerceptionNode {
+            <<abstract>>
+            +perception_metrics: dict
+            +analyze_callback(req, res)*
+            +process_image(path, context)*
+            +check_path(path)*
+        }
+        
+        class BasePositionPerceptionNode {
+            <<abstract>>
+            +min_area_ratio: float
+            +analyze_callback(req, res)
+            +process_image(path, include_raw)*
+        }
+        
+        class BaseVLMPerceptionNode {
+            <<abstract>>
+            +analyze_callback(req, res)
+            +process_image(path, context)*
+        }
+        
+        class TemporalRenderState {
+            +is_hybrid: bool
+            +is_video: bool
+            +output_video_path: str
+            +sequence_paths: list
+        }
+
+        class YoloPerceptionNode { +model: YOLO }
+        class VLMPerceptionNode { +vlm_model: str }
+        class VideoPerceptionNode { +sampled_frames: int }
+        class SequencePerceptionNode { +sampled_frames: int }
+        
+        class HybridPerceptionNode { 
+            +tracking_memory: dict
+            +loaded_models: dict
+            +check_path()
+        }
+    }
+
+    BasePositionPerceptionNode <|-- YoloPerceptionNode
+    BaseVLMPerceptionNode <|-- VLMPerceptionNode
+    BaseVLMPerceptionNode <|-- VideoPerceptionNode
+    BaseVLMPerceptionNode <|-- SequencePerceptionNode
+    BaseVLMPerceptionNode <|-- HybridPerceptionNode
+    BaseVLMPerceptionNode ..> RagContext : Recibe
+    YoloPerceptionNode *-- TemporalRenderState : Usa
+
+    %% --- NIVEL INFERIOR: CAPTURADORES ---
+    namespace Nivel_Inferior_Capturadores {
+        class BaseCapturerNode {
+            <<abstract>>
+            +start_capture()
+            +stop_capture()
+        }
+        class PhotosCapturerNode { +capture_rate: float }
+        class VideoCapturerNode { +fps: int }
+    }
+    
+    BaseCapturerNode <|-- PhotosCapturerNode
+    BaseCapturerNode <|-- VideoCapturerNode
+
+    %% --- ALERTA ---
+    namespace Alerta {
+        class AlarmNotifierNode {
+            +alarm_sub: Subscription
+            +trigger_os_notification()
+        }
+    }
+
+    %% --- NAVEGACIÓN ---
+    namespace Navegacion {
+        class PatrolNode {
+            +report_action_client: ActionClient
+            +navigate_to_waypoint(...)
+            +run_patrol()
+        }
+    }
+
+    %% --- UTILIDADES ---
+    namespace Utilidades {
+        class Utils_Library {
+            <<module>>
+            +Api_Utils: call_ollama_api(), encode_image()
+            +Semantic_Utils: load_semantic_map(), get_zone_name()
+            +Rag_Utils: get_relevant_context()
+            +File_Utils: delete_folder(), clean_orphan_folders()
+        }
+    }
+
+    %% --- RELACIONES GLOBALES ---
+    LLMReporterNode *-- BasePerceptionStrategy : Delega
+    LLMReporterNode *-- VectorManager : Compone
+    LLMReporterNode ..> AlarmNotifierNode : Publica /hospital/alarms
+    LLMReporterNode ..> Utils_Library : Llama
+
+    PatrolNode ..> LLMReporterNode : Action Client -> Server
+
+    BasePerceptionStrategy ..> BasePerceptionNode : Llama por Service
+    BasePerceptionNode ..> Utils_Library : Llama
