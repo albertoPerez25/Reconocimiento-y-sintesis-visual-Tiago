@@ -17,7 +17,6 @@ from ragas.metrics import (
 from langchain_ollama import ChatOllama, OllamaEmbeddings
 from ragas.run_config import RunConfig
 from ruta_hospital.utils.commons.api_utils import call_ollama_api 
-from ruta_hospital.utils.shared.rag_utils import format_context_for_ragas, get_relevant_context
 from ruta_hospital.utils.shared import vector_manager
 
 class OllamaParams:
@@ -37,12 +36,9 @@ class EvaluatorRunParams:
         self.max_stored_rounds = max_stored_rounds
 
 class EvalContext:
-    def __init__(self, global_json, natural_full, natural_filtered, pregenerated_summary=None, reduced_context=None):
+    def __init__(self, global_json, pregenerated_summary=None):
         self.global_json = global_json
-        self.natural_full = natural_full
-        self.natural_filtered = natural_filtered
         self.pregenerated_summary = pregenerated_summary
-        self.reduced_context = reduced_context
 
 class RagasEvaluator:
     def __init__(self, quest_path, metrics_dir, ollama_params, run_params, logger = None):
@@ -154,10 +150,7 @@ class RagasEvaluator:
 
         eval_context = EvalContext(
             global_json=global_context_json,
-            natural_full=format_context_for_ragas(global_context_json, filter_empty=False), # para poder evaluar correctamente el Faithfulness
-            natural_filtered=format_context_for_ragas(global_context_json, filter_empty=True), # Para que Ragas o el LLM en resumen no se pierda 
-            pregenerated_summary=pregenerated_summary,
-            reduced_context=pregenerated_summary
+            pregenerated_summary=pregenerated_summary
         )
 
         rag_chain = vector_manager.get_conversational_chain()
@@ -186,11 +179,13 @@ class RagasEvaluator:
                 eval_context.global_json, eval_context.pregenerated_summary
             )
         else:
-            context_str = "\n".join(eval_context.natural_filtered)
-            llm_answer, question_for_ragas = self.generate_short_answer(context_str, question)
+            llm_answer, question_for_ragas = self.generate_short_answer(eval_context.global_json, question)
 
-        context_to_use = [eval_context.reduced_context] if eval_context.reduced_context else eval_context.natural_filtered
-        
+        # Marcado como riesgo en revisión hecha con IA. TODO: Comprobar
+        #context_to_use = [eval_context.pregenerated_summary] if eval_context.pregenerated_summary else [eval_context.global_json] 
+
+        context_to_use = [eval_context.global_json]
+
         self.add_record_to_dataset(summary_eval_data, {
             "question": question_for_ragas,
             "answer": llm_answer.strip(),

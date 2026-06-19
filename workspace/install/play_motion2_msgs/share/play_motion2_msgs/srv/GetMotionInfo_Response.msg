@@ -1,3 +1,1 @@
-
-
-play_motion2_msgs/Motion motion
+/home/alberto/tfg/Reconocimiento-y-sintesis-visual-Tiago/workspace/build/play_motion2_msgs/rosidl_cmake/srv/GetMotionInfo_Response.msg

@@ -1,7 +1,7 @@
 import os
 from ament_index_python.packages import get_package_share_directory
 from launch import LaunchDescription
-from launch.actions import IncludeLaunchDescription, TimerAction
+from launch.actions import IncludeLaunchDescription, TimerAction, AppendEnvironmentVariable
 from launch.launch_description_sources import PythonLaunchDescriptionSource
 from launch_ros.actions import Node
 
@@ -77,7 +77,8 @@ def generate_launch_description():
                 name='patrol_node',
                 parameters=[{
                 	'use_sim_time': True,
-                	'keep_temp_folders': True
+                	'keep_temp_folders': True,
+                    'use_reranker': True
         	}],
                 output='screen',
                 prefix='gnome-terminal -- ' # para que salga en otra terminal
@@ -100,8 +101,14 @@ def generate_launch_description():
         ]
     )
 
+    env_gazebo_models = AppendEnvironmentVariable(
+        'GAZEBO_MODEL_PATH',
+        f":{os.path.expanduser('~/.gazebo/models')}"
+    )
+
     # Descripcion del Launch
     ld = LaunchDescription()
+    ld.add_action(env_gazebo_models)
     ld.add_action(gazebo_cmd)
     ld.add_action(relay_cmd)
     ld.add_action(ekf_cmd)

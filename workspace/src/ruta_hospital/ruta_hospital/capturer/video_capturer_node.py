@@ -4,15 +4,23 @@ import cv2
 import rclpy
 
 from .base_capturer import BaseCaptureNode
+from hospital_interfaces.msg import LiveCapture
 
 DEFAULT_FPS = 10.0
 MAX_FRAMES = 150 # Límite de seguridad de RAM por si el robot se queda parado
+
+VIDEO_TARGET_DISTANCE_METERS =  2.0 # en metros
+VIDEO_TARGET_ANGLE = 3.14  # 360 grados en radianes
 
 class VideoCapturerNode(BaseCaptureNode):
     '''Nodo encargado de capturar clips de vídeo fluidos entre los puntos de ruta'''
     
     def __init__(self):
-        super().__init__('video_capturer_node')
+        super().__init__(
+            'video_capturer_node', 
+            default_distance=VIDEO_TARGET_DISTANCE_METERS,  
+            default_angle=VIDEO_TARGET_ANGLE    
+        )
         self.declare_parameter("fps", DEFAULT_FPS)
         
         self.frame_buffer = []
@@ -38,6 +46,30 @@ class VideoCapturerNode(BaseCaptureNode):
             # Evitar desbordamiento de memoria si el robot se detiene mucho tiempo
             if len(self.frame_buffer) > MAX_FRAMES:
                 self.frame_buffer.pop(0) """
+    
+    def execute_flush(self, zone_name):
+        '''Cierra el clip de vídeo actual y lo publica al reportero'''
+        capture_mode = 'video'
+        
+        if len(self.frame_buffer) > 0:
+            clip_name, filename = self.save_video()
+            
+            if filename:
+                self.save_metadata(clip_name)
+                # Publicar el evento usando el contrato tipado SOTA
+                msg = LiveCapture()
+                msg.file_path = filename
+                msg.zone_name = zone_name if zone_name else self.current_zone_name
+                msg.timestamp = float(self.get_clock().now().nanoseconds * 1e-9)
+                msg.capture_mode = capture_mode
+                
+                self.capture_pub.publish(msg)
+                self.get_logger().info(f"Clip de vídeo publicado para la zona {zone_name}.")
+            
+            # Vaciar el buffer en RAM para empezar limpios la siguiente zona
+            self.frame_buffer.clear()
+            
+        return True
 
     def camera_callback(self, msg):
         '''Sobrescribe el callback del padre para ir guardando frames fluidos'''
@@ -62,6 +94,17 @@ class VideoCapturerNode(BaseCaptureNode):
         
         if clip_name and os.path.isfile(filename):
             self.save_metadata(clip_name) 
+
+            capture_mode = 'video'
+            
+            msg = LiveCapture()
+            msg.file_path = filename
+            msg.zone_name = self.current_zone_name
+            # Usar el tiempo actual del sistema para el timestamp del mensaje
+            msg.timestamp = float(self.get_clock().now().nanoseconds * 1e-9)
+            msg.capture_mode = capture_mode
+            
+            self.capture_pub.publish(msg)
         
         #Vaciada del buffer para empezar el siguiente clip de la ruta
         self.frame_buffer.clear()

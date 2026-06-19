@@ -1,0 +1,4 @@
+string event_type
+string zone_name
+string description
+float64 timestamp

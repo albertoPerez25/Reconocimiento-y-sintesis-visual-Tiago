@@ -1,4 +1,1 @@
-source;share/play_motion2/environment/ament_prefix_path.sh
-source;share/play_motion2/environment/library_path.sh
-source;share/play_motion2/environment/path.sh
-source;share/play_motion2/environment/pythonpath.sh
+/home/alberto/tfg/Reconocimiento-y-sintesis-visual-Tiago/workspace/build/play_motion2/ament_cmake_environment_hooks/local_setup.dsv

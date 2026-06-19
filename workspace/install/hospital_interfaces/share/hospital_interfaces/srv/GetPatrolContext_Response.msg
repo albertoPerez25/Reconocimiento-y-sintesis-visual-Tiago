@@ -1,4 +1,1 @@
-
-bool success
-string global_context
-string final_summary
+/home/alberto/tfg/Reconocimiento-y-sintesis-visual-Tiago/workspace/build/hospital_interfaces/rosidl_cmake/srv/GetPatrolContext_Response.msg

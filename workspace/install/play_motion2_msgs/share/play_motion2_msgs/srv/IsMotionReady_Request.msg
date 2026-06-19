@@ -1,4 +1,1 @@
-# Shows whether the motion be can executed
-
-string motion_key
-
+/home/alberto/tfg/Reconocimiento-y-sintesis-visual-Tiago/workspace/build/play_motion2_msgs/rosidl_cmake/srv/IsMotionReady_Request.msg

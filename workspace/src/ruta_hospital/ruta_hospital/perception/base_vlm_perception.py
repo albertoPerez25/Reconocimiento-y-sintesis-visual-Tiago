@@ -1,5 +1,6 @@
 import os
 import json
+import time
 from ruta_hospital.perception.base_perception import BasePerceptionNode, RagContext
 
 DEFAULT_OLLAMA_URL = 'http://localhost:11434/api/generate'
@@ -29,6 +30,13 @@ class BaseVLMPerceptionNode(BasePerceptionNode):
         
         context = RagContext(request)
 
+        t_init = time.time()
+        
         report_dict = self.process_image(request.image_path, context)
+        
+        t_process = round(time.time() - t_init, 3)
+        self.perception_metrics["tiempos_procesado"].append(t_process)
+        self.save_perception_metrics()
+
         response.report = json.dumps(report_dict, ensure_ascii=False) # evita que se rompan los acentos
         return response

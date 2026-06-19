@@ -16,6 +16,9 @@ rosidl_generate_interfaces(${PROJECT_NAME}
   "srv/AnalyzeActivity.srv"
   "action/GenerateReport.action"
   "srv/GetPatrolContext.srv"
+  "msg/LiveCapture.msg"         
+  "msg/Alarm.msg"              
+  "srv/FlushZoneData.srv"
 )
 
 if(BUILD_TESTING)

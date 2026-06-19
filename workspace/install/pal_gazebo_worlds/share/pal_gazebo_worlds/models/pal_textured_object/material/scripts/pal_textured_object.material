@@ -1,14 +1,1 @@
-material pal_textured_object
-{
-	technique
-	{
-		pass
-		{
-			texture_unit
-			{
-				texture pal_textured_object.png
-			}
-		}
-	}
-}
-
+/home/alberto/tfg/Reconocimiento-y-sintesis-visual-Tiago/workspace/src/pal_gazebo_worlds/models/pal_textured_object/material/scripts/pal_textured_object.material

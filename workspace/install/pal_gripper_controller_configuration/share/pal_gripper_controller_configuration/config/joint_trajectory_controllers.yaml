@@ -1,13 +1,1 @@
-gripper_controller:
-  type: "position_controllers/JointTrajectoryController"
-  joints:
-    - gripper_right_finger_joint
-    - gripper_left_finger_joint
-
-  constraints:
-    goal_time: &goal_time_constraint 0.6
-    stopped_velocity_tolerance: &stopped_velocity_constraint 5.0
-    torso_1_joint:
-      goal: &goal_pos_constraint 0.02
-    torso_2_joint:
-      goal: *goal_pos_constraint
+/home/alberto/tfg/Reconocimiento-y-sintesis-visual-Tiago/workspace/src/pal_gripper/pal_gripper_controller_configuration/config/joint_trajectory_controllers.yaml

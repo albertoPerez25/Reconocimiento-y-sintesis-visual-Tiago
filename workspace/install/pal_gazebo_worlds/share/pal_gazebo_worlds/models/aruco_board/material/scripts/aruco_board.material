@@ -1,14 +1,1 @@
-material Aruco/aruco_board
-{
-	technique
-	{
-		pass
-		{
-			texture_unit
-			{
-				texture aruco_board.png
-			}
-		}
-	}
-}
-
+/home/alberto/tfg/Reconocimiento-y-sintesis-visual-Tiago/workspace/src/pal_gazebo_worlds/models/aruco_board/material/scripts/aruco_board.material

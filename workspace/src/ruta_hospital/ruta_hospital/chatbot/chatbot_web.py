@@ -1,5 +1,6 @@
 import os
 import sys
+import time
 import streamlit as st
 from ruta_hospital.utils.shared.vector_manager import VectorManager
 
@@ -14,19 +15,31 @@ use_reranker_env = os.environ.get("USE_RERANKER", "False").lower() in ("true", "
 use_reranker_arg = "--use-reranker" in sys.argv
 USE_RERANKER = use_reranker_env or use_reranker_arg
 
+def get_index_mtime(base_dir):
+    """
+    Lee el timestamp de modificación del índice FAISS físico.
+    Si el archivo no existe (ej: inicio de la patrulla), devuelve 0.0.
+    """
+    index_path = os.path.join(base_dir, "patrol_faiss_index", "index.faiss")
+    if os.path.exists(index_path):
+        return os.path.getmtime(index_path)
+    return 0.0
+
 @st.cache_resource
-def get_vector_manager(use_reranker=False):
-    # Inicializa el gestor y lo cachea para no recargarlo en cada interacción de Streamlit
+def get_vector_manager(use_reranker=False, index_timestamp=0.0):
+    # Inicializa el gestor y lo cachea. 
+    # Streamlit reinicializará la función automáticamente si 'index_timestamp' cambia.
     return VectorManager(
         base_dir=RAG_DIR,
-        # Asume la URL por defecto de Ollama, si se cambia en ROS, deberá ajustarse aquí
         ollama_url="http://localhost:11434", 
         llm_model="llama3",
-        max_stored_rounds=5, # Para evitar errores de lectura
+        max_stored_rounds=5, 
         use_reranker=use_reranker
     )
 
-vector_manager = get_vector_manager(USE_RERANKER)
+current_index_mtime = get_index_mtime(RAG_DIR)
+vector_manager = get_vector_manager(USE_RERANKER, current_index_mtime) # Inyección del timestamp
+
 
 def main():
     st.title("Chatbot de patrulla")
@@ -50,12 +63,9 @@ def main():
         if vueltas_disponibles:
             vuelta_seleccionada = st.selectbox("Selecciona una vuelta para ver su resumen:", vueltas_disponibles)
             
-            # Cargar el resumen general más reciente si la seleccionada es la última
-            # Si no, podría generar uno, pero por simplicidad solo leemos el general
-            if vuelta_seleccionada == vueltas_disponibles[0]:
-                st.info(vector_manager.get_latest_summary())
-            else:
-                st.warning(f"Los datos crudos de la Vuelta {vuelta_seleccionada} están disponibles en FAISS. Pregúntale al chatbot para más detalles.")
+            # Carga dinámica del resumen solicitado
+            resumen_texto = vector_manager.get_summary_for_round(vuelta_seleccionada)
+            st.info(resumen_texto)
         else:
             st.info("No hay vueltas registradas aún en el sistema.")
 
@@ -82,10 +92,20 @@ def main():
         with st.chat_message(message["role"]):
             st.markdown(message["content"])
 
-    # Comprobar si hay cadena (si el índice FAISS existe)
+    # Comprobar si hay cadena (si el índice FAISS existe) y pantalla de espera
     if not st.session_state.rag_chain:
-        st.error("No se pudo iniciar el sistema de IA. Asegúrate de que el robot ha terminado al menos una patrulla para generar la base de datos.")
-        st.stop()
+        # Comprobamos silenciosamente si FAISS acaba de ser creado en disco
+        faiss_file = os.path.join(vector_manager.faiss_path, "index.faiss")
+        
+        if os.path.exists(faiss_file):
+            # Cargamos la cadena y recargamos la web
+            st.session_state.rag_chain = vector_manager.get_conversational_chain()
+            st.rerun()
+        else:
+            # Pantalla de espera amigable que se actualiza cada 3 segundos
+            st.info("⏳ **Esperando telemetría...**")
+            time.sleep(3)
+            st.rerun() # Fuerza a Streamlit a volver a comprobar
 
     # Input del usuario
     if prompt := st.chat_input("Pregúntame sobre las rondas de patrulla..."):

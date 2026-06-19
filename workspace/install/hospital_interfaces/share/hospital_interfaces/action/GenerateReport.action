@@ -1,10 +1,1 @@
-# Request (meta que envía el nodo patrulla)
-string folder_path
----
-# Result (respuesta del reportero al finalizar)
-bool success
-string final_report
----
-# Feedback 
-string current_zone
-float32 percentage_complete
+/home/alberto/tfg/Reconocimiento-y-sintesis-visual-Tiago/workspace/src/hospital_interfaces/action/GenerateReport.action

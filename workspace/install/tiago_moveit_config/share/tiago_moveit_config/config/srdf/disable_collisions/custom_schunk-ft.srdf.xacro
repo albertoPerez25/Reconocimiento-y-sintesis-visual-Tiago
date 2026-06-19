@@ -1,5 +1,1 @@
-<?xml version="1.0" ?>
-<robot name="tiago" xmlns:xacro="http://ros.org/wiki/xacro">
-  <xacro:include filename="$(find tiago_moveit_config)/config/srdf/disable_collisions/custom.srdf.xacro" />
-    <disable_collisions link1="wrist_ft_link" link2="wrist_ft_tool_link" reason="Adjacent"/>
-</robot>
+/home/alberto/tfg/Reconocimiento-y-sintesis-visual-Tiago/workspace/src/tiago_moveit_config/config/srdf/disable_collisions/custom_schunk-ft.srdf.xacro

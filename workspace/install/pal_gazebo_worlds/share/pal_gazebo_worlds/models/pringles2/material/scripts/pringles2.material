@@ -1,14 +1,1 @@
-material Custom/pringles2
-{
-	technique
-	{
-		pass
-		{
-			texture_unit
-			{
-				texture pringles2.jpg
-			}
-		}
-	}
-}
-
+/home/alberto/tfg/Reconocimiento-y-sintesis-visual-Tiago/workspace/src/pal_gazebo_worlds/models/pringles2/material/scripts/pringles2.material

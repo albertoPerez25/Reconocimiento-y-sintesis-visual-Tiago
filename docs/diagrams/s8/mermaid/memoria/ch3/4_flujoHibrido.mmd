@@ -1,0 +1,39 @@
+flowchart TB
+    %% --- ENTIDADES ---
+    Entrada[/"Entrada Multimedia\n(Representación visual de la zona)"/]
+    
+    GeoEval["Evaluación Geométrica Ligera\n(Menor consumo de recursos)"]
+    Decision{"¿Presencia\nhumana\ndetectada?"}
+    
+    Exit["Salida Temprana\nSe retorna el estado: 'Despejado'"]
+    ConsumoMinimo(("Ahorro de VRAM\ny energía"))
+    
+    SemEval["Inferencia Semántica Profunda\n(Alto consumo de recursos)"]
+    SalidaRica["Generación de descripción\nestructurada y alertas"]
+
+    %% CONEXIONES
+    Entrada --> GeoEval
+    GeoEval --> Decision
+    
+    %% Rama de Ahorro
+    Decision -- "NO" --> Exit
+    Exit --> ConsumoMinimo
+    
+    %% Rama de Gasto justificado
+    Decision -- "SÍ" --> SemEval
+    SemEval --> SalidaRica
+
+    %% ESTILOS PASTEL
+    classDef input fill:#E5D8BD,stroke:#333,stroke-width:1px,color:#333;
+    classDef light fill:#B3CDE3,stroke:#333,stroke-width:1px,color:#333;
+    classDef decision fill:#FED9A6,stroke:#333,stroke-width:1px,color:#333;
+    classDef save fill:#CCEBC5,stroke:#333,stroke-width:1px,color:#333;
+    classDef heavy fill:#FBB4AE,stroke:#333,stroke-width:1px,color:#333;
+    
+    Entrada:::input
+    GeoEval:::light
+    Decision:::decision
+    Exit:::save
+    ConsumoMinimo:::save
+    SemEval:::heavy
+    SalidaRica:::heavy

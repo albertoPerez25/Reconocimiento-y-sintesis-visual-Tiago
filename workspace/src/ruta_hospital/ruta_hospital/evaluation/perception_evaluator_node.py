@@ -4,6 +4,8 @@ import time
 import json
 import rclpy
 from rclpy.executors import MultiThreadedExecutor
+from rclpy.action import ActionServer
+from hospital_interfaces.action import GenerateReport
 from std_srvs.srv import Trigger
 from rclpy.callback_groups import ReentrantCallbackGroup
 from ament_index_python.packages import get_package_share_directory
@@ -49,17 +51,20 @@ class PerceptionEvaluatorNode(BaseEvaluatorNode):
             callback_group=self.cb_group
         )
         
-        self.eval_srv = self.create_service( # servidor para iniciar la evaluacion
-            Trigger, 
-            'evaluate_perception_model', 
-            self.evaluate_callback,
+        self._action_server = ActionServer(
+            self,
+            GenerateReport,
+            '/evaluate_perception_models',
+            execute_callback=self.evaluate_callback,
+            goal_callback=self.goal_callback,      # Heredado de BaseEvaluatorNode
+            cancel_callback=self.cancel_callback,  # Heredado de BaseEvaluatorNode
             callback_group=self.cb_group
         )
-        
-        self.get_logger().info(f"Evaluador de Percepción listo. Llama a '/evaluate_perception_model' para testear el modelo activo.")
+        self.get_logger().info("Nodo Evaluador de Percepción listo. Llama a la ACCIÓN '/evaluate_perception_models'")
 
-    async def evaluate_callback(self, request, response):        
+    async def evaluate_callback(self, goal_handle):        
         '''Orquestador principal para la evaluación de percepción aislada'''
+        result = GenerateReport.Result()
         try:
             total_init_time = time.time()
 
@@ -73,7 +78,7 @@ class PerceptionEvaluatorNode(BaseEvaluatorNode):
                 
                 perception_dict = saved_data["perception_dict"]
                 t_ragas_init = time.time()
-                res = self.run_ragas_evaluation(perception_dict, response)
+                res = self.run_ragas_evaluation(perception_dict, goal_handle)
                 ragas_time = round(time.time() - t_ragas_init, 2)
                 
                 self.current_metrics["tiempo_ragas_evaluacion_segundos"] = ragas_time
@@ -96,7 +101,7 @@ class PerceptionEvaluatorNode(BaseEvaluatorNode):
                 raise InferencePipelineError("No se pudo extraer ningún dato válido para evaluar.")
 
             t_ragas_init = time.time()
-            res = self.run_ragas_evaluation(perception_data_for_ragas, response)
+            res = self.run_ragas_evaluation(perception_data_for_ragas, goal_handle)
             ragas_time = round(time.time() - t_ragas_init, 2)
             
             self.current_metrics["tiempo_inferencia_total_segundos"] = inference_time
@@ -108,15 +113,15 @@ class PerceptionEvaluatorNode(BaseEvaluatorNode):
             return res        
         except InferencePipelineError as e:
             self.get_logger().error(str(e))
-            response.success = False
-            response.message = str(e)
+            goal_handle.abort()
+            result.summary = str(e)
+            return result
             
         except Exception as e:
             self.get_logger().error(f"Error inesperado durante la evaluación de percepción: {e}")
-            response.success = False
-            response.message = f"Fallo del sistema: {e}"
-        
-        return response
+            goal_handle.abort()
+            result.summary = f"Fallo del sistema: {e}"
+            return result
 
     def load_dataset(self):
         '''Carga el dataset de evaluación desde el archivo JSON'''
@@ -180,24 +185,25 @@ class PerceptionEvaluatorNode(BaseEvaluatorNode):
         self.current_metrics["caracteres_contexto_visual"] = visual_char
         return perception_data_for_ragas
 
-    def run_ragas_evaluation(self, perception_dict, response):
+    def run_ragas_evaluation(self, perception_dict, goal_handle):
         '''Ejecuta la evaluación RAGAS y actualiza la respuesta del servicio ROS'''
         self.get_logger().info("Inferencia completada. Pasando resultados a RAGAS para su puntuación...")
-        
+        result = GenerateReport.Result()
+
         try:
             self.ragas_evaluator.evaluate_perception(
                 eval_dict=perception_dict,
                 config_name=self.evaluation_name, 
                 model_name=self.tested_model_name
             )
-            response.success = True
-            response.message = f"Evaluación completada. CSV guardado como 'ragas_{self.tested_model_name}_perception_evaluation.csv' en {self.metrics_dir}"
+            goal_handle.succeed()
+            result.summary = f"Evaluación completada. CSV guardado como 'ragas_{self.tested_model_name}_perception_evaluation.csv' en {self.metrics_dir}"
         except Exception as e:
             self.get_logger().error(f"Error durante Ragas: {e}")
-            response.success = False
-            response.message = f"Fallo en evaluación RAGAS: {e}"
+            goal_handle.abort()
+            result.summary = f"Fallo en evaluación RAGAS: {e}"
             
-        return response
+        return result
 
 def main(args=None):
     rclpy.init(args=args)

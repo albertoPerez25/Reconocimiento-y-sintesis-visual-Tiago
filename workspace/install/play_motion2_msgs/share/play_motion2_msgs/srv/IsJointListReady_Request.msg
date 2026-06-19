@@ -1,4 +1,1 @@
-# Shows if a list of joints is ready
-
-string[] joints
-
+/home/alberto/tfg/Reconocimiento-y-sintesis-visual-Tiago/workspace/build/play_motion2_msgs/rosidl_cmake/srv/IsJointListReady_Request.msg

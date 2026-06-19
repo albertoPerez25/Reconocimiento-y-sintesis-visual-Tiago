@@ -1,0 +1,76 @@
+---
+config:
+  look: classic
+---
+sequenceDiagram
+    participant P as PatrolNode
+    participant Cap as Capturadores (Foto/Vídeo)
+    participant R as LLMReporterNode
+    participant LC as VectorManager (LangChain/FAISS)
+    participant V as PerceptionNode
+    participant O@{ "type": "entity" } as Ollama API / YOLO
+    participant A as AlarmNotifierNode
+    participant Disco@{ "type": "database" } as Disco Local
+
+    P->>Disco: clean_all_orphan_folders() (Borra basura previa)
+
+    P->>Disco: get_next_available_folder() (Crea ej. vuelta_A)
+    P->>Cap: Service SetParameters (current_save_dir = vuelta_A)
+
+    rect rgb(240, 248, 255)
+        loop Cada punto de ruta (Vuelta A)
+            P->>P: Navega hacia Waypoint
+            opt Usuario pulsa 'd'
+                P->>R: cancel_goal_async() (Aborta meta anterior)
+            end
+            opt Usuario pulsa 's'
+                P->>P: cancelTask() (Salta Waypoint actual)
+            end
+            Cap->>Cap: Escucha /odom y /head_front_camera
+            alt Si avanzó (MSE > umbral / FPS)
+                Cap->>Disco: Guarda archivo (jpg/avi) y metadata.csv en vuelta_A
+                
+                %% --- CAMBIOS: Procesamiento en Tiempo Real (Streaming RAG) ---
+                Cap->>R: Emite evento LiveCapture
+                R->>V: Llama /analyze_image(path, Contexto RAG)
+                
+                %% Cortocircuito Híbrido (Early Exit)
+                V->>O: 1. Evaluación Geométrica (YOLO)
+                O-->>V: Posturas y Detecciones
+                
+                alt Si "Despejado / 0 personas"
+                    V-->>R: JSON (Early Exit: Aborta VLM para ahorrar VRAM)
+                else Presencia detectada
+                    V->>O: 2. Análisis Semántico (VLM)
+                    O-->>V: Descripción profunda
+                    V-->>R: JSON {descripción, alerta}
+                end
+                
+                %% Preservación de Evidencias vs Indexación
+                alt Si alerta == True (ej. y2 < 0.5 = caída)
+                    R->>Disco: save_evidence (Aísla multimedia en dir. persistente)
+                    R->>A: Emite alerta crítica
+                end
+                
+                R->>LC: add_single_event_to_index()
+                LC->>LC: Indexación inmediata en FAISS (Memoria volátil)
+                %% -------------------------------------------------------------
+            end
+        end
+    end
+
+    %% --- CAMBIO CRÍTICO SOTA: Eliminado lote asíncrono y RecursiveSummarizer ---
+    rect rgb(255, 245, 238)
+        Note over P, Disco: Fin de Zona/Vuelta: Consolidación y Volcado Estructurado
+        P->>R: Action: /generate_patrol_report (Fin de ruta)
+        
+        R->>Disco: Volcado de resúmenes estructurados a Disco (Retenido hasta ahora)
+        
+        Note over R, Disco: Políticas de Retención
+        R->>LC: apply_faiss_retention_policy()
+        LC->>LC: Purga vectores de vueltas obsoletas
+        
+        R->>Disco: Elimina carpetas de disco antiguas
+        
+        R-->>P: Devuelve Result (Éxito y Reporte Final)
+    end

@@ -1,2 +1,1 @@
-source;share/tiago_bringup/environment/ament_prefix_path.sh
-source;share/tiago_bringup/environment/path.sh
+/home/alberto/tfg/Reconocimiento-y-sintesis-visual-Tiago/workspace/build/tiago_bringup/ament_cmake_environment_hooks/local_setup.dsv

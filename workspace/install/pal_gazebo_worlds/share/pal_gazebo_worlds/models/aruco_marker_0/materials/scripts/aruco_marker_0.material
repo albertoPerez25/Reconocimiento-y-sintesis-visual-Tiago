@@ -1,14 +1,1 @@
-material ArucoMarker/ID0
-{
-    receive_shadows off
-    technique
-    {
-        pass
-        {
-            texture_unit
-            {
-                texture aruco_marker_0.png
-            }
-        }
-    }
-}
+/home/alberto/tfg/Reconocimiento-y-sintesis-visual-Tiago/workspace/src/pal_gazebo_worlds/models/aruco_marker_0/materials/scripts/aruco_marker_0.material

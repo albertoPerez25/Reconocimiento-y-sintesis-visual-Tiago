@@ -11,7 +11,8 @@ DEFAULT_MODEL = 'moondream'
 
 class SequencePerceptionNode(BaseVLMPerceptionNode):
     def __init__(self):
-        super().__init__('sequence_perception_node', default_model=DEFAULT_MODEL)        
+        super().__init__('sequence_perception_node', default_model=DEFAULT_MODEL)    
+        self.perception_metrics["modelo_usado"] = self.vlm_model    
 
     def process_image(self, image_paths_str, context):
         '''Recibe múltiples rutas de frames separadas por coma y los manda al VLM'''
@@ -24,20 +25,22 @@ class SequencePerceptionNode(BaseVLMPerceptionNode):
         payload = self.get_payload(ok_paths, context)
 
         try:
-            vlm_text = call_ollama_api(self.ollama_url, payload)
-            match = re.search(r'\{.*\}', vlm_text, re.DOTALL)
+            vlm_text = call_ollama_api(self.ollama_url, payload).strip()
             
-            if match:
-                json_str = match.group(0)
-                json.loads(json_str) 
-                return json_str
+            alert = False
+            if any(term in vlm_text.lower() for term in ["despejado", "empty", "no people", "vacio", "sin personas", "no hay personas"]):
+                descripcion = "Despejado."
             else:
-                self.get_logger().warn(f"El VLM de secuencia no devolvió un JSON válido: {vlm_text}")
-                return {"descripcion_vlm": "Error de formato VLM temporal", "alerta": False}
+                descripcion = vlm_text
+                # Evaluar alerta
+                if "urgente" in vlm_text.lower():
+                    alert = True
+                    
+            return {
+                "descripcion_vlm": descripcion,
+                "alerta": alert
+            }
                 
-        except json.JSONDecodeError:
-            self.get_logger().warn(f"El JSON generado en la secuencia está malformado: {vlm_text}")
-            return {"descripcion_vlm": "Error de sintaxis JSON en secuencia", "alerta": False}
         except Exception as e:
             self.get_logger().error(f"Error procesando secuencia: {e}")
             return {"descripcion_vlm": f"Error en inferencia de secuencia: {e}", "alerta": False}
@@ -47,16 +50,21 @@ class SequencePerceptionNode(BaseVLMPerceptionNode):
         base64_frames = self.extract_key_frames(ok_paths, max_frames=40) 
 
         prompt = f"""
-        Actúa como una IA analizadora de seguridad de un hospital.
-        Analiza esta secuencia temporal en la zona {context.zone_name} ({context.zone_type}).
-        Actividades esperadas aquí: {context.expected_activities}.
-        
-        INSTRUCCIONES CRÍTICAS:
-        1. Responde con un resumen telegráfico en MÁXIMO {self.word_limit} PALABRAS.
-        2. Usa formato estricto de log de seguridad (ej: 'Secuencia muestra 2 pacientes paseando').
-        3. Si detectas una emergencia médica (como alguien tirado en el suelo), incluye la palabra "URGENTE".
-        
-        DESCRIPCIÓN DE LA ESCENA (en español):
+        Actúa como un analizador telegráfico de actividades humanas para un hospital
+        Estás dentro de un hospital en {context.zone_name}, que es una zona de tipo {context.zone_type}.
+        Aquí puedes ver personas {context.expected_activities}
+
+        INSTRUCCIONES:
+            - Describe en un máximo de {self.word_limit} PALABRAS las actividades que las personas en esta secuencia temporal de imágenes están realizando
+            - Dentro del límite incluye una MUY BREVE descripción de la persona o personas a las que te refieres
+            - Si ves una situación que amenaza la vida (como una caída o alguien fumando), escribe "URGENTE" y descríbela brevemente
+            - IGNORA a cualquier persona que se vea a lo lejos a través de una puerta o cristal. Describe ÚNICAMENTE lo que esté físicamente DENTRO de tu misma habitación
+            - Si no hay personas en la secuencia, escribe "Despejado"
+
+        EJEMPLO DE SALIDAS:
+            - "Una mujer con sombrero sentada en una silla"
+            - "Un niño con camiseta amarilla corriendo"
+            - "Varios médicos de pie al lado de una camilla con una persona tumbada, posiblemente una operación a un paciente"
         """
         
         payload = {
