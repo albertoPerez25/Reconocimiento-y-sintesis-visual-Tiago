@@ -23,9 +23,10 @@ PKG_DIR = get_package_share_directory('ruta_hospital')
 
 DEFAULT_QUESTIONS_PATH = os.path.join(PKG_DIR, 'config', 'quest.json')
 DEFAULT_EVAL_FOLDER = "/home/alberto/tfg/Reconocimiento-y-sintesis-visual-Tiago/datasets/hospital_photos/vuelta_A/"
-DEFAULT_PERCEPTION_MODE = "image"
+DEFAULT_PERCEPTION_MODE = "image"  # 'sequence' para VLM temporal, 'image' para YOLO foto a foto, 'video' para clips de video
 DEFAULT_USE_RERANKER = False
 DEFAULT_RESUME_SESSION = True
+DEFAULT_EVAL_TARGET = "both" # 'short_only', 'summary_only', 'both'
 
 @dataclass
 class MockLiveCapture:
@@ -57,6 +58,8 @@ class SystemEvaluatorNode(BaseEvaluatorNode):
         super().__init__('system_evaluator_node')
         # Reportero original para acceder a sus métodos
         self.reporter_logic = LLMReporterNode()
+        self.reporter_logic.eval_name = self.evaluation_name
+        #self.reporter_logic.current_metrics["modelo_reportero"] = self.evaluation_name
         self.reporter_logic.keep_photos = True
 
         # Parametros
@@ -65,6 +68,7 @@ class SystemEvaluatorNode(BaseEvaluatorNode):
         self.declare_parameter('perception_mode', DEFAULT_PERCEPTION_MODE)
         self.declare_parameter('use_reranker', DEFAULT_USE_RERANKER)
         self.declare_parameter('resume_session', DEFAULT_RESUME_SESSION)
+        self.declare_parameter('evaluation_target', DEFAULT_EVAL_TARGET) 
 
         quest_path = self.get_parameter('questions_path').get_parameter_value().string_value
         self.eval_folder_path = self.get_parameter('eval_folder_path').get_parameter_value().string_value
@@ -79,6 +83,8 @@ class SystemEvaluatorNode(BaseEvaluatorNode):
         if use_reranker:
             self.reporter_logic.vector_manager.use_reranker = True
             self.reporter_logic.vector_manager.load_reranker_model_if_needed()
+
+        self.evaluation_target = self.get_parameter('evaluation_target').get_parameter_value().string_value
 
         default_map_path = os.path.join(PKG_DIR, 'config', 'semantic_map.json')
         self.declare_parameter('semantic_map_path', default_map_path)
@@ -132,14 +138,15 @@ class SystemEvaluatorNode(BaseEvaluatorNode):
                     self.save_metrics()
 
                     goal_handle.succeed()
-                    result.summary = f"Generación completada. Respuestas guardadas en {self.answers_file}"
+                    result.final_report = f"Generación completada. Respuestas guardadas en {self.answers_file}"
                     return result
 
             t_start_ragas = time.time()
             self.ragas_evaluator.evaluate_system(
                 short_dict=short_dict,
                 summary_dict=summary_dict,
-                config_name=self.evaluation_name
+                config_name=self.evaluation_name,
+                target=self.evaluation_target
             )       
             ragas_time = time.time() - t_start_ragas
         
@@ -147,19 +154,19 @@ class SystemEvaluatorNode(BaseEvaluatorNode):
             self.save_metrics()
 
             goal_handle.succeed()
-            result.summary = f"Evaluación Ragas completada con éxito. Guardado en: {self.metrics_dir}"
+            result.final_report = f"Evaluación Ragas completada con éxito. Guardado en: {self.metrics_dir}"
             return result
             
         except InferencePipelineError as e:
             self.get_logger().error(str(e))
             goal_handle.abort()
-            result.summary = str(e)
+            result.final_report = str(e)
             return result
         
         except Exception as e:
             self.get_logger().error(f"Error inesperado durante la evaluación: {e}")
             goal_handle.abort()
-            result.summary = f"Fallo del sistema: {e}"
+            result.final_report = f"Fallo del sistema: {e}"
             return result
                 
     def sync_metrics_from_reporter(self, inference_time, ragas_time, total_init_time):
@@ -221,8 +228,8 @@ class SystemEvaluatorNode(BaseEvaluatorNode):
 
     def _prepare_and_read_dataset(self):
         '''Prepara el entorno limpiando la caché y lee las filas válidas del CSV.'''
-        self.get_logger().info("Limpiando base vectorial para garantizar una evaluación aislada...")
         self.reporter_logic.vector_manager.clear_all_data()
+        self.get_logger().info("Limpieza de base vectorial ejecutada")
         
         # El reportero en producción empieza en 0 y suma 1 al consolidar. Lo alineamos.
         self.reporter_logic.current_round = 0 
@@ -284,7 +291,7 @@ class SystemEvaluatorNode(BaseEvaluatorNode):
             raise InferencePipelineError(f"No se procesó ninguna imagen/vídeo del CSV en: {self.eval_folder_path}.")
         
         print() # Salto de línea para no pisar la barra de progreso
-        self.get_logger().info(f"Se han inyectado {processed_files} eventos en FAISS exitosamente.")
+        self.get_logger().debug(f"Se han inyectado {processed_files} eventos en FAISS exitosamente.")
 
 
     async def _consolidate_patrol_report(self):
@@ -311,7 +318,7 @@ class SystemEvaluatorNode(BaseEvaluatorNode):
 
         self.get_logger().info("Generando respuestas LLM para evaluación RAGAS...")
         
-        # Recuperamos la "foto en RAM" exacta que usó el LLM
+        # Recupera la "foto en RAM" exacta que usó el LLM
         hospital_data_dict = json.loads(self.reporter_logic.latest_global_context)
         
         # Parseo limpio para no penalizar 'context_precision' con ruido JSON
@@ -323,11 +330,30 @@ class SystemEvaluatorNode(BaseEvaluatorNode):
                 context_texts.append(f"ZONA: {zone}\nSin eventos detectados, despejada.")
         global_context_clean_text = "\n\n".join(context_texts)
 
+        self.current_metrics["caracteres_contexto_visual"] = len(global_context_clean_text)
+        t_init_llm = time.time()
+
         short_dict, summary_dict = self.ragas_evaluator.generate_answers(
             vector_manager=self.reporter_logic.vector_manager,
             global_context_json=global_context_clean_text, 
-            pregenerated_summary=pregenerated_summary
+            pregenerated_summary=pregenerated_summary,
+            target=self.evaluation_target
         )
+
+        t_end_llm = time.time()
+        self.current_metrics["tiempo_llm_segundos"] = round(t_end_llm - t_init_llm, 2)
+        self.current_metrics["tiempo_inferencia_total_segundos"] = self.current_metrics["tiempo_llm_segundos"]
+
+        # Métricas de la patrulla del reportero
+        self.current_metrics["tiempo_percepcion_segundos"] = self.reporter_logic.current_metrics.get("tiempo_percepcion_segundos", 0.0)
+        self.current_metrics["total_imagenes_procesadas"] = self.reporter_logic.current_metrics.get("total_imagenes_procesadas", 0)
+        
+        total_chars = 0
+        if short_dict:
+            total_chars += sum(len(str(ans)) for ans in short_dict.values())
+        if summary_dict:
+            total_chars += sum(len(str(ans)) for ans in summary_dict.values())
+        self.current_metrics["caracteres_informe_final"] = total_chars
         
         if self.evaluation_mode in ["generate_only", "full"]:
             self.save_intermediate_answers({"short_dict": short_dict, "summary_dict": summary_dict})

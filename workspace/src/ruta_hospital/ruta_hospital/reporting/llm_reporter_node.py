@@ -37,6 +37,7 @@ class LLMReporterNode(BaseReporterNode):
             use_reranker=self.use_reranker,
             logger=self.get_logger()
         )
+        self.patrol_start_time = time.time()
 
         self.alarm_counters = {}
         self.alarm_counters_lock = threading.Lock()
@@ -124,7 +125,6 @@ class LLMReporterNode(BaseReporterNode):
     async def execute_report_callback(self, goal_handle):
         '''Cierra la vuelta actual leyendo el estado vivo y generando el resumen final LLM'''
         self.get_logger().info("Vuelta terminada. Iniciando consolidación del informe...")
-        t_inicio_total = time.time()
         result = GenerateReport.Result()
         
         with self.data_lock:
@@ -140,16 +140,18 @@ class LLMReporterNode(BaseReporterNode):
             result.success = False
             return result'''
         
+        thread_output = {"summary_text": "", "llm_time": 0.0}
         t_init_llm = time.time()
-
-        thread_output = {"summary_text": ""}
 
         def worker():
             # Volcado a disco para Debug y la barra lateral de Streamlit
             self.vector_manager.dump_round_data_to_disk(self.current_round, hospital_data_dict)
             
             # Generación del resumen global in-memory con LangChain
+            t_start_llm = time.time()
             summary_text = self.vector_manager.generate_global_summary(hospital_data_dict, self.current_round)
+
+            thread_output["llm_time"] = time.time() - t_start_llm
             thread_output["summary_text"] = summary_text
 
         # Delegación multihilo nativa
@@ -169,9 +171,14 @@ class LLMReporterNode(BaseReporterNode):
         result.success = True if "Error" not in summary_text else False
         result.final_report = f"Informe generado:\n{summary_text}"
         
-        self.current_metrics["tiempo_llm_segundos"] = round(time.time() - t_init_llm, 2)
-        self.current_metrics["tiempo_total_segundos"] = round(time.time() - t_inicio_total, 2)
+        self.current_metrics["tiempo_llm_segundos"] = round(thread_output["llm_time"], 2)
+        self.current_metrics["tiempo_total_segundos"] = round(time.time() - self.patrol_start_time, 2)
+        
+        self.current_metrics["caracteres_contexto_visual"] = len(json.dumps(hospital_data_dict, ensure_ascii=False))
+        self.current_metrics["caracteres_informe_final"] = len(summary_text)
+        
         self.save_metrics()
+        self.patrol_start_time = time.time()
 
         self.get_logger().info(f"\n\n\tINFORME FINAL LANGCHAIN\n{summary_text}\n")
         goal_handle.succeed()
@@ -205,9 +212,14 @@ class LLMReporterNode(BaseReporterNode):
                 images_mock, zone_name, local_zone_data, captured_round, goal_handle=None
             )
 
-            # Evaluación de alarmas críticas inmediatas
+            # Si hay actividad válida, se guarda en FAISS y memoria
             if has_activity and local_zone_data["eventos_recientes"]:
+                with self.data_lock:
+                    self.current_metrics["zonas_con_output"] = self.current_metrics.get("zonas_con_output", 0) + 1
                 self._register_and_evaluate_event(zone_name, zone_type, local_zone_data, captured_round)
+            else:
+                with self.data_lock:
+                    self.current_metrics["zonas_despejadas"] = self.current_metrics.get("zonas_despejadas", 0) + 1
 
         except Exception as e:
             self.get_logger().error(f"Error procesando captura en tiempo real: {e}")

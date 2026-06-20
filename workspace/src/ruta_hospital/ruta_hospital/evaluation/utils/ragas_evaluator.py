@@ -52,10 +52,11 @@ class RagasEvaluator:
         self.evaluator_llm = ChatOllama(model=ollama_params.evaluator_llm_model, 
                                         base_url=ollama_params.ollama_url, 
                                         temperature=0.0, # Evita que Llama-3 añada texto extra al JSON
-                                        format="json")
+                                        num_ctx=2048 #8192 # aumentado del default (2048) para intentar evitar errores summary (contexto grande)
+                                        )#format="json" quitado para intentar evitar errores en el summary
         self.evaluator_embeddings = OllamaEmbeddings(model=ollama_params.evaluator_embed_model, base_url=ollama_params.ollama_url)
 
-    def evaluate_system(self, short_dict, summary_dict, config_name=""):
+    def evaluate_system(self, short_dict, summary_dict, config_name="", target='both'):
         '''Genera respuestas y ejecuta Ragas'''
         # El nombre se inyecta justo antes de evaluar garantizando que esté actualizado
         for d in [short_dict, summary_dict]: 
@@ -74,29 +75,33 @@ class RagasEvaluator:
             #_noise_sensitivity # TODO: Comprobar si aumenta demasiado el tiempo de evaluación
         ]
         
-        df_short = self.run_evaluation_subset(
-            data_dict=short_dict,
-            metrics=short_metrics,
-            eval_type_name='short',
-            config_name=config_name
-        )
+        df_short = None
+        if target in ['both', 'short_only']:
+            df_short = self.run_evaluation_subset(
+                data_dict=short_dict,
+                metrics=short_metrics,
+                eval_type_name='short',
+                config_name=config_name
+            )
         if df_short is not None:
             results_dfs.append(df_short)
 
         # Evaluar resumen
-        df_summary = self.run_evaluation_subset(
-            data_dict=summary_dict,
-            metrics=[answer_correctness, faithfulness, summarization_score],
-            eval_type_name='summary',
-            config_name=config_name,
-            column_map={
-                "question": "question",
-                "answer": "answer",
-                "contexts": "contexts",
-                "ground_truth": "ground_truth",
-                "reference_contexts": "reference_contexts"
-            }
-        )
+        df_summary = None
+        if target in ['both', 'summary_only']:
+            df_summary = self.run_evaluation_subset(
+                data_dict=summary_dict,
+                metrics=[answer_correctness, faithfulness, summarization_score],
+                eval_type_name='summary',
+                config_name=config_name,
+                column_map={
+                    "question": "question",
+                    "answer": "answer",
+                    "contexts": "contexts",
+                    "ground_truth": "ground_truth",
+                    "reference_contexts": "reference_contexts"
+                }
+            )
         if df_summary is not None:
             results_dfs.append(df_summary)
 
@@ -136,7 +141,7 @@ class RagasEvaluator:
         df['evaluation_name'] = config_name if config_name else eval_type_name
         return df
 
-    def generate_answers(self, vector_manager, global_context_json, pregenerated_summary=None, reduced_context=None):
+    def generate_answers(self, vector_manager, global_context_json, pregenerated_summary=None, reduced_context=None, target='both'):
         '''Usa el LLM para responder a las preguntas basándose solo en la patrulla'''
         with open(self.quest_path, 'r', encoding='utf-8') as f:
             questions_data = json.load(f)
@@ -162,9 +167,9 @@ class RagasEvaluator:
                 continue
             question_type = item.get("type", "short") # asume short para retrocompatibilidad con archivos legacy
             
-            if question_type == "summary":
+            if question_type == "summary" and target in ['both', 'summary_only']:
                 self.process_summary_question(item, eval_context, summary_eval_data)
-            else:
+            elif question_type == "short" and target in ['both', 'short_only']:
                 self.process_short_question(item, short_eval_data, rag_chain)
                 
         return short_eval_data, summary_eval_data
@@ -182,7 +187,7 @@ class RagasEvaluator:
             llm_answer, question_for_ragas = self.generate_short_answer(eval_context.global_json, question)
 
         # Marcado como riesgo en revisión hecha con IA. TODO: Comprobar
-        #context_to_use = [eval_context.pregenerated_summary] if eval_context.pregenerated_summary else [eval_context.global_json] 
+        # context_to_use = [eval_context.pregenerated_summary] if eval_context.pregenerated_summary else [eval_context.global_json] 
 
         context_to_use = [eval_context.global_json]
 

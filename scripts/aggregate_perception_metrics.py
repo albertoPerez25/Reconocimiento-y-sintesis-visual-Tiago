@@ -26,7 +26,8 @@ class PerceptionMetricsAggregator:
             if filename.endswith("_metrics.json") and not filename.startswith("aggregated_"):
                 filepath = os.path.join(self.metrics_dir, filename)
                 self._process_file(filepath, filename)
-                processed_count += 1
+                if os.path.exists(os.path.join(self.metrics_dir, f"aggregated_{filename}")):
+                    processed_count += 1
 
         print(f"[INFO] Proceso completado. Se han generado {processed_count} reportes agregados.\n")
 
@@ -35,6 +36,10 @@ class PerceptionMetricsAggregator:
         try:
             with open(filepath, 'r', encoding='utf-8') as f:
                 data = json.load(f)
+
+            # Si el JSON es una lista (histórico de ROS), coge el último guardado
+            if isinstance(data, list) and len(data) > 0:
+                data = data[-1]
 
             if "tiempos_procesado" not in data or not data["tiempos_procesado"]:
                 print(f"[WARN] Saltando {filename}: No tiene la clave 'tiempos_procesado' o está vacía.")

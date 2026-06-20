@@ -7,12 +7,18 @@ from rclpy.action import CancelResponse, GoalResponse
 from hospital_interfaces.action import GenerateReport
 from ruta_hospital.evaluation.utils.ragas_evaluator import OllamaParams, EvaluatorRunParams
 from ruta_hospital.utils.commons.metrics_utils import save_metrics_to_file
+import logging
+
+# --- ACTIVAR DEBUG PROFUNDO DE RAGAS Y LANGCHAIN ---
+logging.getLogger("ragas").setLevel(logging.DEBUG)
+logging.getLogger("langchain").setLevel(logging.DEBUG)
 
 DEFAULT_OLLAMA_URL = "http://localhost:11434"
-DEFAULT_EVALUATOR_LLM_MODEL = "llama3"
+DEFAULT_EVALUATOR_LLM_MODEL = "llama3" #falla en fix_output_format en las preguntas summary, por dar un contexto enorme
+#DEFAULT_EVALUATOR_LLM_MODEL = 'qwen3.5:4b'
 DEFAULT_EVALUATOR_EMBED_MODEL = "nomic-embed-text"
 
-DEFAULT_SYSTEM_WORKERS = 4
+DEFAULT_SYSTEM_WORKERS = 1
 DEFAULT_SYSTEM_TIMEOUT = 1420
 DEFAULT_PERCEPTOR_WORKERS = DEFAULT_SYSTEM_WORKERS
 DEFAULT_PERCEPTOR_TIMEOUT = DEFAULT_SYSTEM_TIMEOUT
