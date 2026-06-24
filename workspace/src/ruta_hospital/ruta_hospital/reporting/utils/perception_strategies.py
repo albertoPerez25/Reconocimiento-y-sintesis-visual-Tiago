@@ -1,3 +1,4 @@
+import time
 import json
 import os
 import shutil
@@ -100,7 +101,16 @@ class SequencePerceptionStrategy(BasePerceptionStrategy):
         req.expected_activities = self.get_expected_activities(zone)
         req.zone_type = zone_data["tipo_zona"]
 
+        t_start_inference = time.time()
         result = await self.vision_cli.call_async(req)
+        t_inference = time.time() - t_start_inference
+
+        with self.reporter.data_lock:
+            self.reporter.current_metrics["tiempo_percepcion_segundos"] = round(
+                self.reporter.current_metrics.get("tiempo_percepcion_segundos", 0.0) + t_inference, 2
+            )
+            self.reporter.current_metrics["total_imagenes_procesadas"] = self.reporter.current_metrics.get("total_imagenes_procesadas", 0) + len(files)
+
         has_activity, is_alert, desc = self.parse_and_append_event(result.report, time_str, zone_data)
 
         if is_alert:
@@ -132,7 +142,15 @@ class ImagePerceptionStrategy(BasePerceptionStrategy):
             req.expected_activities = self.get_expected_activities(zone)
             req.zone_type = zone_data["tipo_zona"]
 
+            t_start_inference = time.time()
             result = await self.vision_cli.call_async(req) 
+            t_inference = time.time() - t_start_inference
+
+            with self.reporter.data_lock:
+                self.reporter.current_metrics["tiempo_percepcion_segundos"] = round(
+                    self.reporter.current_metrics.get("tiempo_percepcion_segundos", 0.0) + t_inference, 2
+                )
+                self.reporter.current_metrics["total_imagenes_procesadas"] = self.reporter.current_metrics.get("total_imagenes_procesadas", 0) + 1 
             
             has_activity, is_alert, desc = self.parse_and_append_event(result.report, req.time, zone_data)
                 

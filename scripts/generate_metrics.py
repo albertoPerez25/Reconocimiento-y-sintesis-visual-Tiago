@@ -11,9 +11,9 @@ import seaborn as sns
 sns.set_theme(style="whitegrid", palette="pastel")
 
 # Rutas por defecto
-JSON_PATH = "/home/alberto/tfg/Reconocimiento-y-sintesis-visual-Tiago/docs/autogenerate_metrics/P1/comparativa_modelos.json"
-RAGAS_DIR = "/home/alberto/tfg/Reconocimiento-y-sintesis-visual-Tiago/docs/autogenerate_metrics/P1/"
-OUTPUT_DIR = "/home/alberto/tfg/Reconocimiento-y-sintesis-visual-Tiago/docs/autogenerate_metrics/P1/res"
+JSON_PATH = "/home/alberto/tfg/Reconocimiento-y-sintesis-visual-Tiago/docs/autogenerate_metrics/comparativa_modelos.json"
+RAGAS_DIR = "/home/alberto/tfg/Reconocimiento-y-sintesis-visual-Tiago/docs/autogenerate_metrics/"
+OUTPUT_DIR = "/home/alberto/tfg/Reconocimiento-y-sintesis-visual-Tiago/docs/autogenerate_metrics/"
 
 FINAL_SCORE_WITH_FAITHFULNESS = False
 

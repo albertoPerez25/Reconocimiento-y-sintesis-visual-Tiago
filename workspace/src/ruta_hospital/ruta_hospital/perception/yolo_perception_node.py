@@ -68,7 +68,8 @@ class YoloPerceptionNode(BasePositionPerceptionNode):
             x1, y1, x2, y2 = box.xyxy[0].tolist()
             width, height = x2 - x1, y2 - y1 
 
-            if (width * height) < (total_area * self.min_area_ratio):
+            # Bypass si la caja es horizontal (posible caída)
+            if (width <= height) and ((width * height) < (total_area * self.min_area_ratio)):
                 continue
 
             pts = keypoints.xy[0].tolist()
@@ -260,7 +261,8 @@ class YoloPerceptionNode(BasePositionPerceptionNode):
             width, height = x2 - x1, y2 - y1
 
             # Filtro de profundidad por área (Ignorar personas en otras salas)
-            if (width * height) < (total_area * self.min_area_ratio):
+            # TODO (Refactor): Extraer esta evaluación a un método privado _is_valid_detection() para cumplir DRY
+            if (width <= height) and ((width * height) < (total_area * self.min_area_ratio)):
                 continue
 
             pts = keypoints.xy[0].tolist()
@@ -273,7 +275,7 @@ class YoloPerceptionNode(BasePositionPerceptionNode):
                                                        img_height
                                                     )
             if len(pts) < 17:
-                return "Postura desconocida", False
+                return #"Postura desconocida", False
             if is_alert:
                 frame_alert = True
             if track_id not in track_history:

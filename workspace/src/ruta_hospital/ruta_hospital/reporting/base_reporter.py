@@ -25,7 +25,7 @@ METRICS_DIR = "/home/alberto/tfg/Reconocimiento-y-sintesis-visual-Tiago/docs/aut
 DEFAULT_RAG_DIR = "/tmp/ruta_hospital_rag_data/"
 METADATA_PATH = os.path.join(PKG_DIR, 'config', 'hospital_metadata.json')
 
-DEFAULT_MODEL = "llama3"
+DEFAULT_MODEL = "llama3" # 'qwen3.5:4b'
 DEFAULT_OLLAMA_URL = "http://localhost:11434/"
 DEFAULT_WORD_LIMIT = 300
 

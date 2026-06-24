@@ -13,6 +13,7 @@ from ruta_hospital.perception.base_perception import BasePerceptionNode, RagCont
 
 DEFAULT_ANNOTATED_IMG_PATH = "/tmp/annotated_vlm_frame.jpg"
 DEFAULT_DELETE_ANNOTATED_IMG = True
+DEFAULT_INCLUDE_POSE_OUTPUT = False
 
 DEFAULT_POSITION_ESTIMATORS = ['ruta_hospital.perception.yolo_perception_node.YoloPerceptionNode']
 DEFAULT_VLM_ESTIMATORS = ['ruta_hospital.perception.vlm_perception_node.VLMPerceptionNode']
@@ -41,9 +42,11 @@ class HybridPerceptionNode(BasePerceptionNode):
 
         self.declare_parameter('position_estimators', DEFAULT_POSITION_ESTIMATORS)
         self.declare_parameter('vlm_estimators', DEFAULT_VLM_ESTIMATORS)
+        self.declare_parameter('include_pose_output', DEFAULT_INCLUDE_POSE_OUTPUT)
 
         self.annotated_image_path = self.get_parameter('annotated_image_path').get_parameter_value().string_value
         self.delete_annotated_image = self.get_parameter('delete_annotated_image').get_parameter_value().bool_value
+        self.include_pose_output = self.get_parameter('include_pose_output').get_parameter_value().bool_value
         
         pos_classes = self.get_parameter('position_estimators').get_parameter_value().string_array_value
         vlm_classes = self.get_parameter('vlm_estimators').get_parameter_value().string_array_value
@@ -326,9 +329,20 @@ class HybridPerceptionNode(BasePerceptionNode):
         for data in vlm_data_list:
             desc = str(data.get("descripcion_vlm", "")).strip()
             alert = bool(data.get("alerta", False))
-            # Convierto a str o bool para evitar que crashe si el vlm alucina 
+            # Conviert a str o bool para evitar que crashe si el vlm alucina 
             # pero devuelve un formato json "valido"
             vlm_atr_list.append(model_atr(desc, alert))
+
+        if not self.include_pose_output:
+            yolo_has_alert = any(m.alert for m in pos_atr_list)
+            vlm_has_alert = any(m.alert for m in vlm_atr_list)
+            
+            # Fallback: Si YOLO detecta alarma pero VLM la ignora, se mantiene YOLO por seguridad
+            if yolo_has_alert and not vlm_has_alert:
+                self.get_logger().warn("Safety Override: Alarma geométrica ignorada por el VLM. Inyectando telemetría de YOLO.")
+            else:
+                # Si no hay alarma, o ambos la han detectado correctamente, se silencia el texto de YOLO
+                pos_atr_list = []
 
         final_desc, final_alert = self.get_combined_json(pos_atr_list, vlm_atr_list)
 

@@ -11,6 +11,8 @@ from ruta_hospital.perception.base_vlm_perception import BaseVLMPerceptionNode
 DEFAULT_MODEL = 'qwen3.5:4b'
 DEFAULT_OLLAMA_URL = 'http://localhost:11434/api/generate'
 DEFAULT_SAMPLED_FRAMES = 5
+DEFAULT_SAVE_FRAMES = False
+DEFAULT_FRAMES_DIR = '/tmp/video_perception_debug/'
 
 class VideoPerceptionNode(BaseVLMPerceptionNode):
     '''Nodo que analiza un clip de vídeo usando un VLM extrayendo frames clave'''
@@ -21,7 +23,18 @@ class VideoPerceptionNode(BaseVLMPerceptionNode):
                         )
         
         self.declare_parameter('sampled_frames', DEFAULT_SAMPLED_FRAMES)
+        self.declare_parameter('save_sampled_frames', DEFAULT_SAVE_FRAMES)
+        self.declare_parameter('sampled_frames_dir', DEFAULT_FRAMES_DIR)
+
         self.sampled_frames = self.get_parameter('sampled_frames').value
+        self.save_sampled_frames = self.get_parameter('save_sampled_frames').value
+        self.sampled_frames_dir = self.get_parameter('sampled_frames_dir').value
+
+        # Crear el directorio de debug si se solicita
+        if self.save_sampled_frames:
+            os.makedirs(self.sampled_frames_dir, exist_ok=True)
+            self.get_logger().info(f"Los frames se guardarán en: {self.sampled_frames_dir}")
+
         self.perception_metrics["modelo_usado"] = self.vlm_model
 
     def process_image(self, file_path, context): # TODO: Dividir
@@ -136,7 +149,15 @@ RESPONDE SOLO EN ESPAÑOL
             if ret:
                 # Escalar imagen
                 frame = cv2.resize(frame, (640, 480)) # TODO: Cambiarlo a la funcion estándar de utilidades
-                # Comprimimos en JPEG para reducir el payload
+                
+                # guardado de frames
+                if self.save_sampled_frames:
+                    base_name = os.path.basename(video_path).split('.')[0]
+                    debug_path = os.path.join(self.sampled_frames_dir, f"{base_name}_frame_{idx}.jpg")
+                    cv2.imwrite(debug_path, frame)
+                    self.get_logger().debug(f"Frame {idx} guardado en: {debug_path}")
+
+                # COmprimir en JPEG para reducir el payload
                 _, buffer = cv2.imencode('.jpg', frame, [int(cv2.IMWRITE_JPEG_QUALITY), 70])
                 b64_str = base64.b64encode(buffer.tobytes()).decode('utf-8')
                 frames_b64.append(b64_str)
