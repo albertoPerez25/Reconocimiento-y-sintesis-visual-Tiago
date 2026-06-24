@@ -59,7 +59,7 @@ class SystemEvaluatorNode(BaseEvaluatorNode):
         # Reportero original para acceder a sus métodos
         self.reporter_logic = LLMReporterNode()
         self.reporter_logic.eval_name = self.evaluation_name
-        #self.reporter_logic.current_metrics["modelo_reportero"] = self.evaluation_name
+        self.reporter_logic.current_metrics["evaluation_name"] = self.evaluation_name
         self.reporter_logic.keep_photos = True
 
         # Parametros
@@ -172,17 +172,6 @@ class SystemEvaluatorNode(BaseEvaluatorNode):
     def sync_metrics_from_reporter(self, inference_time, ragas_time, total_init_time):
         '''Sincroniza y consolida las métricas de rendimiento y ejecución obtenidas desde el nodo reportero 
         instanciado.'''
-
-        rep_metrics = self.reporter_logic.current_metrics
-        
-        # tiempos y contadores
-        self.current_metrics["total_imagenes_procesadas"] = rep_metrics.get("total_imagenes_procesadas", 0)
-        self.current_metrics["tiempo_percepcion_segundos"] = rep_metrics.get("tiempo_percepcion_segundos", 0.0)
-        self.current_metrics["tiempo_llm_segundos"] = rep_metrics.get("tiempo_llm_segundos", 0.0)
-        
-        # verbosidad
-        self.current_metrics["caracteres_contexto_visual"] = rep_metrics.get("caracteres_contexto_visual", 0)
-        self.current_metrics["caracteres_informe_final"] = rep_metrics.get("caracteres_informe_final", 0)
         
         self.current_metrics["tiempo_inferencia_total_segundos"] = inference_time
         self.current_metrics["tiempo_ragas_evaluacion_segundos"] = ragas_time
@@ -297,6 +286,10 @@ class SystemEvaluatorNode(BaseEvaluatorNode):
     async def _consolidate_patrol_report(self):
         '''Simula el fin de la vuelta llamando al callback del reportero y mide tiempos.'''
         mock_goal_handle = MockGoalHandle()
+
+        # Rescatar métricas de percepción ANTES de que el reportero consolide y limpie el diccionario
+        self.current_metrics["tiempo_percepcion_segundos"] = self.reporter_logic.current_metrics.get("tiempo_percepcion_segundos", 0.0)
+        self.current_metrics["total_imagenes_procesadas"] = self.reporter_logic.current_metrics.get("total_imagenes_procesadas", 0)
         
         self.get_logger().debug("Fin de patrulla simulado. Consolidando informe y volcando a disco...")
         t_init_llm = time.time()
@@ -345,8 +338,6 @@ class SystemEvaluatorNode(BaseEvaluatorNode):
         self.current_metrics["tiempo_inferencia_total_segundos"] = self.current_metrics["tiempo_llm_segundos"]
 
         # Métricas de la patrulla del reportero
-        self.current_metrics["tiempo_percepcion_segundos"] = self.reporter_logic.current_metrics.get("tiempo_percepcion_segundos", 0.0)
-        self.current_metrics["total_imagenes_procesadas"] = self.reporter_logic.current_metrics.get("total_imagenes_procesadas", 0)
         
         total_chars = 0
         if short_dict:
