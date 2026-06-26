@@ -3,7 +3,7 @@ import rclpy
 import os
 import cv2
 import base64
-from ruta_hospital.utils.commons.api_utils import call_ollama_api
+from ruta_hospital.utils.commons.api_utils import call_ollama_api, scale_and_encode_frame
 from ruta_hospital.perception.base_vlm_perception import BaseVLMPerceptionNode
 
 # modelo con capacidades nativas de vídeo 
@@ -157,9 +157,8 @@ RESPONDE SOLO EN ESPAÑOL
                     cv2.imwrite(debug_path, frame)
                     self.get_logger().debug(f"Frame {idx} guardado en: {debug_path}")
 
-                # COmprimir en JPEG para reducir el payload
-                _, buffer = cv2.imencode('.jpg', frame, [int(cv2.IMWRITE_JPEG_QUALITY), 70])
-                b64_str = base64.b64encode(buffer.tobytes()).decode('utf-8')
+                # COmprimir en JPEG y escalar para reducir el payload
+                b64_str = scale_and_encode_frame(frame, self.image_size, self.get_logger())
                 frames_b64.append(b64_str)
                 
         cap.release()

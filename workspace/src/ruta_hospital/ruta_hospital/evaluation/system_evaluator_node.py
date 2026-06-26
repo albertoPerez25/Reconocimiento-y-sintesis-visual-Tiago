@@ -59,7 +59,7 @@ class SystemEvaluatorNode(BaseEvaluatorNode):
         # Reportero original para acceder a sus métodos
         self.reporter_logic = LLMReporterNode()
         self.reporter_logic.eval_name = self.evaluation_name
-        self.reporter_logic.current_metrics["evaluation_name"] = self.evaluation_name
+        self.reporter_logic.current_metrics["evaluacion_nombre"] = self.evaluation_name
         self.reporter_logic.keep_photos = True
 
         # Parametros
@@ -132,8 +132,9 @@ class SystemEvaluatorNode(BaseEvaluatorNode):
                 t_start_inference = time.time()
                 short_dict, summary_dict = await self.get_data_for_inference_and_evaluate()
 
+                inference_time = time.time() - t_start_inference
+
                 if self.evaluation_mode == "generate_only":
-                    inference_time = time.time() - t_start_inference
                     self.sync_metrics_from_reporter(inference_time, 0.0, total_init_time)
                     self.save_metrics()
 
@@ -286,10 +287,6 @@ class SystemEvaluatorNode(BaseEvaluatorNode):
     async def _consolidate_patrol_report(self):
         '''Simula el fin de la vuelta llamando al callback del reportero y mide tiempos.'''
         mock_goal_handle = MockGoalHandle()
-
-        # Rescatar métricas de percepción ANTES de que el reportero consolide y limpie el diccionario
-        self.current_metrics["tiempo_percepcion_segundos"] = self.reporter_logic.current_metrics.get("tiempo_percepcion_segundos", 0.0)
-        self.current_metrics["total_imagenes_procesadas"] = self.reporter_logic.current_metrics.get("total_imagenes_procesadas", 0)
         
         self.get_logger().debug("Fin de patrulla simulado. Consolidando informe y volcando a disco...")
         t_init_llm = time.time()
@@ -323,7 +320,6 @@ class SystemEvaluatorNode(BaseEvaluatorNode):
                 context_texts.append(f"ZONA: {zone}\nSin eventos detectados, despejada.")
         global_context_clean_text = "\n\n".join(context_texts)
 
-        self.current_metrics["caracteres_contexto_visual"] = len(global_context_clean_text)
         t_init_llm = time.time()
 
         short_dict, summary_dict = self.ragas_evaluator.generate_answers(
@@ -334,17 +330,16 @@ class SystemEvaluatorNode(BaseEvaluatorNode):
         )
 
         t_end_llm = time.time()
-        self.current_metrics["tiempo_llm_segundos"] = round(t_end_llm - t_init_llm, 2)
-        self.current_metrics["tiempo_inferencia_total_segundos"] = self.current_metrics["tiempo_llm_segundos"]
-
-        # Métricas de la patrulla del reportero
+        
+        self.current_metrics["tiempo_ragas_generacion_respuestas_segundos"] = round(t_end_llm - t_init_llm, 2)
         
         total_chars = 0
         if short_dict:
             total_chars += sum(len(str(ans)) for ans in short_dict.values())
         if summary_dict:
             total_chars += sum(len(str(ans)) for ans in summary_dict.values())
-        self.current_metrics["caracteres_informe_final"] = total_chars
+            
+        self.current_metrics["caracteres_ragas_respuestas_totales"] = total_chars
         
         if self.evaluation_mode in ["generate_only", "full"]:
             self.save_intermediate_answers({"short_dict": short_dict, "summary_dict": summary_dict})

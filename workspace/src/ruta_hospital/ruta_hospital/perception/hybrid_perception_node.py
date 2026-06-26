@@ -127,8 +127,8 @@ class HybridPerceptionNode(BasePerceptionNode):
         if not pos_data_list and not vlm_data_list:
             return {"descripcion_vlm": "Formato ignorado por los perceptores acoplados.", "alerta": False}
         
-        self.get_logger().error(f"\n[DEBUG POS] Tipo: {type(pos_data_list)} | Contenido: {pos_data_list}")
-        self.get_logger().error(f"[DEBUG VLM] Tipo: {type(vlm_data_list)} | Contenido: {vlm_data_list}")
+        self.get_logger().debug(f"\n[DEBUG POS] Tipo: {type(pos_data_list)} | Contenido: {pos_data_list}")
+        self.get_logger().debug(f"[DEBUG VLM] Tipo: {type(vlm_data_list)} | Contenido: {vlm_data_list}")
         
         json_response = self.get_json_response(pos_data_list, vlm_data_list)
         self.get_logger().debug(f"{json_response}")

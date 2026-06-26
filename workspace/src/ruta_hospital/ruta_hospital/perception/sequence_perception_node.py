@@ -4,7 +4,7 @@ import rclpy
 import json
 import re # extraer el json
 from ruta_hospital.perception.base_perception import BasePerceptionNode
-from ruta_hospital.utils.commons.api_utils import encode_image_to_base64, call_ollama_api
+from ruta_hospital.utils.commons.api_utils import load_image_and_scale, call_ollama_api
 from ruta_hospital.perception.base_vlm_perception import BaseVLMPerceptionNode
 
 DEFAULT_MODEL = 'moondream'
@@ -100,7 +100,7 @@ class SequencePerceptionNode(BaseVLMPerceptionNode):
 
         frames_b64 = []
         for ruta in seleccionadas:
-            frames_b64.append(encode_image_to_base64(ruta))
+            frames_b64.append(load_image_and_scale(ruta, self.image_size, self.get_logger()))
         return frames_b64
 
     def check_path(self, path):
