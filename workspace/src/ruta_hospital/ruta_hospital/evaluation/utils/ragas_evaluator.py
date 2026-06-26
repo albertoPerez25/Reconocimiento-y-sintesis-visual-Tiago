@@ -12,19 +12,39 @@ from ragas.metrics import (
     context_precision,
     context_recall,
     context_entity_recall,
-    _noise_sensitivity
+    _noise_sensitivity,
+    AspectCritic
 )
 from langchain_ollama import ChatOllama, OllamaEmbeddings
 from ragas.run_config import RunConfig
 from ruta_hospital.utils.commons.api_utils import call_ollama_api 
 from ruta_hospital.utils.shared import vector_manager
 
+'''critic_fidelidad = AspectCritic(
+    name="fidelidad_log", 
+    definition="El resumen NO DEBE inventar alarmas, zonas o personas que no estén presentes textualmente en el contexto aportado. Si menciona algo que no está en el contexto, es 0."
+)
+
+critic_omision = AspectCritic(
+    name="omision_critica", 
+    definition="El resumen DEBE incluir obligatoriamente cualquier evento marcado con 'alerta: true' o descrito como anomalía en el contexto. Si falta una sola alarma del contexto, es 0."
+)'''# TODO: Comprobar si son necesarias
+
 class OllamaParams:
-    def __init__(self, ollama_url = "http://localhost:11434", evaluator_llm_model = "llama3", evaluator_embed_model = "nomic-embed-text"):
+    def __init__(self, ollama_url = "http://localhost:11434", 
+                 evaluator_llm_model = "llama3", 
+                 evaluator_embed_model = "nomic-embed-text", 
+                 api_key=None,
+                 provider="local"):
+        
         self.ollama_url=ollama_url
         self.evaluator_llm_model = evaluator_llm_model
         self.evaluator_embed_model = evaluator_embed_model
-        self.reporter_llm_model = None # TODO
+        #self.reporter_llm_model = None 
+
+        # Preparado para APIs cloud # TODO
+        self.api_key = api_key
+        self.provider = provider
 
 class EvaluatorRunParams:
     def __init__(self, system_workers = 4, system_timeout = 420, perceptor_workers = 4, perceptors_timeout = 420, max_words = 300, max_stored_rounds = 5):
@@ -88,10 +108,10 @@ class RagasEvaluator:
 
         # Evaluar resumen
         df_summary = None
-        if target in ['both', 'summary_only']:
+        if target in ['both', 'summary_only']: 
             df_summary = self.run_evaluation_subset(
                 data_dict=summary_dict,
-                metrics=[answer_correctness, faithfulness, summarization_score],
+                metrics=[answer_correctness, faithfulness, summarization_score], # TODO Comprobar si ya funciona con estas metricas, si no usar AspectCritic
                 eval_type_name='summary',
                 config_name=config_name,
                 column_map={
@@ -104,6 +124,32 @@ class RagasEvaluator:
             )
         if df_summary is not None:
             results_dfs.append(df_summary)
+
+        '''# Evaluar resumen
+        df_summary = None
+        if target in ['both', 'summary_only']:
+            
+            # --- NUEVO ENRUTAMIENTO DE MÉTRICAS (ISP) ---
+            # En lugar de usar métricas matemáticas complejas como summarization_score,
+            # usamos nuestra lista de validación binaria de rúbricas.
+            summary_metrics = [critic_fidelidad, critic_omision]
+            
+            df_summary = self.run_evaluation_subset(
+                data_dict=summary_dict,
+                metrics=summary_metrics,
+                eval_type_name='summary',
+                config_name=config_name,
+                column_map={
+                    "question": "question",
+                    "answer": "answer",
+                    "contexts": "contexts",
+                    "ground_truth": "ground_truth",
+                    # eliminamos reference_contexts del mapeo ya que AspectCritic 
+                    # opera evaluando 'answer' contra 'contexts' nativamente
+                }
+            )
+        if df_summary is not None:
+            results_dfs.append(df_summary)'''
 
         if results_dfs:
             df_final = pd.concat(results_dfs, ignore_index=True)

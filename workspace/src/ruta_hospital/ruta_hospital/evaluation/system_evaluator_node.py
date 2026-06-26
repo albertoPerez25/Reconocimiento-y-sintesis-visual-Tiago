@@ -18,6 +18,7 @@ from ruta_hospital.evaluation.base_evaluator import BaseEvaluatorNode
 from ruta_hospital.evaluation.base_evaluator import InferencePipelineError
 from ruta_hospital.utils.shared.semantic_map_utils import load_semantic_map, get_zone_name
 from hospital_interfaces.action import GenerateReport
+from ruta_hospital.evaluation.utils.context_compressor import ContextCompressor
 
 PKG_DIR = get_package_share_directory('ruta_hospital')
 
@@ -61,6 +62,7 @@ class SystemEvaluatorNode(BaseEvaluatorNode):
         self.reporter_logic.eval_name = self.evaluation_name
         self.reporter_logic.current_metrics["evaluacion_nombre"] = self.evaluation_name
         self.reporter_logic.keep_photos = True
+        self.context_compressor = ContextCompressor(llm=self.reporter_logic.vector_manager.llm)
 
         # Parametros
         self.declare_parameter('questions_path', DEFAULT_QUESTIONS_PATH)
@@ -308,23 +310,28 @@ class SystemEvaluatorNode(BaseEvaluatorNode):
 
         self.get_logger().info("Generando respuestas LLM para evaluación RAGAS...")
         
-        # Recupera la "foto en RAM" exacta que usó el LLM
+        # Recupera la telemetría masiva en RAM y la parsea a una lista de strings estructurada
         hospital_data_dict = json.loads(self.reporter_logic.latest_global_context)
-        
-        # Parseo limpio para no penalizar 'context_precision' con ruido JSON
         context_texts = []
         for zone, info in hospital_data_dict.items():
             if info.get("eventos_recientes"):
                 context_texts.append(f"ZONA: {zone}\n{json.dumps(info, ensure_ascii=False)}")
             else:
                 context_texts.append(f"ZONA: {zone}\nSin eventos detectados, despejada.")
-        global_context_clean_text = "\n\n".join(context_texts)
+                
+        # Convertirla lista de strings crudos en objetos Document de LangChain para el Map-Reduce
+        from langchain_core.documents import Document
+        docs_to_compress = [Document(page_content=text) for text in context_texts]
+        
+        self.get_logger().info("Ejecutando Map-Reduce para comprimir el contexto destinado al LLM Juez...")
+        compressed_context = self.context_compressor.compress_documents(docs_to_compress)
 
         t_init_llm = time.time()
 
+        # Pasamos a RAGAS el contexto reducido en lugar del global_context crudo
         short_dict, summary_dict = self.ragas_evaluator.generate_answers(
             vector_manager=self.reporter_logic.vector_manager,
-            global_context_json=global_context_clean_text, 
+            global_context_json=compressed_context,  # compresión de viñetas
             pregenerated_summary=pregenerated_summary,
             target=self.evaluation_target
         )
