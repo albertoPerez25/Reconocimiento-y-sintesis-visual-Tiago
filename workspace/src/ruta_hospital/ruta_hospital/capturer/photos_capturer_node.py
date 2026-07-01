@@ -37,8 +37,13 @@ class PhotosCapturerNode(BaseCaptureNode):
         err = np.sum((gray_current.astype("float") - gray_last.astype("float")) ** 2)
         err /= float(gray_current.shape[0] * gray_current.shape[1])
 
+        max_pixel_value = np.iinfo(gray_current.dtype).max
+        max_mse = float(max_pixel_value) ** 2
+
+        mse_percentage = (err / max_mse) * 100.0
+
         threshold = self.get_parameter("similarity_threshold").value
-        return err > threshold
+        return mse_percentage > threshold
     
     def process_and_save_capture(self, cv_image):
         '''Validación y guardado de una imagen'''
@@ -57,7 +62,6 @@ class PhotosCapturerNode(BaseCaptureNode):
         self.save_metadata(image_name) 
         self.last_saved_cv_image = cv_image
 
-        # NUEVA LÓGICA DE PUBLICACIÓN/BUFFER:
         capture_mode = self.get_parameter('capture_mode').value
         
         if capture_mode == 'image':
