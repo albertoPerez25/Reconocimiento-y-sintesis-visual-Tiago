@@ -19,15 +19,20 @@ from ruta_hospital.evaluation.base_evaluator import InferencePipelineError
 from ruta_hospital.utils.shared.semantic_map_utils import load_semantic_map, get_zone_name
 from hospital_interfaces.action import GenerateReport
 from ruta_hospital.evaluation.utils.context_compressor import ContextCompressor
+from langchain_core.documents import Document
+
 
 PKG_DIR = get_package_share_directory('ruta_hospital')
 
 DEFAULT_QUESTIONS_PATH = os.path.join(PKG_DIR, 'config', 'quest.json')
 DEFAULT_EVAL_FOLDER = "/home/alberto/tfg/Reconocimiento-y-sintesis-visual-Tiago/datasets/hospital_photos/vuelta_A/"
 DEFAULT_PERCEPTION_MODE = "image"  # 'sequence' para VLM temporal, 'image' para YOLO foto a foto, 'video' para clips de video
-DEFAULT_USE_RERANKER = False
+DEFAULT_USE_RERANKER = True
 DEFAULT_RESUME_SESSION = True
 DEFAULT_EVAL_TARGET = "both" # 'short_only', 'summary_only', 'both'
+DEFAULT_CONTEXT_COMPRESSOR = False
+DEFAULT_ENFORCE_ZONE_MATCH = True
+
 
 @dataclass
 class MockLiveCapture:
@@ -71,6 +76,8 @@ class SystemEvaluatorNode(BaseEvaluatorNode):
         self.declare_parameter('use_reranker', DEFAULT_USE_RERANKER)
         self.declare_parameter('resume_session', DEFAULT_RESUME_SESSION)
         self.declare_parameter('evaluation_target', DEFAULT_EVAL_TARGET) 
+        self.declare_parameter('use_context_compressor', DEFAULT_CONTEXT_COMPRESSOR) 
+        self.declare_parameter('enforce_zone_match', DEFAULT_ENFORCE_ZONE_MATCH) 
 
         quest_path = self.get_parameter('questions_path').get_parameter_value().string_value
         self.eval_folder_path = self.get_parameter('eval_folder_path').get_parameter_value().string_value
@@ -80,6 +87,10 @@ class SystemEvaluatorNode(BaseEvaluatorNode):
 
         resume_session = self.get_parameter('resume_session').get_parameter_value().bool_value
         self.reporter_logic.resume_session = resume_session
+
+        self.use_context_compressor = self.get_parameter('use_context_compressor').get_parameter_value().bool_value
+        enforce_zone_match = self.get_parameter('enforce_zone_match').get_parameter_value().bool_value
+        self.reporter_logic.vector_manager.enforce_zone_match = enforce_zone_match
 
         use_reranker = self.get_parameter('use_reranker').get_parameter_value().bool_value
         if use_reranker:
@@ -113,7 +124,7 @@ class SystemEvaluatorNode(BaseEvaluatorNode):
             callback_group=self.action_cb_group
         )
         
-        self.get_logger().info("Nodo Evaluador listo. Llama al servicio '/evaluate_patrol_system'")
+        self.get_logger().info("Nodo Evaluador listo. Lanza la acción '/evaluate_patrol_system'")
 
     async def evaluate_callback(self, goal_handle):
         '''Orquesta el flujo de evaluación completo: obtención de datos (inferencia o lectura de disco), 
@@ -318,20 +329,25 @@ class SystemEvaluatorNode(BaseEvaluatorNode):
                 context_texts.append(f"ZONA: {zone}\n{json.dumps(info, ensure_ascii=False)}")
             else:
                 context_texts.append(f"ZONA: {zone}\nSin eventos detectados, despejada.")
-                
-        # Convertirla lista de strings crudos en objetos Document de LangChain para el Map-Reduce
-        from langchain_core.documents import Document
-        docs_to_compress = [Document(page_content=text) for text in context_texts]
-        
-        self.get_logger().info("Ejecutando Map-Reduce para comprimir el contexto destinado al LLM Juez...")
-        compressed_context = self.context_compressor.compress_documents(docs_to_compress)
+
+        raw_global_context_str = "\n".join(context_texts)
+        context_to_use =  raw_global_context_str
+
+        if self.use_context_compressor:  
+            # Convertirla lista de strings crudos en objetos Document de LangChain para el Map-Reduce
+            docs_to_compress = [Document(page_content=text) for text in context_texts]
+            
+            self.get_logger().debug("Map-Reduce para comprimir el contexto destinado al LLM Juez...")
+            compressed_context = self.context_compressor.compress_documents(docs_to_compress)
+
+            context_to_use = compressed_context 
 
         t_init_llm = time.time()
 
         # Pasamos a RAGAS el contexto reducido en lugar del global_context crudo
         short_dict, summary_dict = self.ragas_evaluator.generate_answers(
             vector_manager=self.reporter_logic.vector_manager,
-            global_context_json=compressed_context,  # compresión de viñetas
+            global_context_json=context_to_use,  
             pregenerated_summary=pregenerated_summary,
             target=self.evaluation_target
         )

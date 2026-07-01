@@ -12,6 +12,7 @@ from ragas.metrics import (
     context_precision,
     context_recall,
     context_entity_recall,
+    answer_similarity,
     _noise_sensitivity,
     AspectCritic
 )
@@ -20,15 +21,11 @@ from ragas.run_config import RunConfig
 from ruta_hospital.utils.commons.api_utils import call_ollama_api 
 from ruta_hospital.utils.shared import vector_manager
 
-'''critic_fidelidad = AspectCritic(
-    name="fidelidad_log", 
-    definition="El resumen NO DEBE inventar alarmas, zonas o personas que no estén presentes textualmente en el contexto aportado. Si menciona algo que no está en el contexto, es 0."
-)
-
-critic_omision = AspectCritic(
-    name="omision_critica", 
-    definition="El resumen DEBE incluir obligatoriamente cualquier evento marcado con 'alerta: true' o descrito como anomalía en el contexto. Si falta una sola alarma del contexto, es 0."
-)'''# TODO: Comprobar si son necesarias
+# Metricas custom que no usan LLMs
+from ruta_hospital.evaluation.utils.custom_metrics import RougeScoreMetric, HHEMFidelity, BERTScoreMetric
+rouge_metric = RougeScoreMetric()
+hhem_metric = HHEMFidelity()
+bert_metric = BERTScoreMetric()
 
 class OllamaParams:
     def __init__(self, ollama_url = "http://localhost:11434", 
@@ -56,9 +53,10 @@ class EvaluatorRunParams:
         self.max_stored_rounds = max_stored_rounds
 
 class EvalContext:
-    def __init__(self, global_json, pregenerated_summary=None):
+    def __init__(self, global_json, pregenerated_summary=None, reduced_context=None):
         self.global_json = global_json
         self.pregenerated_summary = pregenerated_summary
+        self.reduced_context = reduced_context
 
 class RagasEvaluator:
     def __init__(self, quest_path, metrics_dir, ollama_params, run_params, logger = None):
@@ -72,7 +70,7 @@ class RagasEvaluator:
         self.evaluator_llm = ChatOllama(model=ollama_params.evaluator_llm_model, 
                                         base_url=ollama_params.ollama_url, 
                                         temperature=0.0, # Evita que Llama-3 añada texto extra al JSON
-                                        num_ctx=2048 #8192 # aumentado del default (2048) para intentar evitar errores summary (contexto grande)
+                                        num_ctx=4096 #8192 # aumentado del default (2048) para intentar evitar errores summary (contexto grande)
                                         )#format="json" quitado para intentar evitar errores en el summary
         self.evaluator_embeddings = OllamaEmbeddings(model=ollama_params.evaluator_embed_model, base_url=ollama_params.ollama_url)
 
@@ -109,47 +107,26 @@ class RagasEvaluator:
         # Evaluar resumen
         df_summary = None
         if target in ['both', 'summary_only']: 
-            df_summary = self.run_evaluation_subset(
-                data_dict=summary_dict,
-                metrics=[answer_correctness, faithfulness, summarization_score], # TODO Comprobar si ya funciona con estas metricas, si no usar AspectCritic
-                eval_type_name='summary',
-                config_name=config_name,
-                column_map={
-                    "question": "question",
-                    "answer": "answer",
-                    "contexts": "contexts",
-                    "ground_truth": "ground_truth",
-                    "reference_contexts": "reference_contexts"
-                }
-            )
-        if df_summary is not None:
-            results_dfs.append(df_summary)
+            
+            summary_metrics = [
+                answer_similarity,    # Ragas Nativo (Semántica por Embeddings)
+                rouge_metric,         # Cobertura algorítmica pura (Sustituto de context_recall)
+                hhem_metric,           # Fidelidad NLI (Sustituto de los Critics de Ragas)
+                bert_metric,
+                context_recall, 
+                context_entity_recall, 
+                faithfulness          # Funciona a veces 
+                #summarization_score # da timeout haga lo que haga
+            ]
 
-        '''# Evaluar resumen
-        df_summary = None
-        if target in ['both', 'summary_only']:
-            
-            # --- NUEVO ENRUTAMIENTO DE MÉTRICAS (ISP) ---
-            # En lugar de usar métricas matemáticas complejas como summarization_score,
-            # usamos nuestra lista de validación binaria de rúbricas.
-            summary_metrics = [critic_fidelidad, critic_omision]
-            
             df_summary = self.run_evaluation_subset(
                 data_dict=summary_dict,
-                metrics=summary_metrics,
+                metrics=summary_metrics, # faithfulness y answer_correctness no funciona, ni su reemplazo aspect critic
                 eval_type_name='summary',
-                config_name=config_name,
-                column_map={
-                    "question": "question",
-                    "answer": "answer",
-                    "contexts": "contexts",
-                    "ground_truth": "ground_truth",
-                    # eliminamos reference_contexts del mapeo ya que AspectCritic 
-                    # opera evaluando 'answer' contra 'contexts' nativamente
-                }
+                config_name=config_name
             )
-        if df_summary is not None:
-            results_dfs.append(df_summary)'''
+            if df_summary is not None and not df_summary.empty:
+                results_dfs.append(df_summary)
 
         if results_dfs:
             df_final = pd.concat(results_dfs, ignore_index=True)
@@ -201,7 +178,8 @@ class RagasEvaluator:
 
         eval_context = EvalContext(
             global_json=global_context_json,
-            pregenerated_summary=pregenerated_summary
+            pregenerated_summary=pregenerated_summary,
+            reduced_context=reduced_context # Pasa el parámetro que recibe la función
         )
 
         rag_chain = vector_manager.get_conversational_chain()
@@ -225,29 +203,27 @@ class RagasEvaluator:
         question = item["question"]
         ground_truth = item["ground_truth"]
         
+        llm_answer, default_question_for_ragas = self.generate_summary_answer(
+            eval_context.global_json, eval_context.pregenerated_summary
+        )
+
+        # si hay pregunta en el JSON se usa esa
         if not question or str(question).strip() == "":
-            llm_answer, question_for_ragas = self.generate_summary_answer(
-                eval_context.global_json, eval_context.pregenerated_summary
-            )
+            question_for_ragas = default_question_for_ragas
         else:
-            llm_answer, question_for_ragas = self.generate_short_answer(eval_context.global_json, question)
-
-        # Marcado como riesgo en revisión hecha con IA. TODO: Comprobar
-        # context_to_use = [eval_context.pregenerated_summary] if eval_context.pregenerated_summary else [eval_context.global_json] 
-
-        context_to_use = [eval_context.global_json]
+            question_for_ragas = str(question)
 
         self.add_record_to_dataset(summary_eval_data, {
             "question": question_for_ragas,
             "answer": llm_answer.strip(),
             "ground_truth": ground_truth,
-            "contexts": context_to_use,
-            "reference_contexts": context_to_use
+            "contexts": [eval_context.global_json], 
+            "reference_contexts": [eval_context.global_json] 
         })
         
         if self.logger:
             self.logger.debug(f"Resumen generado: {llm_answer.strip()}")
-            self.logger.debug(f"Contexto pasado a RAGAS: {context_to_use}")
+            self.logger.debug("Contextos separados empaquetados para RAGAS.")
 
     def process_short_question(self, item, short_eval_data, rag_chain):
         '''Responde y empaqueta preguntas cortas usando RAG de LangChain'''
@@ -306,10 +282,10 @@ class RagasEvaluator:
         return llm_answer, question_for_ragas
 
     def add_record_to_dataset(self, dataset, record):
-        '''Añade una nueva fila de datos al diccionario columnar de RAGAS'''
+        '''Añade una nueva fila de datos al diccionario de RAGAS'''
         for key, value in record.items():
-            if key in dataset:
-                dataset[key].append(value)
+            # setdefault crea la lista vacía si la clave no existe, y luego hace el append
+            dataset.setdefault(key, []).append(value)
     
     def evaluate_perception(self, eval_dict, config_name="", model_name="perception_model"):
         '''Genera respuestas imagen por imagen y ejecuta Ragas para el perceptor a partir de un diccionario'''

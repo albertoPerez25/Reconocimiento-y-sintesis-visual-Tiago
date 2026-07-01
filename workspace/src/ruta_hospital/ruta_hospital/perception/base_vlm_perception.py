@@ -19,7 +19,7 @@ class BaseVLMPerceptionNode(BasePerceptionNode):
         
         self.vlm_model = self.get_parameter('vlm_model').get_parameter_value().string_value
         self.ollama_url = self.get_parameter('ollama_url').get_parameter_value().string_value
-        self.model_word_limit = self.get_parameter('word_limit').get_parameter_value().integer_value
+        self.model_word_limit = self.get_parameter('model_word_limit').get_parameter_value().integer_value
         self.image_size = list(self.get_parameter('image_size').get_parameter_value().integer_array_value)
 
     def analyze_callback(self, request, response):

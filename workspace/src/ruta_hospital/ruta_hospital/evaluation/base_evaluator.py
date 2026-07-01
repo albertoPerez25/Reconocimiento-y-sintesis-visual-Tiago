@@ -14,7 +14,7 @@ logging.getLogger("ragas").setLevel(logging.DEBUG)
 logging.getLogger("langchain").setLevel(logging.DEBUG)
 
 DEFAULT_OLLAMA_URL = "http://localhost:11434"
-DEFAULT_EVALUATOR_LLM_MODEL = "llama3" #falla en fix_output_format en las preguntas summary, por dar un contexto enorme
+DEFAULT_EVALUATOR_LLM_MODEL = "llama3.1" #falla en fix_output_format en las preguntas summary, por dar un contexto enorme
 #DEFAULT_EVALUATOR_LLM_MODEL = 'qwen3.5:4b'
 DEFAULT_EVALUATOR_EMBED_MODEL = "nomic-embed-text"
 

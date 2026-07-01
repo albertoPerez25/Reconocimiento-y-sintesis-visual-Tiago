@@ -14,6 +14,8 @@ from langchain_ollama import ChatOllama, OllamaEmbeddings
 from langchain_community.retrievers import BM25Retriever
 from langchain_classic.retrievers.ensemble import EnsembleRetriever
 from langchain_core.documents import Document
+from langchain_core.retrievers import BaseRetriever 
+from typing import List, Any
 
 # IMPORTACIONES PROFUNDAS 
 from langchain_classic.chains.summarize.chain import load_summarize_chain
@@ -28,6 +30,37 @@ from langchain_core.prompts import PromptTemplate, ChatPromptTemplate, SystemMes
 #CROSS_ENCODER_MODEL_NAME = "cross-encoder/ms-marco-MiniLM-L-6-v2" # este NO es multilingual
 CROSS_ENCODER_MODEL_NAME = "cross-encoder/mmarco-mMiniLMv2-L12-H384-v1"
 
+
+class HospitalContextEnforcer(BaseRetriever):
+    """Red de Seguridad Léxica Determinista. Fuerza la inyección de una zona si se menciona pero no se recupera."""
+    base_retriever: Any
+    vectorstore: Any
+    valid_zones: List[str]
+    logger_ref: Any = None
+
+    def _get_relevant_documents(self, query: str, *, run_manager: Any = None) -> List[Document]:
+        # Compatibilidad con múltiples versiones de LangChain
+        if hasattr(self.base_retriever, "invoke"):
+            docs = self.base_retriever.invoke(query)
+        else:
+            docs = self.base_retriever.get_relevant_documents(query)
+        
+        query_lower = query.lower()
+        mentioned_zones = [zone for zone in self.valid_zones if zone.lower() in query_lower]
+        
+        for req_zone in mentioned_zones:
+            zone_found = any(doc.metadata.get("zona") == req_zone for doc in docs)
+            if not zone_found:
+                if self.logger_ref:
+                    self.logger_ref.debug(f"Red Léxica: Zona '{req_zone}' mencionada pero no recuperada. Inyectando forzosamente.")
+                
+                forced_docs = self.vectorstore.similarity_search(query, k=1, filter={"zona": req_zone})
+                if forced_docs:
+                    docs.insert(0, forced_docs[0])
+                    
+        return list(docs)
+
+
 class VectorManager:
     '''
     Clase encargada de orquestar la ingesta de documentos, la gestión del almacenamiento
@@ -35,7 +68,7 @@ class VectorManager:
     '''
     def __init__(self, base_dir, ollama_url="http://localhost:11434", 
                  llm_model="llama3", embed_model="nomic-embed-text",
-                 max_stored_rounds=5, use_reranker=False, logger=None):
+                 max_stored_rounds=5, use_reranker=False, enforce_zone_match=True, logger=None):
         
         self.base_dir = base_dir
         self.docs_dir = os.path.join(base_dir, "db_docs")
@@ -46,6 +79,7 @@ class VectorManager:
         self.embed_model = embed_model
         self.max_stored_rounds = max_stored_rounds
         self.use_reranker = use_reranker
+        self.enforce_zone_match = enforce_zone_match
         self.logger = logger
 
         self.reranker_model = None
@@ -261,6 +295,16 @@ class VectorManager:
 
         base_retriever = self._build_hybrid_retriever(vectorstore, top_k_docs)
         retriever = self._apply_reranker_if_configured(base_retriever, top_k_docs)
+
+        # Context Enforcer de zonas
+        if self.enforce_zone_match:
+            valid_zones = self._get_valid_zones_list()
+            retriever = HospitalContextEnforcer(
+                base_retriever=retriever,
+                vectorstore=vectorstore,
+                valid_zones=valid_zones,
+                logger_ref=self.logger
+            )
         
         zones_str = self._get_valid_zones_string()
         CONDENSE_QUESTION_PROMPT, qa_prompt = self._create_chain_prompts(zones_str)
@@ -342,6 +386,19 @@ class VectorManager:
                             valid_zones.add(f.replace(".txt", ""))
         zones_str = ", ".join(valid_zones) if valid_zones else "Zonas desconocidas"
         return zones_str
+    
+
+    def _get_valid_zones_list(self):
+        '''Devuelve una lista de Python con las zonas válidas exactas para la Red Léxica'''
+        valid_zones = set()
+        if os.path.exists(self.docs_dir):
+            for folder in os.listdir(self.docs_dir):
+                folder_path = os.path.join(self.docs_dir, folder)
+                if os.path.isdir(folder_path):
+                    for f in os.listdir(folder_path):
+                        if f.endswith(".txt") and f != "resumen.txt":
+                            valid_zones.add(f.replace(".txt", ""))
+        return list(valid_zones)
 
 
     def _create_chain_prompts(self, zones_str):
@@ -362,10 +419,11 @@ class VectorManager:
         # Prompt del asistente
         system_template = """Eres una IA de reconocimiento de actividades y humanos de un hospital.
 Responde de forma concisa basándote ÚNICAMENTE en el siguiente contexto extraído de los sensores.
-Si no sabes la respuesta basándote en este contexto, di que no hay información registrada. No inventes datos.
+Si el contexto indica que la zona está "despejada", "sin actividad" "vacía" o similar, responde explícitamente que no se ha detectado actividad humana.
+No inventes datos.
 
 CONTEXTO DE SENSORES RECUPERADO:
-{context}"""
+{context}"""#Si la zona no aparece en este contexto, di que no se ha encontrado información registrada.
 
         qa_prompt = ChatPromptTemplate.from_messages([
             SystemMessagePromptTemplate.from_template(system_template),
@@ -379,6 +437,7 @@ CONTEXTO DE SENSORES RECUPERADO:
         Añade un evento individual al índice FAISS en tiempo real y persiste en disco.
         (Arquitectura Streaming / Real-Time RAG)
         '''
+        inserted_ids = None
         # Recuperar la inyección dura de metadatos en el texto para ayudar a BM25
         zone_type = event_data.get("tipo_zona", "Desconocida") 
         content = f"[Zona: {zone_name} | Tipo: {zone_type} | Vuelta: {round_num}]\nEvento detectado:\n{json.dumps(event_data, ensure_ascii=False)}"
@@ -405,15 +464,16 @@ CONTEXTO DE SENSORES RECUPERADO:
                         self.embeddings, 
                         allow_dangerous_deserialization=True
                     )
-                    self.vector_store.add_documents([doc])
+                    inserted_ids = self.vector_store.add_documents([doc])
                 else:
                     # Si no hay nada en RAM ni en disco, desde cero
                     self.logger.debug(f"Inicializando FAISS en memoria con primer evento en {zone_name}")
                     self.vector_store = FAISS.from_documents([doc], self.embeddings)
+                    inserted_ids = list(self.vector_store.docstore._dict.keys())
             else:
                 # Flujo normal en tiempo real
                 self.logger.debug(f"Añadiendo evento de {zone_name} a FAISS existente")
-                self.vector_store.add_documents([doc])
+                inserted_ids = self.vector_store.add_documents([doc])
 
                 # Semantic Checkpointing (Guardar solo al cambiar de zona)
                 if self.last_saved_zone is not None and self.last_saved_zone != zone_name:
@@ -425,7 +485,17 @@ CONTEXTO DE SENSORES RECUPERADO:
             
         except Exception as e:
             self.logger.error(f"Error fatal insertando evento en FAISS: {e}")
+        return inserted_ids
 
+    def remove_single_event_from_index(self, doc_id):
+        '''Elimina un documento específico del índice FAISS usando su ID de LangChain (Retracción)'''
+        if getattr(self, 'vector_store', None) is not None and doc_id:
+            try:
+                self.vector_store.delete([doc_id])
+                self.logger.debug(f"Vector de zona despejada retraído (ID: {doc_id})")
+                self.atomic_save_faiss(self.vector_store)
+            except Exception as e:
+                self.logger.error(f"Error retrayendo vector de FAISS: {e}")
             
     def dump_round_data_to_disk(self, round_number, hospital_data_dict):
         '''

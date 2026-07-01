@@ -34,6 +34,7 @@ DEFAULT_MAX_STORED_ROUNDS = 5
 DEFAULT_RESUME_SESSION = True
 DEFAULT_KEEP_PHOTOS = False
 DEFAULT_EVIDENCE_DIR = os.path.join(DEFAULT_RAG_DIR, "alarm_evidences")
+DEFAULT_ENFORCE_ZONE_MATCH = True
 
 class BaseReporterNode(Node, ABC):
     '''Clase abstracta para los nodos generadores de informes'''
@@ -55,6 +56,7 @@ class BaseReporterNode(Node, ABC):
         self.declare_parameter('keep_photos', DEFAULT_KEEP_PHOTOS)
         self.declare_parameter('evidence_dir', DEFAULT_EVIDENCE_DIR)
         self.declare_parameter('experiment_name', node_name)
+        self.declare_parameter('enforce_zone_match', DEFAULT_ENFORCE_ZONE_MATCH)
 
         self.semantic_map_path = self.get_parameter('semantic_map_path').get_parameter_value().string_value
         self.metrics_dir = self.get_parameter('metrics_dir').get_parameter_value().string_value
@@ -69,6 +71,7 @@ class BaseReporterNode(Node, ABC):
         self.keep_photos = self.get_parameter('keep_photos').get_parameter_value().bool_value
         self.evidence_dir = self.get_parameter('evidence_dir').get_parameter_value().string_value
         self.eval_name = self.get_parameter('experiment_name').get_parameter_value().string_value
+        self.enforce_zone_match = self.get_parameter('enforce_zone_match').get_parameter_value().bool_value
 
         self.use_reranker = False # Para el resumen de vuelta no se usa ni tiene sentido usarlo
         self.hospital_zones, self.reception_zone = load_semantic_map(self.semantic_map_path, self.get_logger())

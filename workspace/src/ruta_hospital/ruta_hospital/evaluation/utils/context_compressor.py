@@ -18,8 +18,16 @@ class ContextCompressor:
 
         # PROMPT 1: FASE MAP (Extracción atómica)
         map_template = """Extrae de forma exhaustiva los eventos, detecciones de personas y anomalías de este fragmento de telemetría.
-Devuelve estrictamente una lista de hechos cortos y objetivos (sujeto, verbo, predicado, tiempo/zona). 
-IMPORTANTE: No redactes prosa, no uses conectores narrativos. Solo hechos puros.
+Devuelve estrictamente una lista de hechos cortos y objetivos.
+
+REGLAS ESTRICTAS DE FORMATO:
+- Cada viñeta debe ser una frase simple, natural y plana.
+- PROHIBIDO usar desgloses gramaticales o sub-listas.
+- PROHIBIDO usar etiquetas analíticas como "Sujeto:", "Verbo:", "Predicado:" o "Tiempo:".
+
+Ejemplo de salida correcta:
+- Una persona de pie mirando hacia la pared en Recepción
+- Un hombre corriendo en el pasillo del Quirófano 2
 
 Fragmento de telemetría:
 {text}
@@ -32,7 +40,11 @@ Hechos extraídos:"""
         # =====================================================================
         reduce_template = """Combina los siguientes hechos extraídos en una única lista de viñetas consolidadas.
 Elimina cualquier redundancia o repetición temporal, pero MANTÉN todos los detalles críticos únicos (personas, posturas, alarmas y tiempos exactos).
-Devuelve ÚNICAMENTE la lista de viñetas finales. No incluyas introducciones, ni comentarios, ni conclusiones.
+
+REGLAS ESTRICTAS DE FORMATO:
+- Devuelve ÚNICAMENTE la lista de viñetas finales. No incluyas introducciones, ni comentarios, ni conclusiones.
+- Cada viñeta debe ser una frase de texto plano.
+- PROHIBIDO ABSOLUTAMENTE usar estructuras anidadas, tabulaciones o etiquetas como "Sujeto:", "Acción:" o similares.
 
 Hechos recopilados:
 {text}
