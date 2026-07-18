@@ -76,6 +76,7 @@ class SequencePerceptionNode(BaseVLMPerceptionNode):
             "options": {
                 "num_predict": self.self.model_word_limit * 2,
                 "temperature": 0.0,  # Hace las respuestas menos creativas y más predecibles
+                "seed": 42,
                 "stop": [
                     "Sujeto ID_", 
                     "Historial", 

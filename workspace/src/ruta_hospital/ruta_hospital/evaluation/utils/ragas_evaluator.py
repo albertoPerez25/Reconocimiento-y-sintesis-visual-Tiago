@@ -70,7 +70,8 @@ class RagasEvaluator:
         self.evaluator_llm = ChatOllama(model=ollama_params.evaluator_llm_model, 
                                         base_url=ollama_params.ollama_url, 
                                         temperature=0.0, # Evita que Llama-3 añada texto extra al JSON
-                                        num_ctx=4096 #8192 # aumentado del default (2048) para intentar evitar errores summary (contexto grande)
+                                        num_ctx=4096, #8192 # aumentado del default (2048) para intentar evitar errores summary (contexto grande)
+                                        seed=42 
                                         )#format="json" quitado para intentar evitar errores en el summary
         self.evaluator_embeddings = OllamaEmbeddings(model=ollama_params.evaluator_embed_model, base_url=ollama_params.ollama_url)
 
@@ -110,12 +111,12 @@ class RagasEvaluator:
             
             summary_metrics = [
                 answer_similarity,    # Ragas Nativo (Semántica por Embeddings)
-                rouge_metric,         # Cobertura algorítmica pura (Sustituto de context_recall)
+                rouge_metric,         # Cobertura algorítmica (Sustituto de context_recall)
                 hhem_metric,           # Fidelidad NLI (Sustituto de los Critics de Ragas)
                 bert_metric,
-                context_recall, 
-                context_entity_recall, 
-                faithfulness          # Funciona a veces 
+                #context_recall, 
+                #context_entity_recall, 
+                #faithfulness          # Funciona a veces 
                 #summarization_score # da timeout haga lo que haga
             ]
 

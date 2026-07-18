@@ -92,8 +92,9 @@ RESPONDE SOLO EN ESPAÑOL
             "keep_alive": "30s",
             "options": {
                 "num_predict": self.model_word_limit * 2,
-                "temperature": 0.01,  # respuestas menos creativas y mas predecibles
+                "temperature": 0.0,  # respuestas menos creativas y mas predecibles
                 "num_ctx": 1024,
+                "seed": 42,
                 "stop": [
                     "Sujeto ID_", 
                     "Historial", 

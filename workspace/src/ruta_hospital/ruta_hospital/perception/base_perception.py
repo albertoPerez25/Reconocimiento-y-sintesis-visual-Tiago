@@ -1,3 +1,4 @@
+import os, json
 from abc import ABC, abstractmethod
 from rclpy.node import Node
 from hospital_interfaces.srv import AnalyzeActivity
@@ -44,7 +45,8 @@ class BasePerceptionNode(Node, ABC):
     def save_perception_metrics(self):
         '''Guarda las métricas de rendimiento en un archivo JSON específico para este nodo'''
         filename = f"{self.get_name()}_metrics.json"
-        save_metrics_to_file(self.metrics_dir, self.perception_metrics, self.get_logger(), filename)
+        with open(os.path.join(self.metrics_dir, filename), 'w', encoding='utf-8') as f:
+            json.dump([self.perception_metrics], f, ensure_ascii=False, indent=4)
 
     @abstractmethod
     def analyze_callback(self, request, response):

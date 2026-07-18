@@ -221,15 +221,20 @@ class YoloPerceptionNode(BasePositionPerceptionNode):
             if frame_alert:
                 global_alert = True
 
-        if state.video_writer is not None:
-            state.video_writer.release()
+        #if state.video_writer is not None:
+        #    state.video_writer.release()
             
         # Formateo y retorno de la respuesta
         return self.build_response(track_history, global_alert, state=state)
 
     def handle_temporal_rendering(self, result, index, state):
         '''Gestiona el renderizado SOTA y guardado de frames para vídeo o secuencias'''
-        annotated_frame = result.plot() 
+
+        # Desactivado el guardado y creacion de video con las bounding boxes de YOLO por una implementación 
+        # incompleta. Mantenido por ser útil para debug y en un futuro TODO: actualizar la implementación para 
+        # activarse solo cuando el flag "save_debug_images" del hibrido esté en True (replicando el comportamiento 
+        # de las imágenes)
+        '''annotated_frame = result.plot() 
         
         if state.is_video:
             if state.video_writer is None:
@@ -241,7 +246,12 @@ class YoloPerceptionNode(BasePositionPerceptionNode):
             unique_id = uuid.uuid4().hex[:8]
             frame_path = f"/tmp/yolo_seq_{unique_id}_{index}.jpg"
             cv2.imwrite(frame_path, annotated_frame)
-            state.sequence_paths.append(frame_path)
+            state.sequence_paths.append(frame_path)'''
+
+        if state.is_video:
+            state.output_video_path = result.path
+        else:
+            state.sequence_paths.append(result.path)
 
     def update_tracking_history(self, result, track_history):
         '''Actualiza el historial de posturas y devuelve True si hay alerta en este frame'''

@@ -101,20 +101,34 @@ class SequencePerceptionStrategy(BasePerceptionStrategy):
         req.expected_activities = self.get_expected_activities(zone)
         req.zone_type = zone_data["tipo_zona"]
 
+        has_activity = False
         t_start_inference = time.time()
-        result = await self.vision_cli.call_async(req)
-        t_inference = time.time() - t_start_inference
 
-        with self.reporter.data_lock:
-            self.reporter.current_metrics["tiempo_percepcion_segundos"] = round(
-                self.reporter.current_metrics.get("tiempo_percepcion_segundos", 0.0) + t_inference, 2
-            )
-            self.reporter.current_metrics["total_imagenes_procesadas"] = self.reporter.current_metrics.get("total_imagenes_procesadas", 0) + len(files)
+        try:
+            result = await self.vision_cli.call_async(req)
+            t_inference = time.time() - t_start_inference
 
-        has_activity, is_alert, desc = self.parse_and_append_event(result.report, time_str, zone_data)
+            with self.reporter.data_lock:
+                self.reporter.current_metrics["tiempo_percepcion_segundos"] = round(
+                    self.reporter.current_metrics.get("tiempo_percepcion_segundos", 0.0) + t_inference, 2
+                )
+                self.reporter.current_metrics["total_imagenes_procesadas"] = self.reporter.current_metrics.get("total_imagenes_procesadas", 0) + len(images)
 
-        if is_alert:
-            self.save_evidence(rutas_str, zone, time_str, desc, captured_round)
+            has_activity, is_alert, desc = self.parse_and_append_event(result.report, time_str, zone_data)
+
+            if is_alert:
+                self.save_evidence(rutas_str, zone, time_str, desc, captured_round)
+
+        except Exception as e:
+            t_inference = time.time() - t_start_inference
+            with self.reporter.data_lock:
+                self.reporter.current_metrics["tiempo_percepcion_segundos"] = round(
+                    self.reporter.current_metrics.get("tiempo_percepcion_segundos", 0.0) + t_inference, 2
+                )
+                self.reporter.current_metrics["total_imagenes_procesadas"] = self.reporter.current_metrics.get("total_imagenes_procesadas", 0) + len(images)
+            
+            self.reporter.get_logger().error(f"Error llamando a visión para la secuencia {rutas_str}: {e}")
+
         if not self.reporter.keep_photos:
             paths_to_delete = [p.strip() for p in rutas_str.split(',') if p.strip()]
             for file_path in paths_to_delete:
@@ -174,6 +188,7 @@ class VideoPerceptionStrategy(BasePerceptionStrategy):
         for video_file in files:
             if goal_handle and goal_handle.is_cancel_requested:
                 break
+            self.reporter.current_metrics["total_imagenes_procesadas"] += 1
 
             req = AnalyzeActivity.Request()
             req.image_path = video_file['path']
@@ -182,12 +197,16 @@ class VideoPerceptionStrategy(BasePerceptionStrategy):
             req.expected_activities = self.get_expected_activities(zone)
             req.zone_type = zone_data["tipo_zona"]
 
-            result = await self.vision_cli.call_async(req) 
-            
-            has_activity, is_alert, desc = self.parse_and_append_event(result.report, req.time, zone_data)
+            try:
+                result = await self.vision_cli.call_async(req) 
                 
-            if is_alert:
-                self.save_evidence(video_file['path'], zone, req.time, desc, captured_round,)
+                has_activity, is_alert, desc = self.parse_and_append_event(result.report, req.time, zone_data)
+                    
+                if is_alert:
+                    self.save_evidence(video_file['path'], zone, req.time, desc, captured_round)
+
+            except Exception as e:
+                self.reporter.get_logger().error(f"Error llamando a visión para {video_file['path']}: {e}")
 
             if not self.reporter.keep_photos:
                 try:

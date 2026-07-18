@@ -213,6 +213,16 @@ class SystemEvaluatorNode(BaseEvaluatorNode):
 
         if not skip_inference:
             summary_text = await self._run_patrol_simulation()
+        elif self.evaluation_target == "summary_only":
+            self.get_logger().debug("Forzando regeneración de resumen desde FAISS existente.")
+            # Rehudratar FAISS antes de consolidar
+            highest_round = self.reporter_logic.vector_manager.get_highest_round_in_disk()
+            hospital_data_dict = self.reporter_logic.vector_manager.load_round_data_from_disk(highest_round)
+            summary_text = self.reporter_logic.vector_manager.generate_global_summary(hospital_data_dict, highest_round)
+            
+            # Actualizar el estado del reportero para que RAGAS tenga contexto al evaluar
+            self.reporter_logic.latest_global_context = json.dumps(hospital_data_dict, ensure_ascii=False)
+            self.reporter_logic.latest_final_summary = summary_text
         else:
             self.get_logger().info("Resume Session activo y FAISS detectado. Saltando simulación de perceptores...")
             # Forzar carga de FAISS a la RAM
@@ -353,6 +363,16 @@ class SystemEvaluatorNode(BaseEvaluatorNode):
         )
 
         t_end_llm = time.time()
+
+        # Preservar respuestas previas a no regenerar intactas
+        if self.evaluation_target != "both":
+            saved_data = self.load_intermediate_answers() or {}
+            if self.evaluation_target == "summary_only" and not short_dict:
+                short_dict = saved_data.get("short_dict", {})
+                self.get_logger().debug("Manteniendo respuestas cortas intactas desde el JSON.")
+            elif self.evaluation_target == "short_only" and not summary_dict:
+                summary_dict = saved_data.get("summary_dict", {})
+                self.get_logger().debug("Manteniendo respuestas de resumen intactas desde el JSON.")
         
         self.current_metrics["tiempo_ragas_generacion_respuestas_segundos"] = round(t_end_llm - t_init_llm, 2)
         

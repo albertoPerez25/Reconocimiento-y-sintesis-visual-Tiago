@@ -36,6 +36,7 @@ class LLMReporterNode(BaseReporterNode):
             max_stored_rounds=self.max_stored_rounds,
             use_reranker=self.use_reranker,
             enforce_zone_match=self.enforce_zone_match,
+            max_words=self.max_words,
             logger=self.get_logger()
         )
         self.patrol_start_time = time.time()
@@ -142,6 +143,7 @@ class LLMReporterNode(BaseReporterNode):
                             "alerta": False,
                             "tipo_zona": last_zone_data.get("tipo_zona", "Desconocida")
                         }
+                        last_zone_data["eventos_recientes"].append(empty_event)
                         self.vector_manager.add_single_event_to_index(last_zone, empty_event, self.current_round + 1)
             
             self.active_zone = None
@@ -217,7 +219,7 @@ class LLMReporterNode(BaseReporterNode):
 
             zone_type, local_zone_data, captured_round = self._prepare_local_zone_data(zone_name)
 
-            # Lógica de salida (Transición de estado de la máquina)
+            # Lógica de salida
             with self.data_lock:
                 if getattr(self, 'active_zone', None) is not None and self.active_zone != zone_name:
                     old_zone = self.active_zone
@@ -231,6 +233,10 @@ class LLMReporterNode(BaseReporterNode):
                                 "alerta": False,
                                 "tipo_zona": old_zone_data.get("tipo_zona", "Desconocida")
                             }
+
+                            # Modificar la variable de memoria
+                            old_zone_data["eventos_recientes"].append(empty_event)
+
                             # Inyectar y guardar el ID devuelto
                             inserted_ids = self.vector_manager.add_single_event_to_index(old_zone, empty_event, captured_round)
                             if inserted_ids and len(inserted_ids) > 0:

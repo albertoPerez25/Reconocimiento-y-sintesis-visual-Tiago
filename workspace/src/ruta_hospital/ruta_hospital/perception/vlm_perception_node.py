@@ -96,8 +96,9 @@ RESPONDE SOLO EN ESPAÑOL
             "keep_alive": "30s",
             "options": {
                 "num_predict": self.model_word_limit * 2,
-                "temperature": 0.01,  
+                "temperature": 0.0,  
                 "num_ctx": 1024,
+                "seed": 42,
                 #"num_gpu": 99  no es un parámetro estándar
                 "stop": [
                     "Sujeto ID_", 

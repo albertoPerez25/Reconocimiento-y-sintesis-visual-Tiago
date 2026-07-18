@@ -12,7 +12,7 @@ from ruta_hospital.perception.base_perception import BasePerceptionNode, RagCont
 #from .vlm_perception_node import VLMPerceptionNode
 
 DEFAULT_ANNOTATED_IMG_PATH = "/tmp/annotated_vlm_frame.jpg"
-DEFAULT_DELETE_ANNOTATED_IMG = True
+DEFAULT_SAVE_DEBUG_IMAGES = False
 DEFAULT_INCLUDE_POSE_OUTPUT = False
 
 DEFAULT_POSITION_ESTIMATORS = ['ruta_hospital.perception.yolo_perception_node.YoloPerceptionNode']
@@ -38,14 +38,14 @@ class HybridPerceptionNode(BasePerceptionNode):
 
         # parametros
         self.declare_parameter('annotated_image_path', DEFAULT_ANNOTATED_IMG_PATH)
-        self.declare_parameter('delete_annotated_image', DEFAULT_DELETE_ANNOTATED_IMG)
+        self.declare_parameter('save_debug_images', DEFAULT_SAVE_DEBUG_IMAGES)
 
         self.declare_parameter('position_estimators', DEFAULT_POSITION_ESTIMATORS)
         self.declare_parameter('vlm_estimators', DEFAULT_VLM_ESTIMATORS)
         self.declare_parameter('include_pose_output', DEFAULT_INCLUDE_POSE_OUTPUT)
 
         self.annotated_image_path = self.get_parameter('annotated_image_path').get_parameter_value().string_value
-        self.delete_annotated_image = self.get_parameter('delete_annotated_image').get_parameter_value().bool_value
+        self.save_debug_images = self.get_parameter('save_debug_images').get_parameter_value().bool_value
         self.include_pose_output = self.get_parameter('include_pose_output').get_parameter_value().bool_value
         
         pos_classes = self.get_parameter('position_estimators').get_parameter_value().string_array_value
@@ -111,17 +111,14 @@ class HybridPerceptionNode(BasePerceptionNode):
 
         t_total_start = time.time()
 
-        # 1. Ejecutar modelos de pose/posición
-        pos_data_list, all_detections, image_to_vlm, requiere_vlm, yolo_duration = self._process_pose_models(image_path)
+        # Ejecutar modelos de pose/posición
+        pos_data_list, all_detections, requiere_vlm, yolo_duration = self._process_pose_models(image_path)
 
-        # 2. Generar imagen anotada (si corresponde)
-        image_to_vlm = self._prepare_vlm_image(all_detections, image_to_vlm, image_path, context)
+        # Generar imagen anotada (si corresponde)
+        self._prepare_vlm_image(all_detections, image_path, context)
 
-        # 3. Ejecutar modelos VLM
-        vlm_data_list, vlm_duration = self._process_vlm_models(requiere_vlm, image_to_vlm, context)
-
-        # 4. Limpieza de temporales
-        self._cleanup_temp_files(image_to_vlm, image_path)
+        # Ejecutar modelos VLM
+        vlm_data_list, vlm_duration = self._process_vlm_models(requiere_vlm, image_path, context)
 
         # Si el reportero envió un formato que no tiene modelos compatibles
         if not pos_data_list and not vlm_data_list:
@@ -142,23 +139,13 @@ class HybridPerceptionNode(BasePerceptionNode):
         }
         self.perception_metrics["tiempos_procesado"].append(time_metrics)
         
-        '''self.get_logger().info(
-            f"\n{'='*45}\n"
-            f"TIEMPOS DE PERCEPCIÓN ({os.path.basename(image_path)}):\n"
-            f"   - YOLO (Espacial):  {yolo_duration:.2f} s\n"
-            f"   - VLM (Semántico):  {vlm_duration:.2f} s\n"
-            f"   - Total Pipeline:   {total_duration:.2f} s\n"
-            f"{'='*45}"
-        )'''
         return json_response
     
     def _process_pose_models(self, image_path):
         '''Ejecuta los modelos espaciales (YOLO) y recolecta las detecciones'''
         pos_data_list = []
         all_detections = []
-        image_to_vlm = image_path
         requiere_vlm = len(self.pos_models) == 0 # si no hay modelo pose iniciado, se requiere vlm
-
         t_yolo_start = time.time()
 
         # Ejecutar modelos de posición (posiciones, conteo exacto y tracking)
@@ -177,9 +164,6 @@ class HybridPerceptionNode(BasePerceptionNode):
                 # Detecciones para el renderizado visual
                 if "detecciones" in parsed_data:
                     all_detections.extend(parsed_data["detecciones"])
-                if "ruta_anotada" in parsed_data:
-                    # El estimador ya provee el archivo con tracking
-                    image_to_vlm = parsed_data["ruta_anotada"]
 
                 desc_lower = str(parsed_data.get("descripcion_vlm", "")).lower()
                 if "despejado" not in desc_lower and "0 personas" not in desc_lower:
@@ -187,17 +171,16 @@ class HybridPerceptionNode(BasePerceptionNode):
                     requiere_vlm = True    
 
         yolo_duration = time.time() - t_yolo_start
-        return pos_data_list, all_detections, image_to_vlm, requiere_vlm, yolo_duration
+        return pos_data_list, all_detections, requiere_vlm, yolo_duration
     
-    def _prepare_vlm_image(self, all_detections, image_to_vlm, image_path, context):
+    def _prepare_vlm_image(self, all_detections, image_path, context):
         '''Dibuja las cajas delimitadoras de YOLO en la imagen si es necesario'''
-        # comentar el bloque 'if annotated_img:' para que sea image_to_vlm = image_path (imagen limpia)
-        if all_detections and image_to_vlm == image_path: 
-            self.get_logger().debug("Generando imagen anotada con detecciones para el VLM...")
-            annotated_img = self.get_image_with_tracking_data(all_detections, image_path, context)
-            '''if annotated_img: # Seguridad por si cv2 falla al escribir
-                image_to_vlm = annotated_img'''
-        return image_to_vlm
+        im_tracking_data = None
+        if all_detections and self.save_debug_images: 
+            self.get_logger().debug(f"Modo DEBUG: Guardando imagen anotada en {self.annotated_image_path}")
+            # Se genera y guarda en disco
+            im_tracking_data = self.get_image_with_tracking_data(all_detections, image_path, context)
+        return im_tracking_data
 
 
     def _process_vlm_models(self, requiere_vlm, image_to_vlm, context):
@@ -220,21 +203,7 @@ class HybridPerceptionNode(BasePerceptionNode):
             vlm_duration = time.time() - t_vlm_start
             
         return vlm_data_list, vlm_duration
-
-
-    def _cleanup_temp_files(self, image_to_vlm, image_path):
-        '''Libera espacio eliminando las imágenes anotadas temporales'''
-        # Limpiaer frame temporal
-        if self.delete_annotated_image and image_to_vlm != image_path:
-            # Separar por comas por si es una secuencia, o iterar una sola ruta si es foto/vídeo
-            for path_to_delete in image_to_vlm.split(','):
-                clean_path = path_to_delete.strip()
-                if os.path.exists(clean_path):
-                    try:
-                        os.remove(clean_path)
-                    except OSError as e:
-                        self.get_logger().error(f"Error borrando temporal {clean_path}: {e}")
-    
+        
         
     def check_path(self, path):
         '''Metodo para comprobar que el input sea compatible con alguno de los modelos'''
@@ -275,7 +244,7 @@ class HybridPerceptionNode(BasePerceptionNode):
             
             context.tracking_history = history_str
 
-            if not self.delete_annotated_image:
+            if not self.save_debug_images:
                 base, ext = os.path.splitext(self.annotated_image_path) # Separar ruta y extensión (/tmp/foto , .jpg)
                 final_image_path = f"{base}_{self.saved_image_counter}{ext}"
                 self.saved_image_counter += 1

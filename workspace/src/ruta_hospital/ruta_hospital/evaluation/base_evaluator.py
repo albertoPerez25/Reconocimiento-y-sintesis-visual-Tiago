@@ -97,14 +97,11 @@ class BaseEvaluatorNode(Node, ABC):
             "fecha": str(datetime.datetime.now()),
             "nodo_ejecutor": self.get_name(),
             "evaluacion_nombre": self.evaluation_name,
-            "total_imagenes_procesadas": 0,
-            "tiempo_percepcion_segundos": 0.0,
-            "tiempo_llm_segundos": 0.0,
             "tiempo_inferencia_total_segundos": 0.0, # Tiempo de inferencia (sin Ragas)
             "tiempo_ragas_evaluacion_segundos": 0.0, # Tiempo solo de Ragas
-            "tiempo_total_ejecucion_segundos": 0.0,  # Media/Suma del sistema (Inferencia + Ragas)
-            "caracteres_contexto_visual": 0,         
-            "caracteres_informe_final": 0            
+            "tiempo_total_ejecucion_segundos": 0.0,  # Media/Suma del sistema (Inferencia + Ragas)      
+            "tiempo_ragas_generacion_respuestas_segundos": 0.0,
+            "caracteres_ragas_respuestas_totales": 0 
         }
 
     def save_metrics(self, custom_metrics_dict=None):
