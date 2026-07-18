@@ -1,1 +1,0 @@
-/home/alberto/tfg/Reconocimiento-y-sintesis-visual-Tiago/workspace/build/play_motion2_msgs/ament_cmake_environment_hooks/local_setup.bash

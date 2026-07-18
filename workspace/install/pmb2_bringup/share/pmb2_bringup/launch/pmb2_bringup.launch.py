@@ -1,1 +1,0 @@
-/home/alberto/tfg/Reconocimiento-y-sintesis-visual-Tiago/workspace/src/pmb2_robot/pmb2_bringup/launch/pmb2_bringup.launch.py

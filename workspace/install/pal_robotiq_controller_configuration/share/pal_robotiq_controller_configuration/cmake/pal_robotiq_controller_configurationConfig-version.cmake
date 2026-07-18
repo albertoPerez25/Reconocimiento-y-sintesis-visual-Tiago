@@ -1,1 +1,0 @@
-/home/alberto/tfg/Reconocimiento-y-sintesis-visual-Tiago/workspace/build/pal_robotiq_controller_configuration/ament_cmake_core/pal_robotiq_controller_configurationConfig-version.cmake

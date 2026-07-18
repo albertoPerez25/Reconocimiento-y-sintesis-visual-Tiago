@@ -1,1 +1,0 @@
-/home/alberto/tfg/Reconocimiento-y-sintesis-visual-Tiago/workspace/build/hospital_interfaces/rosidl_cmake/srv/AnalyzeActivity_Response.msg

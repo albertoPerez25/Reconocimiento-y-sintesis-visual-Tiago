@@ -1,1 +1,0 @@
-/home/alberto/tfg/Reconocimiento-y-sintesis-visual-Tiago/workspace/build/urdf_test/ament_cmake_core/urdf_testConfig-version.cmake

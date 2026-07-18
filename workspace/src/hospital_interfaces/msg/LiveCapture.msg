@@ -1,4 +1,0 @@
-string file_path
-string zone_name
-float64 timestamp
-string capture_mode

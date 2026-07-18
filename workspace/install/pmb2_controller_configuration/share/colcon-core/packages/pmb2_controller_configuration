@@ -1,1 +1,0 @@
-controller_manager:diff_drive_controller:joint_state_broadcaster:launch:launch_pal:ros2controlcli

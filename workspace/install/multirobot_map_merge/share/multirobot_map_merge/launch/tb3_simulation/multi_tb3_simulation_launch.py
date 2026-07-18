@@ -1,1 +1,0 @@
-/home/alberto/tfg/Reconocimiento-y-sintesis-visual-Tiago/workspace/src/m-explore-ros2/map_merge/launch/tb3_simulation/multi_tb3_simulation_launch.py

@@ -1,1 +1,0 @@
-/home/alberto/tfg/Reconocimiento-y-sintesis-visual-Tiago/workspace/build/hospital_interfaces/rosidl_generator_c/hospital_interfaces/srv/detail/get_patrol_context__type_support.h

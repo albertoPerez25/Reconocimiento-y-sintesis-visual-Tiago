@@ -1,1 +1,0 @@
-/home/alberto/tfg/Reconocimiento-y-sintesis-visual-Tiago/workspace/build/hospital_interfaces/rosidl_generator_cpp/hospital_interfaces/msg/detail/live_capture__type_support.hpp
