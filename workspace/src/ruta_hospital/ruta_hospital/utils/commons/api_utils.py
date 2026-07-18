@@ -7,27 +7,30 @@ def encode_image_to_base64(image_path: str) -> str:
     with open(image_path, "rb") as image_file:
         return base64.b64encode(image_file.read()).decode('utf-8')
     
-def load_image_and_scale(image_path: str, logger) -> str:
-    '''Lee una imagen de la ruta y la codifica en base64 para la API HTTP'''
+def scale_and_encode_frame(img, image_size: list, logger) -> str:
+    '''Redimensiona un frame de OpenCV y lo codifica en base64 para la API HTTP'''
+    if img is None:
+        logger.error("CV2 Error: La imagen proporcionada es None")
+        return ""
+        
+    w_target, h_target = image_size[0], image_size[1]
+    
+    # Redimensionado a los parámetros
+    img_resized = cv2.resize(img, (w_target, h_target), interpolation=cv2.INTER_AREA)
+    
+    # JPG en memoria con 85% de calidad y a base64
+    _, buffer = cv2.imencode('.jpg', img_resized, [cv2.IMWRITE_JPEG_QUALITY, 85])
+    return base64.b64encode(buffer).decode('utf-8')
+
+def load_image_and_scale(image_path: str, image_size: list, logger) -> str:
+    '''Lee una imagen de la ruta física y delega el redimensionado y codificación'''
     img = cv2.imread(image_path)
 
     if img is None:
         logger.error(f"CV2 Error: No se pudo leer la imagen en {image_path}")
-        base64_img = ""
-    else:
-        # Reescalar para ahorrar recursos
-        max_size = 480 # TODO: poner ancho y alto distintos
-        h, w = img.shape[:2]
-        if max(h, w) > max_size:
-            scale = max_size / max(h, w)
-            # INTER_AREA es el algoritmo matemático óptimo para hacer sub-muestreo
-            img = cv2.resize(img, (int(w * scale), int(h * scale)), interpolation=cv2.INTER_AREA)
+        return ""
         
-        # Codificamos a JPG en memoria con 85% de calidad y lo pasamos a base64
-        _, buffer = cv2.imencode('.jpg', img, [cv2.IMWRITE_JPEG_QUALITY, 85])
-        base64_img = base64.b64encode(buffer).decode('utf-8')
-        
-    return base64_img
+    return scale_and_encode_frame(img, image_size, logger)
         
 
 def call_ollama_api(url: str, payload: dict) -> str:

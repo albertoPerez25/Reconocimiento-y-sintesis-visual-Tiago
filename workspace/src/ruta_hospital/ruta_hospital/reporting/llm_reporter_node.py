@@ -35,8 +35,11 @@ class LLMReporterNode(BaseReporterNode):
             llm_model=self.llm_model,
             max_stored_rounds=self.max_stored_rounds,
             use_reranker=self.use_reranker,
+            enforce_zone_match=self.enforce_zone_match,
+            max_words=self.max_words,
             logger=self.get_logger()
         )
+        self.patrol_start_time = time.time()
 
         self.alarm_counters = {}
         self.alarm_counters_lock = threading.Lock()
@@ -45,6 +48,7 @@ class LLMReporterNode(BaseReporterNode):
 
         self.live_patrol_data = {}
         self.data_lock = threading.Lock() # Protección para MultiThreadedExecutor
+        self.active_zone = None # Tracker de estado para transiciones de zona
 
         self.capture_sub = self.create_subscription(
             LiveCapture,
@@ -124,32 +128,45 @@ class LLMReporterNode(BaseReporterNode):
     async def execute_report_callback(self, goal_handle):
         '''Cierra la vuelta actual leyendo el estado vivo y generando el resumen final LLM'''
         self.get_logger().info("Vuelta terminada. Iniciando consolidación del informe...")
-        t_inicio_total = time.time()
         result = GenerateReport.Result()
         
         with self.data_lock:
+            # Forzar la salida de la última zona patrullada
+            if getattr(self, 'active_zone', None) is not None:
+                last_zone = self.active_zone
+                if last_zone in self.live_patrol_data:
+                    last_zone_data = self.live_patrol_data[last_zone]
+                    if not last_zone_data["eventos_recientes"] and last_zone_data.get("cleared_vector_id") is None:
+                        empty_event = {
+                            "tiempo": f"{time.time()}s",
+                            "descripcion_vlm": "Zona completamente vacía y despejada. No se ha detectado ninguna persona, ni pacientes, ni personal, ni ninguna otra actividad humana.",
+                            "alerta": False,
+                            "tipo_zona": last_zone_data.get("tipo_zona", "Desconocida")
+                        }
+                        last_zone_data["eventos_recientes"].append(empty_event)
+                        self.vector_manager.add_single_event_to_index(last_zone, empty_event, self.current_round + 1)
+            
+            self.active_zone = None
+
             hospital_data_dict = json.loads(json.dumps(self.live_patrol_data))
             self.live_patrol_data.clear()
             self.current_round += 1
 
         if not hospital_data_dict:
             self.get_logger().info("La patrulla ha finalizado sin incidentes. Generando informe de seguridad limpio...")
-        '''if not hospital_data_dict:
-            self.get_logger().warn("La patrulla ha finalizado sin datos registrados en memoria.")
-            goal_handle.abort()
-            result.success = False
-            return result'''
         
-        t_init_llm = time.time()
-
-        thread_output = {"summary_text": ""}
+        thread_output = {"summary_text": "", "llm_time": 0.0}
+        t_init_llm = time.time() # TODO: 
 
         def worker():
             # Volcado a disco para Debug y la barra lateral de Streamlit
             self.vector_manager.dump_round_data_to_disk(self.current_round, hospital_data_dict)
             
             # Generación del resumen global in-memory con LangChain
+            t_start_llm = time.time()
             summary_text = self.vector_manager.generate_global_summary(hospital_data_dict, self.current_round)
+
+            thread_output["llm_time"] = time.time() - t_start_llm
             thread_output["summary_text"] = summary_text
 
         # Delegación multihilo nativa
@@ -169,9 +186,14 @@ class LLMReporterNode(BaseReporterNode):
         result.success = True if "Error" not in summary_text else False
         result.final_report = f"Informe generado:\n{summary_text}"
         
-        self.current_metrics["tiempo_llm_segundos"] = round(time.time() - t_init_llm, 2)
-        self.current_metrics["tiempo_total_segundos"] = round(time.time() - t_inicio_total, 2)
+        self.current_metrics["tiempo_llm_segundos"] = round(thread_output["llm_time"], 2)
+        self.current_metrics["tiempo_total_segundos"] = round(time.time() - self.patrol_start_time, 2)
+        
+        self.current_metrics["caracteres_contexto_visual"] = len(json.dumps(hospital_data_dict, ensure_ascii=False))
+        self.current_metrics["caracteres_informe_final"] = len(summary_text)
+        
         self.save_metrics()
+        self.patrol_start_time = time.time()
 
         self.get_logger().info(f"\n\n\tINFORME FINAL LANGCHAIN\n{summary_text}\n")
         goal_handle.succeed()
@@ -197,6 +219,32 @@ class LLMReporterNode(BaseReporterNode):
 
             zone_type, local_zone_data, captured_round = self._prepare_local_zone_data(zone_name)
 
+            # Lógica de salida
+            with self.data_lock:
+                if getattr(self, 'active_zone', None) is not None and self.active_zone != zone_name:
+                    old_zone = self.active_zone
+                    if old_zone in self.live_patrol_data:
+                        old_zone_data = self.live_patrol_data[old_zone]
+                        # Si la zona anterior está vacía y no se ha inyectado aún el vector sintético
+                        if not old_zone_data["eventos_recientes"] and old_zone_data.get("cleared_vector_id") is None:
+                            empty_event = {
+                                "tiempo": f"{timestamp}s",
+                                "descripcion_vlm": "Zona completamente vacía y despejada. No se ha detectado ninguna persona, ni pacientes, ni personal, ni ninguna otra actividad humana.",
+                                "alerta": False,
+                                "tipo_zona": old_zone_data.get("tipo_zona", "Desconocida")
+                            }
+
+                            # Modificar la variable de memoria
+                            old_zone_data["eventos_recientes"].append(empty_event)
+
+                            # Inyectar y guardar el ID devuelto
+                            inserted_ids = self.vector_manager.add_single_event_to_index(old_zone, empty_event, captured_round)
+                            if inserted_ids and len(inserted_ids) > 0:
+                                old_zone_data["cleared_vector_id"] = inserted_ids[0]
+                
+                # Actualizar la zona activa
+                self.active_zone = zone_name
+
             # Empaquetar como mock para respetar la firma de las estrategias SOTA
             images_mock = [{'path': image_path, 'time': timestamp}]
 
@@ -205,9 +253,14 @@ class LLMReporterNode(BaseReporterNode):
                 images_mock, zone_name, local_zone_data, captured_round, goal_handle=None
             )
 
-            # Evaluación de alarmas críticas inmediatas
+            # Si hay actividad válida, se guarda en FAISS y memoria
             if has_activity and local_zone_data["eventos_recientes"]:
+                with self.data_lock:
+                    self.current_metrics["zonas_con_output"] = self.current_metrics.get("zonas_con_output", 0) + 1
                 self._register_and_evaluate_event(zone_name, zone_type, local_zone_data, captured_round)
+            else:
+                with self.data_lock:
+                    self.current_metrics["zonas_despejadas"] = self.current_metrics.get("zonas_despejadas", 0) + 1
 
         except Exception as e:
             self.get_logger().error(f"Error procesando captura en tiempo real: {e}")
@@ -225,10 +278,11 @@ class LLMReporterNode(BaseReporterNode):
                 self.live_patrol_data[zone_name] = {
                     "nombre_zona": zone_name,
                     "tipo_zona": zone_type,
-                    "eventos_recientes": []
+                    "eventos_recientes": [],
+                    "cleared_vector_id": None
                 }
-            # Snapshot: Pasamos el historial intacto al VLM para que mantenga el contexto RAG temporal,
-            # pero nos desvinculamos del diccionario original mutable.
+            # Snapshot: El historial intacto al VLM para que mantenga el contexto RAG temporal,
+            # pero se desvincula del diccionario original
             local_zone_data = json.loads(json.dumps(self.live_patrol_data[zone_name]))
             captured_round = self.current_round + 1
 
@@ -250,6 +304,12 @@ class LLMReporterNode(BaseReporterNode):
                     "eventos_recientes": []
                 }
             
+            # Borrar vector de zona despejada si existía
+            if self.live_patrol_data[zone_name].get("cleared_vector_id") is not None:
+                vector_id = self.live_patrol_data[zone_name]["cleared_vector_id"]
+                self.vector_manager.remove_single_event_from_index(vector_id)
+                self.live_patrol_data[zone_name]["cleared_vector_id"] = None
+
             # añadir solo el evento nuevo a la memoria global
             self.live_patrol_data[zone_name]["eventos_recientes"].append(last_event)
             

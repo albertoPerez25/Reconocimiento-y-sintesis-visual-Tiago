@@ -26,7 +26,8 @@ class PerceptionMetricsAggregator:
             if filename.endswith("_metrics.json") and not filename.startswith("aggregated_"):
                 filepath = os.path.join(self.metrics_dir, filename)
                 self._process_file(filepath, filename)
-                processed_count += 1
+                if os.path.exists(os.path.join(self.metrics_dir, f"aggregated_{filename}")):
+                    processed_count += 1
 
         print(f"[INFO] Proceso completado. Se han generado {processed_count} reportes agregados.\n")
 
@@ -35,6 +36,27 @@ class PerceptionMetricsAggregator:
         try:
             with open(filepath, 'r', encoding='utf-8') as f:
                 data = json.load(f)
+
+            # Si el JSON es una lista (histórico de ROS), coge el último guardado
+            # NOTA: Funciona nativamente tanto para el formato viejo como para el nuevo (de longitud 1)
+            if isinstance(data, list) and len(data) > 0:
+                # Si es el formato antiguo exponencial, detectamos si la lista tiene más de un historial completo repetido
+                es_formato_antiguo_exponencial = (
+                    len(data) > 1 and 
+                    isinstance(data[0], dict) and 
+                    isinstance(data[0].get("tiempos_procesado"), list) and
+                    len(data[0].get("tiempos_procesado", [])) > 0
+                )
+                
+                if es_formato_antiguo_exponencial:
+                    # Modo histórico: data[-1] ya contiene la lista final completa acumulada, pero
+                    # debido al bug de ROS2, sus primeros elementos están duplicados en los bloques previos del JSON.
+                    # Al quedarnos con data[-1] y procesarlo de forma normal abajo, el bucle interno de
+                    # _build_report leería los 1273 elementos limpios.
+                    data = data[-1]
+                else:
+                    # Modo nuevo: data es una lista de un único elemento [dict]. data[-1] extrae el dict directamente.
+                    data = data[-1]
 
             if "tiempos_procesado" not in data or not data["tiempos_procesado"]:
                 print(f"[WARN] Saltando {filename}: No tiene la clave 'tiempos_procesado' o está vacía.")

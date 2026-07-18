@@ -58,7 +58,7 @@ Estás dentro de un hospital en {context.zone_name}, que es una zona de tipo {co
 Aquí puedes ver personas {context.expected_activities}
 
 INSTRUCCIONES:
-    - Describe en un máximo de {self.word_limit} PALABRAS las actividades que las personas en la imagen están realizando
+    - Describe en un máximo de {self.model_word_limit} PALABRAS las actividades que las personas en la imagen están realizando
     - Dentro del límite incluye una MUY BREVE descripción de la persona o personas a las que te refieres
     - Si ves una situación que amenaza la vida (como una caída o alguien fumando), escribe "URGENTE" y descríbela brevemente
     - IGNORA a cualquier persona que se vea a lo lejos a través de una puerta o cristal. Describe ÚNICAMENTE lo que esté físicamente DENTRO de tu misma habitación
@@ -86,7 +86,7 @@ RESPONDE SOLO EN ESPAÑOL
     
     
         self.get_logger().debug(f"PROMPT AL VLM: {prompt}")
-        base64_img = load_image_and_scale(image_path, self.get_logger())
+        base64_img = load_image_and_scale(image_path, self.image_size, self.get_logger())
         payload = {
             "model": self.vlm_model, 
             "prompt": prompt, 
@@ -95,9 +95,10 @@ RESPONDE SOLO EN ESPAÑOL
             "stream": False,
             "keep_alive": "30s",
             "options": {
-                "num_predict": self.word_limit * 2,
-                "temperature": 0.01,  
+                "num_predict": self.model_word_limit * 2,
+                "temperature": 0.0,  
                 "num_ctx": 1024,
+                "seed": 42,
                 #"num_gpu": 99  no es un parámetro estándar
                 "stop": [
                     "Sujeto ID_", 
