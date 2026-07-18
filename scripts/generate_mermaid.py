@@ -10,10 +10,10 @@ logging.basicConfig(level=logging.INFO, format='%(levelname)s: %(message)s')
 # CONSTANTES DE CONFIGURACIÓN 
 DIAGRAMS_FOLDER = "/home/alberto/tfg/Reconocimiento-y-sintesis-visual-Tiago/docs/diagrams/s9/mermaid/memoria/ch4" 
 OUTPUT_FOLDER = "/home/alberto/tfg/Reconocimiento-y-sintesis-visual-Tiago/docs/diagrams/s9/mermaid/output"             
-DEFAULT_FORMAT = "pdf"                    # Actualizado a pdf por defecto
+DEFAULT_FORMAT = "pdf"                    
 CHROME_INSTALLATION = "/usr/bin/google-chrome-stable" 
-SCALE_FACTOR = 12                         # Mantenido por compatibilidad, aunque no se pase al cmd
-CONFIG_FILE = "./configs/puppeteer-config.json" # Ruta adaptada para el -c
+SCALE_FACTOR = 12                         # DEPRECATED: Mantenido por compatibilidad, aunque no se pase al cmd
+CONFIG_FILE = "./configs/puppeteer-config.json" 
 
 
 class MermaidCLIConverter:
