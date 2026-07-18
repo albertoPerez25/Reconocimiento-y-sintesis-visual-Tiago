@@ -8,11 +8,12 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 logging.basicConfig(level=logging.INFO, format='%(levelname)s: %(message)s')
 
 # CONSTANTES DE CONFIGURACIÓN 
-DIAGRAMS_FOLDER = "docs/diagrams/s8/mermaid/" 
-OUTPUT_FOLDER = "docs/diagrams/s8/"             
-DEFAULT_FORMAT = "png"                    # Formatos soportados por mmdc: png, svg, pdf
-CHROME_INSTALLATION = "/usr/bin/google-chrome-stable" # Como paquete es preferible a snap o flatpak
-SCALE_FACTOR = 12                         # Escala configurable
+DIAGRAMS_FOLDER = "/home/alberto/tfg/Reconocimiento-y-sintesis-visual-Tiago/docs/diagrams/s9/mermaid/memoria/ch4" 
+OUTPUT_FOLDER = "/home/alberto/tfg/Reconocimiento-y-sintesis-visual-Tiago/docs/diagrams/s9/mermaid/output"             
+DEFAULT_FORMAT = "pdf"                    # Actualizado a pdf por defecto
+CHROME_INSTALLATION = "/usr/bin/google-chrome-stable" 
+SCALE_FACTOR = 12                         # Mantenido por compatibilidad, aunque no se pase al cmd
+CONFIG_FILE = "./configs/puppeteer-config.json" # Ruta adaptada para el -c
 
 
 class MermaidCLIConverter:
@@ -24,7 +25,7 @@ class MermaidCLIConverter:
         self.source_dir = Path(source_dir)
         self.output_format = output_format.lower().strip('.')
         self.output_dir = Path(output_dir) / self.output_format
-        self.scale = scale # Guardamos la escala en la instancia
+        self.scale = scale 
 
     def convert_file(self, input_path: Path) -> bool:
         """Ejecuta el comando mmdc en el sistema para procesar el archivo"""
@@ -32,20 +33,24 @@ class MermaidCLIConverter:
         output_filename = input_path.with_suffix(f".{self.output_format}").name
         output_path = self.output_dir / output_filename
 
-        # Comando: mmdc -i archivo_entrada.mmd -o archivo_salida.png -s [escala]
+        # Comando actualizado con npx, pdfFit, backgroundColor y config.json
         cmd = [
             "mmdc",
-            "-p", "scripts/configs/puppeteer-config.json",
             "-i", str(input_path),
             "-o", str(output_path),
-            "-s", str(self.scale)  # 9 menos calidad pero aceptable, 15 mucha calidad
+            "--pdfFit",
+            "--backgroundColor", "white",
+            "-c", CONFIG_FILE
         ]
 
-        # Inyectamos la ruta del Chrome oficial
+        # Inyectamos la ruta del Chrome oficial de forma segura
         env = os.environ.copy()
-        env["PUPPETEER_EXECUTABLE_PATH"] = CHROME_INSTALLATION
+        if CHROME_INSTALLATION:
+            env["PUPPETEER_EXECUTABLE_PATH"] = CHROME_INSTALLATION
 
         try:
+            # Nota: shell=True suele ser necesario en Windows para npx, 
+            # pero en Linux es mejor práctica (y funcional) mantenerlo en False (por defecto) o ignorarlo.
             subprocess.run(cmd, check=True, capture_output=True, text=True, env=env)
             logging.info(f"Convertido: {input_path.name} -> {output_filename}")
             return True
@@ -53,7 +58,7 @@ class MermaidCLIConverter:
             logging.error(f"Error en {input_path.name}:\n{e.stderr}")
             return False
         except FileNotFoundError:
-            logging.error("No se encuentra el comando 'mmdc'. ¿Se encuentra instalado Node.js y @mermaid-js/mermaid-cli ?")
+            logging.error("No se encuentra el comando 'npx' o 'mmdc'. ¿Se encuentra instalado Node.js y @mermaid-js/mermaid-cli?")
             return False
         except Exception as e:
             logging.error(f"Error inesperado procesando {input_path.name}: {str(e)}")
@@ -76,16 +81,12 @@ class MermaidCLIConverter:
         
         # Chrome sin cabeza consume mucha RAM. A mayor escala, menos hilos debemos usar.
         if self.scale >= 10:
-            # Escala masiva: Restringimos a 1 o 2 Chrome a la vez para evitar colapso de RAM
             safe_workers = min(2, max(1, cpu_count // 4)) 
         elif self.scale >= 7:
-            # Escala alta: Usamos un tercio de la CPU
             safe_workers = max(1, cpu_count // 3)
         elif self.scale >= 4:
-            # Escala media: Usamos la mitad de la CPU
             safe_workers = max(1, cpu_count // 2)
         else:
-            # Escala baja: Podemos usar casi toda la CPU
             safe_workers = max(1, cpu_count - 1)
 
         max_workers = min(len(files), safe_workers)
@@ -96,10 +97,7 @@ class MermaidCLIConverter:
 
         success_count = 0
         
-        # Ejecución paralela controlada (Cola automática)
         with ThreadPoolExecutor(max_workers=max_workers) as executor:
-            # Metemos todos los archivos al pool. Si hay más archivos que workers, 
-            # se quedan esperando su turno inteligentemente sin crashear el PC.
             futures = {executor.submit(self.convert_file, file): file for file in files}
             
             for future in as_completed(futures):
