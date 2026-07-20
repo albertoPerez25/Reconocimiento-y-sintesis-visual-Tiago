@@ -1,0 +1,1 @@
+/home/alberto/tfg/Reconocimiento-y-sintesis-visual-Tiago/workspace/src/pal_gripper/pal_gripper_simulation/launch/gripper_spawn.launch.py

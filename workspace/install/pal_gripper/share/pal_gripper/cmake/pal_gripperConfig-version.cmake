@@ -1,0 +1,1 @@
+/home/alberto/tfg/Reconocimiento-y-sintesis-visual-Tiago/workspace/build/pal_gripper/ament_cmake_core/pal_gripperConfig-version.cmake

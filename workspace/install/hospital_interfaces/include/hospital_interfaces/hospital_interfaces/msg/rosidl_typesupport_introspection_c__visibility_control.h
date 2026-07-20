@@ -1,0 +1,1 @@
+/home/alberto/tfg/Reconocimiento-y-sintesis-visual-Tiago/workspace/build/hospital_interfaces/rosidl_typesupport_introspection_c/hospital_interfaces/msg/rosidl_typesupport_introspection_c__visibility_control.h

@@ -1,0 +1,1 @@
+/home/alberto/tfg/Reconocimiento-y-sintesis-visual-Tiago/workspace/src/tiago_robot/tiago_description/launch/show.launch.py

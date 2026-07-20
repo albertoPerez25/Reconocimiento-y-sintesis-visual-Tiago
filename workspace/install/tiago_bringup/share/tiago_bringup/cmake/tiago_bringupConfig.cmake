@@ -1,0 +1,1 @@
+/home/alberto/tfg/Reconocimiento-y-sintesis-visual-Tiago/workspace/build/tiago_bringup/ament_cmake_core/tiago_bringupConfig.cmake
