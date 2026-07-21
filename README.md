@@ -6,7 +6,7 @@ Sistema en ROS2 para sintetizar mediante lenguaje natural todo lo observado por 
   ### Demostración del Sistema y Percepción Visual
 
   <p align="center">
-    <video src="docs/media/vista_general_hospital~2.mp4" width="70%" controls autoplay loop muted playsinline></video>
+    <video src="docs/media/vista_general_hospital_compressed.mp4_" width="70%" controls autoplay loop muted playsinline></video>
   </p>
 
   <table>
@@ -66,52 +66,46 @@ Reconocimiento-y-sintesis-visual-Tiago/
 ├── docs/                                 # Documentación, históricos de diagramas y métricas autogeneradas
 ├── experiment_pipeline/                  # Pipeline automatizado para los experimentos y generar gráficas y tablas LaTeX
 ├── scripts/                              # Utilidades para la memoria y orquestación de experimentos
-│   ├── aggregate_perception_metrics.py   # Agrega métricas individuales de percepción en un reporte unificado
-│   ├── configs/                          # Configuraciones locales para la ejecución de scripts
-│   ├── dataset_downsampler.py            # Submuestrea datasets (reduce cantidad de imágenes/frames para pruebas)
-│   ├── generate_mermaid.py               # Autogenera diagramas de arquitectura/flujo en código Mermaid
-│   ├── generate_metrics.py               # Calcula y formatea métricas a partir de los logs generados
-│   ├── image_difference.py               # Analiza la similitud visual (MSE) para el filtrado de redundancias
-│   ├── merge_ragas_summary_with_short.py # Combina los DataFrames de RAGAS (preguntas cortas y resúmenes)
-│   ├── reduction_metrics.py              # Calcula tasas de reducción de carga cognitiva tras los filtros
-│   ├── run_evaluations.py                # Script principal de lanzamiento en lote de los experimentos
-│   └── run_exp4_limits.py                # Ejecuta el pipeline específico del experimento 4 (límites de palabras)
+│   ├── aggregate_perception_metrics.py    # Agrega métricas individuales de percepción en un reporte unificado
+│   ├── configs/                           # Configuraciones locales para la ejecución de scripts
+│   ├── dataset_downsampler.py             # Submuestrea datasets (reduce cantidad de imágenes/frames para pruebas)
+│   ├── generate_mermaid.py                # Autogenera diagramas de arquitectura/flujo en código Mermaid
+│   ├── generate_metrics.py                # Calcula y formatea métricas a partir de los logs generados
+│   ├── image_difference.py                # Analiza la similitud visual (MSE) para el filtrado de redundancias
+│   ├── merge_ragas_summary_with_short.py  # Combina los DataFrames de RAGAS (preguntas cortas y resúmenes)
+│   ├── reduction_metrics.py               # Calcula tasas de reducción de carga cognitiva tras los filtros
+│   ├── run_evaluations.py                 # Script principal de lanzamiento en lote de los experimentos
+│   └── run_exp4_limits.py                 # Ejecuta el pipeline específico del experimento 4 (límites de palabras)
 └── workspace/src/
-    ├── hospital_interfaces/            # Paquete ROS 2 con la definición de interfaces personalizadas
+    ├── hospital_interfaces/          # Paquete ROS 2 con la definición de interfaces personalizadas
     │   ├── action/                     # Definición de acciones ROS 2 
     │   ├── msg/                        # Definición de mensajes personalizados 
     │   └── srv/                        # Definición de servicios 
-    └── ruta_hospital/                  # Paquete principal con la lógica de negocio y nodos
+    └── ruta_hospital/                # Paquete principal con los nodos
         ├── config/                     # Archivos de configuración, waypoints y mapas semánticos
-        │   ├── ekf.yaml                # Parámetros del filtro EKF
-        │   ├── hospital_metadata.json  # Reglas de zona y actividades esperadas
-        │   ├── nav2_params.yaml        # Parámetros del stack de navegación Nav2
-        │   ├── perception_dataset.json # Ground-truth para evaluación de percepción
-        │   ├── quest.json              # Banco de preguntas para evaluación del sistema
-        │   ├── route_waypoints.json    # Coordenadas de la ruta de patrullaje
-        │   └── semantic_map.json       # Geometría y nombres semánticos de las zonas
-        ├── launch_files/                  # Archivos de lanzamiento ROS 2
-        │   ├── chatbot_only/              # Despliegue exclusivo de la interfaz gráfica
-        │   │   └── streamlit_ui.launch.py
-        │   ├── full_system/               # Despliegue integral del sistema
-        │   │   ├── sequence_mode.launch.py
-        │   │   ├── static_image.launch.py
-        │   │   └── video_mode.launch.py
-        │   └── patrol_only/               # Despliegue exclusivo de la navegación
-        │       ├── hospital_rute.launch.py
-        │       ├── hospital_slam.launch.py
-        │       └── keep_temp_video_hospital_rute.launch.py
+        │   ├── ekf.yaml                 # Parámetros del filtro EKF
+        │   ├── hospital_metadata.json   # Reglas de zona y actividades esperadas
+        │   ├── nav2_params.yaml         # Parámetros del stack de navegación Nav2
+        │   ├── perception_dataset.json  # Ground-truth para evaluación de percepción
+        │   ├── quest.json               # Banco de 26 preguntas para la evaluación del sistema
+        │   ├── quest_full.json          # Banco de 55 preguntas para la evaluación del sistema
+        │   ├── route_waypoints.json     # Coordenadas de la ruta de patrullaje
+        │   └── semantic_map.json        # Geometría y nombres semánticos de las zonas
+        ├── launch_files/               # Archivos de lanzamiento ROS 2
+        │   ├── chatbot_only/            # Despliegue exclusivo de la interfaz gráfica
+        │   ├── full_system/             # Despliegue integral del sistema
+        │   └── patrol_only/             # Despliegue exclusivo de la navegación
         └── ruta_hospital/             # Código fuente en Python (Nodos ROS 2)
-           ├── alarm/                  # Gestión de notificaciones
-           ├── capturer/               # Captura visual y filtrado
-           ├── chatbot/                # Código de la aplicación Streamlit
-           ├── evaluation/             # Nodos y utilidades de evaluación RAGAS
-           ├── navigation/             # Lógica del patrullero
-           ├── perception/             # Nodos de inferencia YOLO y VLM
-           ├── reporting/              # Orquestador RAG y estrategias de síntesis
-           └── utils/                  # Módulos comunes, clientes HTTP y acceso a FAISS
-               ├── common/             # Utilidades genéricas comunes a varios módulos
-               └── shared/             # Código específico usado en varios módulos
+           ├── alarm/                   # Gestión de notificaciones
+           ├── capturer/                # Captura visual y filtrado
+           ├── chatbot/                 # Código de la aplicación Streamlit
+           ├── evaluation/              # Nodos y utilidades de evaluación RAGAS
+           ├── navigation/              # Lógica del patrullero
+           ├── perception/              # Nodos de inferencia YOLO y VLM
+           ├── reporting/               # Orquestador RAG y estrategias de síntesis
+           └── utils/                   # Módulos comunes, clientes HTTP y acceso a FAISS
+               ├── common/               # Utilidades genéricas comunes a varios módulos
+               └── shared/               # Código específico usado en varios módulos
 ```
 
 ## Configuración
