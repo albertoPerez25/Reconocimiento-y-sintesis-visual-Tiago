@@ -6,7 +6,7 @@ Sistema en ROS2 para sintetizar mediante lenguaje natural todo lo observado por 
   ### Demostración del Sistema y Percepción Visual
 
   <p align="center">
-    <video src="docs/media/vista_general_hospital_compressed.mp4_" width="70%" controls autoplay loop muted playsinline></video>
+    <video src="docs/media/vista_general_hospital_compressed.mp4" width="70%" controls autoplay loop muted playsinline></video>
   </p>
 
   <table>
