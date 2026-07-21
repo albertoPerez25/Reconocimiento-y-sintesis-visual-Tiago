@@ -205,13 +205,13 @@ También es posible modificar parámetros específicos en tiempo de ejecución a
 Para consultar la lista completa de parámetros, sus valores por defecto y su configuración específica, revisa la documentación técnica de cada módulo:
 
 | Subsistema | Descripción | Documentación |
-| --- | --- | --- |
-| **Navegación** | Control del patrullaje autónomo y recuperación de atascos. | [`navigation_params.md`](https://www.google.com/search?q=docs/parameters_md/navigation_params.md) |
-| **Captura** | Extracción visual, buffers multimedia y filtrado de redundancias. | [`capturer_params.md`](https://www.google.com/search?q=docs/parameters_md/capturer_params.md) |
-| **Percepción** | Orquestador híbrido, estimación posicional y modelos VLM. | [`perception_params.md`](https://www.google.com/search?q=docs/parameters_md/perception_params.md) |
-| **Reportes** | Consolidación de memoria RAG y generación de resúmenes. | [`reporting_params.md`](https://www.google.com/search?q=docs/parameters_md/reporting_params.md) |
-| **Chatbot** | Configuración de la interfaz interactiva y variables de entorno. | [`chatbot_params.md`](https://www.google.com/search?q=docs/parameters_md/chatbot_params.md) |
-| **Evaluación** | Entorno de validación y métricas automatizadas. | [`evaluation_params.md`](https://www.google.com/search?q=docs/parameters_md/evaluation_params.md) |
+| :--- | :--- | :--- |
+| **Navegación** | Control del patrullaje autónomo y recuperación de atascos. | [navigation_params.md](./docs/parameters_md/navigation_params.md) |
+| **Captura** | Extracción visual, buffers multimedia y filtrado de redundancias. | [capturer_params.md](./docs/parameters_md/capturer_params.md) |
+| **Percepción** | Orquestador híbrido, estimación posicional y modelos VLM. | [perception_params.md](./docs/parameters_md/perception_params.md) |
+| **Reportes** | Consolidación de memoria RAG y generación de resúmenes. | [reporting_params.md](./docs/parameters_md/reporting_params.md) |
+| **Chatbot** | Configuración de la interfaz interactiva y variables de entorno. | [chatbot_params.md](./docs/parameters_md/chatbot_params.md) |
+| **Evaluación** | Entorno de validación y métricas automatizadas. | [evaluation_params.md](./docs/parameters_md/evaluation_params.md) |
 
 ### Ejecución Manual y Depuración 
 
