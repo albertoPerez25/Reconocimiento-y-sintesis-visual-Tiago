@@ -116,7 +116,7 @@ RESPONDE SOLO EN ESPAÑOL
                 # Evaluar alerta de seguridad según la instrucción del prompt
                 if "urgente" in vlm_text.lower():
                     alert = True
-            self.get_logger().error(f"Output video: {descripcion}")
+            self.get_logger().debug(f"Output video: {descripcion}")
                     
             return {
                 "descripcion_vlm": descripcion,

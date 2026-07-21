@@ -9,6 +9,9 @@ st.set_page_config(page_title="Chatbot de patrulla", page_icon="🤖", layout="w
 
 # Rutas de directorios basadas en la misma configuración del sistema
 RAG_DIR = "/tmp/ruta_hospital_rag_data/"
+OLLAMA_URL = os.environ.get("OLLAMA_URL", "http://localhost:11434")
+LLM_MODEL = os.environ.get("LLM_MODEL", "llama3")
+MAX_STORED_ROUNDS = int(os.environ.get("MAX_STORED_ROUNDS", 5))
 
 # Reranker
 use_reranker_env = os.environ.get("USE_RERANKER", "False").lower() in ("true", "1", "yes")
@@ -31,9 +34,9 @@ def get_vector_manager(use_reranker=False, index_timestamp=0.0):
     # Streamlit reinicializará la función automáticamente si 'index_timestamp' cambia.
     return VectorManager(
         base_dir=RAG_DIR,
-        ollama_url="http://localhost:11434", 
-        llm_model="llama3",
-        max_stored_rounds=5, 
+        ollama_url=OLLAMA_URL, 
+        llm_model=LLM_MODEL,
+        max_stored_rounds=MAX_STORED_ROUNDS, 
         use_reranker=use_reranker
     )
 

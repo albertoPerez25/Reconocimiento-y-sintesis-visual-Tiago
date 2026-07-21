@@ -4,14 +4,14 @@ import datetime
 import os
 from rclpy.node import Node
 from rclpy.action import CancelResponse, GoalResponse
-from hospital_interfaces.action import GenerateReport
 from ruta_hospital.evaluation.utils.ragas_evaluator import OllamaParams, EvaluatorRunParams
 from ruta_hospital.utils.commons.metrics_utils import save_metrics_to_file
-import logging
+from ament_index_python.packages import get_package_share_directory
+#import logging
 
-# --- ACTIVAR DEBUG PROFUNDO DE RAGAS Y LANGCHAIN ---
-logging.getLogger("ragas").setLevel(logging.DEBUG)
-logging.getLogger("langchain").setLevel(logging.DEBUG)
+
+#logging.getLogger("ragas").setLevel(logging.DEBUG)
+#logging.getLogger("langchain").setLevel(logging.DEBUG)
 
 DEFAULT_OLLAMA_URL = "http://localhost:11434"
 DEFAULT_EVALUATOR_LLM_MODEL = "llama3.1" #falla en fix_output_format en las preguntas summary, por dar un contexto enorme
@@ -27,7 +27,14 @@ DEFAULT_EVALUATION_NAME = "generic"
 DEFAULT_EVALUATION_MODE = "full" # "generate_only", "full", "evaluate_only"
 
 DEFAULT_ANSWERS_FILE = "/tmp/ragas_intermediate_answers.json"
-DEFAULT_METRICS_DIR = "/home/alberto/tfg/Reconocimiento-y-sintesis-visual-Tiago/docs/autogenerate_metrics/"
+
+
+PKG_DIR = get_package_share_directory('ruta_hospital')
+REPO_ROOT_DIR = os.path.abspath(os.path.join(PKG_DIR, "..", "..", "..", "..", ".."))
+DEFAULT_METRICS_DIR = os.path.join(REPO_ROOT_DIR, "docs", "autogenerate_metrics", "")
+if not os.path.exists(os.path.join(REPO_ROOT_DIR, "docs")):
+    DEFAULT_METRICS_DIR = os.path.join(os.path.expanduser("~"), "ruta_hospital_metrics", "")
+
 
 DEFAULT_WORD_LIMIT = 300
 DEFAULT_MAX_STORED_ROUNDS = 5

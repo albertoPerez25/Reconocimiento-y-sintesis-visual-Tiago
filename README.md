@@ -6,7 +6,7 @@ Sistema en ROS2 para sintetizar mediante lenguaje natural todo lo observado por 
   ### Demostración del Sistema y Percepción Visual
 
   <p align="center">
-    <video src="docs/media/vista_general_hospital_compressed.mp4" width="70%" controls autoplay loop muted playsinline></video>
+    <img src="docs/media/vista_general_hospital_compressed.gif" width="70%">
   </p>
 
   <table>
@@ -200,6 +200,19 @@ También es posible modificar parámetros específicos en tiempo de ejecución a
   ros2 run ruta_hospital hybrid_perception_node --ros-args -p vlm_estimators:="['ruta_hospital.perception.video_perception_node.VideoPerceptionNode']"
   ```
 
+#### Documentación Detallada por Módulo
+
+Para consultar la lista completa de parámetros, sus valores por defecto y su configuración específica, revisa la documentación técnica de cada módulo:
+
+| Subsistema | Descripción | Documentación |
+| --- | --- | --- |
+| **Navegación** | Control del patrullaje autónomo y recuperación de atascos. | [`navigation_params.md`](https://www.google.com/search?q=docs/parameters_md/navigation_params.md) |
+| **Captura** | Extracción visual, buffers multimedia y filtrado de redundancias. | [`capturer_params.md`](https://www.google.com/search?q=docs/parameters_md/capturer_params.md) |
+| **Percepción** | Orquestador híbrido, estimación posicional y modelos VLM. | [`perception_params.md`](https://www.google.com/search?q=docs/parameters_md/perception_params.md) |
+| **Reportes** | Consolidación de memoria RAG y generación de resúmenes. | [`reporting_params.md`](https://www.google.com/search?q=docs/parameters_md/reporting_params.md) |
+| **Chatbot** | Configuración de la interfaz interactiva y variables de entorno. | [`chatbot_params.md`](https://www.google.com/search?q=docs/parameters_md/chatbot_params.md) |
+| **Evaluación** | Entorno de validación y métricas automatizadas. | [`evaluation_params.md`](https://www.google.com/search?q=docs/parameters_md/evaluation_params.md) |
+
 ### Ejecución Manual y Depuración 
 
 Para pruebas unitarias, desarrollo de nuevos perceptores o visualización aislada de Rviz, los subsistemas pueden instanciarse de forma independiente ignorando los archivos launch:
@@ -229,9 +242,13 @@ ros2 run ruta_hospital perception_evaluator_node --ros-args -p tested_model_name
 # Evaluar el sistema completo (pipeline de inferencia y consolidación)
 ros2 run ruta_hospital system_evaluator_node --ros-args -p evaluation_name:="system_evaluation" -p use_reranker:=true -p evaluation_mode:=full
 ```
+## Licencia
 
-## Autor
+Todo el contenido de este repositorio se encuentra bajo la licencia **GNU GENERAL PUBLIC LICENSE Version 3 (GPL-v3)**, detallada al completo en el archivo **LICENSE**. 
 
-**Alberto Pérez Álvarez**  
-Universidad de Castilla-La Mancha (UCLM)  
-Escuela Superior de Ingeniería Informática  
+Se otorgan derechos para el uso privado y comercial, la modificación del código fuente y la libre distribución del software derivado. Asimismo, se incluye la concesión de derechos sobre las patentes asociadas por parte de cualquier contibución al proyecto.
+
+Cualquier software derivado que se distribuya debe publicar su código fuente bajo esta misma licencia GPL-v3. Se exige la inclusión de la licencia original, el aviso de copyright y la documentación de los cambios realizados, ofreciéndose el software "tal cual" (as is) sin garantías legales por parte de los autores.
+
+---
+Copyright (c) 2026 Alberto Pérez Álvarez
