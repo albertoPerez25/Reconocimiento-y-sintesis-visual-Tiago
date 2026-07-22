@@ -1,9 +1,9 @@
-# Reconocimiento-y-sintesis-visual-Tiago
+# Reconocimiento Visual y Síntesis de Actividades Humanas en Robots Móviles
 Sistema en ROS2 para sintetizar mediante lenguaje natural todo lo observado por un robot móvil.
 
 <div align="center">
 
-  ### Demostración del Sistema y Percepción Visual
+  ### Clip e Imágenes del Sistema
 
   <p align="center">
     <img src="docs/media/vista_general_hospital_compressed.gif" width="70%">
@@ -202,7 +202,7 @@ También es posible modificar parámetros específicos en tiempo de ejecución a
 
 #### Documentación Detallada por Módulo
 
-Para consultar la lista completa de parámetros, sus valores por defecto y su configuración específica, revisa la documentación técnica de cada módulo:
+Para consultar la lista completa de parámetros, se encuentra disponible documentación para cada módulo:
 
 | Subsistema | Descripción | Documentación |
 | :--- | :--- | :--- |
@@ -251,4 +251,4 @@ Se otorgan derechos para el uso privado y comercial, la modificación del códig
 Cualquier software derivado que se distribuya debe publicar su código fuente bajo esta misma licencia GPL-v3. Se exige la inclusión de la licencia original, el aviso de copyright y la documentación de los cambios realizados, ofreciéndose el software "tal cual" (as is) sin garantías legales por parte de los autores.
 
 ---
-Copyright (c) 2026 Alberto Pérez Álvarez
+Copyright (c) 2026 Alberto Pérez Álvarez en https://github.com/albertoPerez25/Reconocimiento-y-sintesis-visual-Tiago
