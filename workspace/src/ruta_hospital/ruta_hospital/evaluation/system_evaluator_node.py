@@ -25,7 +25,13 @@ from langchain_core.documents import Document
 PKG_DIR = get_package_share_directory('ruta_hospital')
 
 DEFAULT_QUESTIONS_PATH = os.path.join(PKG_DIR, 'config', 'quest.json')
-DEFAULT_EVAL_FOLDER = "/home/alberto/tfg/Reconocimiento-y-sintesis-visual-Tiago/datasets/hospital_photos/vuelta_A/"
+
+REPO_ROOT_DIR = os.path.abspath(os.path.join(PKG_DIR, "..", "..", "..", "..", ".."))
+DEFAULT_EVAL_FOLDER = os.path.join(REPO_ROOT_DIR, "datasets", "hospital_photos", "vuelta_A", "")
+
+if not os.path.exists(os.path.join(REPO_ROOT_DIR, "datasets")):
+    DEFAULT_EVAL_FOLDER = os.path.join(os.path.expanduser("~"), "ruta_hospital_datasets", "hospital_photos", "vuelta_A", "")
+
 DEFAULT_PERCEPTION_MODE = "image"  # 'sequence' para VLM temporal, 'image' para YOLO foto a foto, 'video' para clips de video
 DEFAULT_USE_RERANKER = True
 DEFAULT_RESUME_SESSION = True

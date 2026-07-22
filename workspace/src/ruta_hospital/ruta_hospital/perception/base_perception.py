@@ -3,9 +3,11 @@ from abc import ABC, abstractmethod
 from rclpy.node import Node
 from hospital_interfaces.srv import AnalyzeActivity
 import datetime
-from ruta_hospital.utils.commons.metrics_utils import save_metrics_to_file
+from ament_index_python.packages import get_package_share_directory
 
-DEFAULT_METRICS_DIR = "/home/alberto/tfg/Reconocimiento-y-sintesis-visual-Tiago/docs/autogenerate_metrics/"
+PKG_DIR = get_package_share_directory('ruta_hospital')
+REPO_ROOT_DIR = os.path.abspath(os.path.join(PKG_DIR, "..", "..", "..", "..", ".."))
+DEFAULT_METRICS_DIR = os.path.join(REPO_ROOT_DIR, "docs", "autogenerate_metrics", "")
 
 class RagContext:
     def __init__(self,request):

@@ -26,6 +26,8 @@ CAMERA_TOPIC = "/head_front_camera/rgb/image_raw"
 ODOM_TOPIC = "/odom"
 CSV_FILENAME = "metadata.csv"
 
+DEFAULT_CAPTURE_MODE = "image" # 'image', 'sequence', o 'video'
+
 
 class BaseCaptureNode(rclpy.node.Node, ABC):
     '''Clase abstracta encargada de la lógica común para capturar datos visuales (fotos/vídeo) en la ruta'''
@@ -37,8 +39,8 @@ class BaseCaptureNode(rclpy.node.Node, ABC):
         self.declare_parameter(TARGET_DISTANCE_MET_NAME, default_distance) # (nombre, valor por defecto)
         self.declare_parameter(CURRENT_SAVE_DIR_NAME, DEFAULT_SAVE_DIR) # Parámetro dinámico para la carpeta actual
         self.declare_parameter("target_angle", default_angle)
-        self.declare_parameter('capture_mode', 'image') # 'image', 'sequence', o 'video'
-        self.declare_parameter('current_zone', 'Desconocida')
+        self.declare_parameter('capture_mode', DEFAULT_CAPTURE_MODE) # 'image', 'sequence', o 'video'
+        #self.declare_parameter('current_zone', 'Desconocida')
         self.current_zone_name = "Desconocida"
 
         self.last_image = None

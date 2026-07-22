@@ -4,6 +4,9 @@ import csv
 import math
 import shutil
 
+SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
+PROJECT_ROOT = os.path.abspath(os.path.join(SCRIPT_DIR, ".."))
+
 # ==============================================================================
 # CONFIGURACIÓN DE EXPERIMENTOS (Fácilmente modificable)
 # ==============================================================================
@@ -17,8 +20,8 @@ LINEAR_THRESHOLD_METERS = 0.15
 TARGET_DISTANCES = [0.5, 1.0, 2.0, 4.0]  
 
 # Rutas de entrada y salida del dataset
-SOURCE_DATASET_DIR = "/home/alberto/tfg/Reconocimiento-y-sintesis-visual-Tiago/datasets/hospital_photos/vuelta_A"
-OUTPUT_BASE_DIR = "/home/alberto/tfg/Reconocimiento-y-sintesis-visual-Tiago/datasets/hospital_photos"
+SOURCE_DATASET_DIR = os.path.join(PROJECT_ROOT, "datasets", "hospital_photos", "vuelta_A")
+OUTPUT_BASE_DIR = os.path.join(PROJECT_ROOT, "datasets", "hospital_photos")
 
 CSV_FILENAME = "metadata.csv"
 

@@ -1,11 +1,16 @@
 import cv2
+import os
 import numpy as np
 import matplotlib.pyplot as plt
 
+SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
+PROJECT_ROOT = os.path.abspath(os.path.join(SCRIPT_DIR, ".."))
+IMG_DIFF_DIR = os.path.join(PROJECT_ROOT, "docs", "diagrams", "s9", "mermaid", "memoria", "image_difference")
+
 # --- 1. CONFIGURACIÓN ---
 # Rutas de ejemplo (cámbialas por dos fotos consecutivas de tu dataset del hospital)
-PATH_IMG_1 = 'C:\\Users\\Goku\\Documents\\Envio\\Reconocimiento-y-sintesis-visual-Tiago\\docs\\diagrams\\s9\\mermaid\\memoria\\image_difference\\antes.png' 
-PATH_IMG_2 = 'C:\\Users\\Goku\\Documents\\Envio\\Reconocimiento-y-sintesis-visual-Tiago\\docs\\diagrams\\s9\\mermaid\\memoria\\image_difference\\despues.png'
+PATH_IMG_1 = os.path.join(IMG_DIFF_DIR, "antes.png")
+PATH_IMG_2 = os.path.join(IMG_DIFF_DIR, "despues.png")
 THRESHOLD = 1 # Porcentaje de diferencia mínimo requerido (0-100)
 
 def calculate_mse_percentage(img1, img2):

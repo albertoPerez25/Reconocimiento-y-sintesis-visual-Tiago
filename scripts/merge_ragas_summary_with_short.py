@@ -1,5 +1,9 @@
+import os
 import pandas as pd
 from pathlib import Path
+
+SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
+PROJECT_ROOT = os.path.abspath(os.path.join(SCRIPT_DIR, ".."))
 
 def merge_ragas_metrics_by_structure(dir_viejo, dir_nuevo, dir_salida):
     # Convertir a objetos Path para un manejo arquitectónico limpio
@@ -74,10 +78,9 @@ def merge_ragas_metrics_by_structure(dir_viejo, dir_nuevo, dir_salida):
             print(f"[!] Error crítico procesando {ruta_relativa}: {e}")
 
 # --- Configuración de rutas ---
-# Ajusta estas rutas a tu estructura local
-DIRECTORIO_VIEJO = "viejo_todas"
-DIRECTORIO_NUEVO = "nuevo_resumen"
-DIRECTORIO_SALIDA = "fusionado_completo"
+DIRECTORIO_VIEJO = os.path.join(PROJECT_ROOT, "docs", "metrics_history_data", "viejo_todas")
+DIRECTORIO_NUEVO = os.path.join(PROJECT_ROOT, "docs", "metrics_history_data", "nuevo_resumen")
+DIRECTORIO_SALIDA = os.path.join(PROJECT_ROOT, "docs", "metrics_history_data", "fusionado_completo")
 
 # Ejecutar
 print(f"Iniciando proceso de fusión. Salida en: {DIRECTORIO_SALIDA}\n" + "-"*50)

@@ -5,19 +5,25 @@ import os
 import shutil
 from datetime import datetime
 
+# Resolución dinámica de la raíz del proyecto
+SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
+PROJECT_ROOT = os.path.abspath(os.path.join(SCRIPT_DIR, ".."))
+
 # ================= CONFIGURACIÓN DE RUTAS LOCALES =================
-WORKSPACE_DIR = "/home/alberto/tfg/Reconocimiento-y-sintesis-visual-Tiago/workspace/"
-CONFIG_FILE = f"{WORKSPACE_DIR}src/ruta_hospital/config/reporter_config.yaml"
+WORKSPACE_DIR = os.path.join(PROJECT_ROOT, "workspace", "")
+CONFIG_FILE = os.path.join(WORKSPACE_DIR, "src", "ruta_hospital", "config", "reporter_config.yaml")
 
 # Directorios de Datasets
-BASE_DATASET_DIR = "/home/alberto/tfg/Reconocimiento-y-sintesis-visual-Tiago/datasets/datasets/"
-ACTIVE_PHOTOS_DIR = "/home/alberto/tfg/Reconocimiento-y-sintesis-visual-Tiago/datasets/hospital_photos/vuelta_A"
+BASE_DATASET_DIR = os.path.join(PROJECT_ROOT, "datasets", "datasets", "")
+ACTIVE_PHOTOS_DIR = os.path.join(PROJECT_ROOT, "datasets", "hospital_photos", "vuelta_A")
 
 # Directorios de Métricas y Archivos Temporales
-METRICS_BASE_DIR = "/home/alberto/tfg/Reconocimiento-y-sintesis-visual-Tiago/docs/autogenerate_metrics/"
-TMP_ARCHIVE_BASE_DIR = "/home/alberto/tfg/Datos_tmp/eval/"
+METRICS_BASE_DIR = os.path.join(PROJECT_ROOT, "docs", "autogenerate_metrics", "")
 
-# Archivos vivos en /tmp
+# Datos de caché pesados almacenados fuera del repositorio (Fallback al Home del usuario)
+TMP_ARCHIVE_BASE_DIR = os.path.expanduser("~/Datos_tmp/eval/")
+
+# Archivos vivos en /tmp (Estándar Linux)
 TMP_RAG_DATA = "/tmp/ruta_hospital_rag_data"
 TMP_RAGAS_ANSWERS = "/tmp/ragas_intermediate_answers.json"
 
@@ -28,7 +34,6 @@ DESKTOP_STATUS_FILE = os.path.expanduser("~/Escritorio/estado_pruebas.txt")
 BASE_EVAL_CMD = f"ros2 run ruta_hospital system_evaluator_node --ros-args --params-file {CONFIG_FILE} -p use_reranker:=false -p evaluation_mode:=\"full\" -p resume_session:=false -p evaluation_target:=\"summary_only\""
 ACTION_CMD = 'ros2 action send_goal /evaluate_patrol_system hospital_interfaces/action/GenerateReport "{folder_path: \'\'}"'
 REGEN_SUMMARY_CMD = f"ros2 run ruta_hospital system_evaluator_node --ros-args --params-file {CONFIG_FILE} -p use_reranker:=true -p evaluation_mode:=\"full\" -p resume_session:=false -p evaluation_target:=\"summary_only\""
-
 
 # ================= MATRIZ DE PRUEBAS OPTIMIZADA (MODO EVALUATE_ONLY + SUMMARY_ONLY) =================
 TESTS = [
