@@ -5,7 +5,10 @@ import argparse
 import statistics
 import datetime
 
-DEFAULT_METRICS_DIR = "/home/alberto/tfg/Reconocimiento-y-sintesis-visual-Tiago/docs/autogenerate_metrics/"
+SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
+PROJECT_ROOT = os.path.abspath(os.path.join(SCRIPT_DIR, ".."))
+
+DEFAULT_METRICS_DIR = os.path.join(PROJECT_ROOT, "docs", "autogenerate_metrics", "")
 
 class PerceptionMetricsAggregator:
     '''Script externo para agregar y analizar estadísticamente los tiempos de los perceptores visuales.'''

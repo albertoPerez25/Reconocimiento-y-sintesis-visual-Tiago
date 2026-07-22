@@ -10,10 +10,15 @@ import seaborn as sns
 # Tema para los gráficos
 sns.set_theme(style="whitegrid", palette="pastel")
 
+# Resolución dinámica de la raíz del proyecto
+SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
+PROJECT_ROOT = os.path.abspath(os.path.join(SCRIPT_DIR, ".."))
+BASE_METRICS_DIR = os.path.join(PROJECT_ROOT, "docs", "autogenerate_metrics", "")
+
 # Rutas por defecto
-JSON_PATH = "/home/alberto/tfg/Reconocimiento-y-sintesis-visual-Tiago/docs/autogenerate_metrics/comparativa_modelos.json"
-RAGAS_DIR = "/home/alberto/tfg/Reconocimiento-y-sintesis-visual-Tiago/docs/autogenerate_metrics/"
-OUTPUT_DIR = "/home/alberto/tfg/Reconocimiento-y-sintesis-visual-Tiago/docs/autogenerate_metrics/"
+JSON_PATH = os.path.join(BASE_METRICS_DIR, "comparativa_modelos.json")
+RAGAS_DIR = BASE_METRICS_DIR
+OUTPUT_DIR = BASE_METRICS_DIR
 
 FINAL_SCORE_WITH_FAITHFULNESS = False
 

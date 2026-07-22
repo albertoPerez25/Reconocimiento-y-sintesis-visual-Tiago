@@ -2,16 +2,21 @@ import subprocess
 import logging
 import os
 from pathlib import Path
+import shutil
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
 # Formato de los mensajes en la terminal
 logging.basicConfig(level=logging.INFO, format='%(levelname)s: %(message)s')
 
+# Resolución dinámica de la raíz del proyecto
+SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
+PROJECT_ROOT = os.path.abspath(os.path.join(SCRIPT_DIR, ".."))
+
 # CONSTANTES DE CONFIGURACIÓN 
-DIAGRAMS_FOLDER = "/home/alberto/tfg/Reconocimiento-y-sintesis-visual-Tiago/docs/diagrams/s9/mermaid/memoria/ch4" 
-OUTPUT_FOLDER = "/home/alberto/tfg/Reconocimiento-y-sintesis-visual-Tiago/docs/diagrams/s9/mermaid/output"             
+DIAGRAMS_FOLDER = os.path.join(PROJECT_ROOT, "docs", "diagrams", "s9", "mermaid", "memoria", "ch4") 
+OUTPUT_FOLDER = os.path.join(PROJECT_ROOT, "docs", "diagrams", "s9", "mermaid", "output")             
 DEFAULT_FORMAT = "pdf"                    
-CHROME_INSTALLATION = "/usr/bin/google-chrome-stable" 
+CHROME_INSTALLATION = shutil.which("google-chrome-stable") or "/usr/bin/google-chrome-stable"
 SCALE_FACTOR = 12                         # DEPRECATED: Mantenido por compatibilidad, aunque no se pase al cmd
 CONFIG_FILE = "./configs/puppeteer-config.json" 
 

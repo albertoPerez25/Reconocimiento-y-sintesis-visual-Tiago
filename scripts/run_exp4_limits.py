@@ -1,15 +1,25 @@
 #!/usr/bin/env python3
 
 '''
-Para que funcione es necesario ejecutarlo desde la carpeta raíz del paquete patrulla_hospital, o modificar los import.
+Para que funcione PUEDE que sea necesario ejecutarlo desde la carpeta raíz del paquete patrulla_hospital, o modificar los import.
 
 '''
 
 import os
+import sys
 import json
 import time
 import pandas as pd
 import ast
+
+# Resolución dinámica y configuración del sys.path (Patrón SOTA para scripts externos)
+SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
+PROJECT_ROOT = os.path.abspath(os.path.join(SCRIPT_DIR, ".."))
+ROS2_WS_SRC = os.path.join(PROJECT_ROOT, "workspace", "src")
+
+# Inyectar el workspace en el path para resolver los módulos sin instalarlos
+if ROS2_WS_SRC not in sys.path:
+    sys.path.insert(0, ROS2_WS_SRC)
 
 # Importaciones directas de la lógica de tu proyecto (Sin ROS 2)
 from ruta_hospital.utils.shared.vector_manager import VectorManager
@@ -21,9 +31,9 @@ from langchain_ollama import ChatOllama
 
 # ================= CONFIGURACIÓN =================
 # Usamos el FAISS generado en el experimento 1 (Dataset Grande) como base constante
-FAISS_SOURCE_DIR = "/home/alberto/tfg/Datos_tmp/eval/1_hybrid_vs_vlm/1_eval_hybrid/ruta_hospital_rag_data"
-QUESTIONS_PATH = "/home/alberto/tfg/Reconocimiento-y-sintesis-visual-Tiago/workspace/src/ruta_hospital/config/quest.json"
-OUTPUT_METRICS_DIR = "/home/alberto/tfg/Reconocimiento-y-sintesis-visual-Tiago/docs/autogenerate_metrics/exp4_limites_palabras"
+FAISS_SOURCE_DIR = os.path.expanduser("~/Datos_tmp/eval/1_hybrid_vs_vlm/1_eval_hybrid/ruta_hospital_rag_data")
+QUESTIONS_PATH = os.path.join(ROS2_WS_SRC, "ruta_hospital", "config", "quest.json")
+OUTPUT_METRICS_DIR = os.path.join(PROJECT_ROOT, "docs", "autogenerate_metrics", "exp4_limites_palabras")
 
 # Parámetros del LLM
 OLLAMA_URL = "http://localhost:11434"

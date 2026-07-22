@@ -4,9 +4,13 @@ import json
 import pandas as pd
 import numpy as np
 
+# Resolución dinámica de la raíz del proyecto
+SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
+PROJECT_ROOT = os.path.abspath(os.path.join(SCRIPT_DIR, ".."))
+
 # ================= CONFIGURACIÓN DE RUTAS =================
-METRICS_BASE_DIR = "/home/alberto/tfg/Reconocimiento-y-sintesis-visual-Tiago/docs/metrics_history_data/eval_OLD/6_size_datasets"
-DATASETS_PHYSICAL_DIR = "/home/alberto/tfg/Reconocimiento-y-sintesis-visual-Tiago/datasets/datasets/"
+METRICS_BASE_DIR = os.path.join(PROJECT_ROOT, "docs", "metrics_history_data", "eval_OLD", "6_size_datasets")
+DATASETS_PHYSICAL_DIR = os.path.join(PROJECT_ROOT, "datasets", "datasets", "")
 
 # Orden lógico de los datasets con la nomenclatura final
 DATASETS = [

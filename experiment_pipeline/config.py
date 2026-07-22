@@ -26,8 +26,12 @@ METRICS_MAPPING = {
 # =========================================================
 # MAPA DE DIRECTORIOS DE LOS EXPERIMENTOS
 # =========================================================
-BASE_DIR = "/home/alberto/tfg/Reconocimiento-y-sintesis-visual-Tiago/docs/autogenerate_metrics"
-DATASETS_DIR = "/home/alberto/tfg/Reconocimiento-y-sintesis-visual-Tiago/datasets/datasets"
+# Resolución dinámica de la raíz del proyecto
+script_dir = os.path.dirname(os.path.abspath(__file__))
+project_root = os.path.abspath(os.path.join(script_dir, ".."))
+
+BASE_DIR = os.path.join(project_root, "docs", "autogenerate_metrics")
+DATASETS_DIR = os.path.join(project_root, "datasets", "datasets")
 
 # EXPERIMENTO 1: Híbrido vs VLM
 EXP1_CONFIG = [

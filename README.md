@@ -37,7 +37,7 @@ Sistema en ROS2 para sintetizar mediante lenguaje natural todo lo observado por 
 
 ## Descripción General
 
-Este repositorio contiene un sistema modular para la plataforma robótica móvil TIAGo. Su propósito es dotar al robot de la capacidad de navegar de forma autónoma por un entorno hospitalario, identificar visualmente actividades humanas y sintetizar dicha información en lenguaje natural. Esta síntesis tiene como objetivo generar informes en lenguaje natural y alertas en tiempo real para facilitar la toma de decisiones del personal del centro.
+Este repositorio contiene un sistema modular para una plataforma robótica móvil TIAGo. Su propósito es dotar a robots móviles de la capacidad de navegar de forma autónoma por un entorno de asistencia médica, identificar visualmente actividades humanas y sintetizar dicha información en lenguaje natural. Esta síntesis tiene como objetivo generar informes en lenguaje natural y alertas en tiempo real para facilitar la toma de decisiones del personal del centro.
 
 ## Arquitectura del Sistema
 
@@ -51,12 +51,45 @@ La arquitectura de software se divide en subsistemas asíncronos distribuidos me
 4. **Capa de Presentación y Alertas**: Interfaz de usuario interactiva desarrollada en *Streamlit* para consultas asíncronas sobre el estado del hospital, complementada por un sistema de notificaciones críticas a nivel de sistema operativo.
 
 ## Requisitos Previos
+* **Sistema Operativo**: Ubuntu 22.04 LTS.
+* **Middleware**: ROS 2 (Humble).
+* **Simulador**: Gazebo y AWS RoboMaker Hospital World.
+* **Inteligencia Artificial y Análisis**: Ollama (API local activa), FAISS, LangChain, Ultralytics (YOLOv8/11), Pandas, Seaborn.
+* **Lenguaje**: Python 3.10+.
 
-*   **Sistema Operativo**: Ubuntu 22.04 con GNOME.
-*   **Middleware**: ROS 2 (Humble).
-*   **Simulación**: Gazebo, AWS RoboMaker Hospital World.
-*   **Inteligencia Artificial**: Ollama (API local activa), FAISS, LangChain, Ultralytics (YOLO).
-*   **Lenguaje**: Python 3.10+.
+### Instalación de Dependencias
+1. **Dependencias del Sistema y ROS 2**:
+   Se requiere el stack de navegación y localización nativo:
+   ```bash
+   sudo apt update
+   sudo apt install ros-humble-cv-bridge ros-humble-nav2-simple-commander \
+                    ros-humble-tf2-ros ros-humble-tf2-geometry-msgs \
+                    ros-humble-nav-msgs ros-humble-sensor-msgs \
+                    ros-humble-robot-localization
+    ```
+
+2. **Dependencias de Python**:
+    Instalar las librerías del ecosistema de IA y Visión en el entorno:
+    ```bash
+    pip install -r requirements.txt
+    ```
+
+3. **Despliegue de Modelos Base (Ollama)**:
+    Instalar Ollama y los modelos locales requeridos por el sistema RAG:
+    ```bash
+    # Modelos de Lenguaje (Síntesis de informes RAG y LLM Juez)
+    ollama pull llama3
+    ollama pull llama3.1
+
+    # Modelo de Embeddings (Base de datos vectorial FAISS)
+    ollama pull nomic-embed-text
+
+    # Modelos de Lenguaje Visual / VLM (Percepción en imagen, secuencia y vídeo)
+    ollama pull moondream
+    ollama pull qwen3.5:4b
+    ollama pull nemotron-3-nano:4b
+    ```
+    (Nota: La instalación de Node.js y Mermaid CLI es necesaria únicamente para autogenerar diagramas con el script generate_mermaid.py).
 
 ## Estructura del Repositorio
 
@@ -131,6 +164,25 @@ Configurar los recursos del mundo simulado:
    export GAZEBO_MODEL_PATH=$GAZEBO_MODEL_PATH:$HOSPITAL_MODELS:$HOSPITAL_FUEL
    ```
 
+## Proyectos Relacionados
+
+Este proyecto integra y adapta diversos repositorios de código abierto desarrollados por la comunidad.
+
+Los componentes de simulación del robot y del entorno hospitalario se gestionan como submódulos de Git en la carpeta `workspace/src/`:
+
+* **Entorno Hospitalario:** Basado en el escenario [AWS RoboMaker Hospital World](https://github.com/aws-robotics/aws-robomaker-hospital-world) (`aws-robomaker-hospital-world`).
+* **Plataforma TIAGo:** Integración de los paquetes oficiales de simulación y navegación de [PAL Robotics](https://github.com/pal-robotics) (`tiago_simulation`, `tiago_navigation` y `pmb2_navigation`, entre otros).
+* **Adaptaciones:** Se emplean versiones ajustadas de estos entornos para garantizar la compatibilidad con el sistema. Las modificaciones detalladas pueden consultarse directamente en los repositorios correspondientes.
+
+**Nota:** Al clonar el repositorio, se deben inicializar los submódulos ejecutando:
+```bash
+git clone --recurse-submodules <URL_DEL_REPOSITORIO>
+```
+Puede automatizarse ejecutando lo siguiente en `/workspace/src/`:
+```bash
+for d in */; do (cd "$d" && url=$(git config --get remote.origin.url) && [ -n "$url" ] && cd .. && git submodule add "$url" "${d%/}"); done
+```
+
 ## Guía de Ejecución
 
 El despliegue del sistema se realiza mediante archivos `.launch.py` para garantizar el orden de inicialización y evitar condiciones de carrera entre el simulador, el stack de navegación y los nodos de inferencia. Los orquestadores principales se encuentran en `launch_files/full_system/`.
@@ -192,7 +244,7 @@ También es posible modificar parámetros específicos en tiempo de ejecución a
 
 * **Cambiar el modelo LLM y el límite de palabras del reportero**:
   ```bash
-  ros2 run ruta_hospital llm_reporter_node --ros-args -p llm_model:="qwen2.5" -p max_words:=500
+  ros2 run ruta_hospital llm_reporter_node --ros-args -p llm_model:="qwen3.5" -p max_words:=500
   ```
 
 * **Inyectar una estrategia de percepción diferente en el perceptor híbrido**:
@@ -242,6 +294,7 @@ ros2 run ruta_hospital perception_evaluator_node --ros-args -p tested_model_name
 # Evaluar el sistema completo (pipeline de inferencia y consolidación)
 ros2 run ruta_hospital system_evaluator_node --ros-args -p evaluation_name:="system_evaluation" -p use_reranker:=true -p evaluation_mode:=full
 ```
+
 ## Licencia
 
 Todo el contenido de este repositorio se encuentra bajo la licencia **GNU GENERAL PUBLIC LICENSE Version 3 (GPL-v3)**, detallada al completo en el archivo **LICENSE**. 

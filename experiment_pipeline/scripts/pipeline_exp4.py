@@ -9,7 +9,11 @@ from extractor import load_ragas_csv
 from transformer import normalize_ragas_metrics
 
 # ================= CONFIGURACIÓN =================
-BASE_DIR = "/home/alberto/tfg/Reconocimiento-y-sintesis-visual-Tiago/docs/autogenerate_metrics/exp4_limites_palabras"
+# Resolución dinámica de la raíz del proyecto
+script_dir = os.path.dirname(os.path.abspath(__file__))
+project_root = os.path.abspath(os.path.join(script_dir, "..", ".."))
+
+BASE_DIR = os.path.join(project_root, "docs", "autogenerate_metrics", "exp4_limites_palabras")
 RESULTS_CSV = os.path.join(BASE_DIR, "experimento_4_limite_palabras_resultados.csv")
 
 # Se ordenan para asegurar coherencia visual en las gráficas y tablas
