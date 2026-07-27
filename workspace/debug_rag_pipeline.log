@@ -5272,3 +5272,35 @@ Nueva pregunta reformulada:
 3. Zonas detectadas en el texto tras normalización: ['Quirófano 2']
 4. Contexto final enviado al LLM (Cantidad: 3): ['Quirófano 2', 'Quirófano 2', 'Baño 2']
 ==================================================
+
+
+- Query recibida en la Red Léxica: 'Que zonas tienes'
+- Documentos devueltos originalmente por la base (Cantidad: 3): ['Habitación Individual 2', 'Recepcion', 'Almacén 1']
+- Zonas detectadas en el texto tras normalización: []
+- Contexto final enviado al LLM (Cantidad: 3): ['Habitación Individual 2', 'Recepcion', 'Almacén 1']
+
+
+
+- Query recibida en la Red Léxica: 'recepcion'
+- Documentos devueltos originalmente por la base (Cantidad: 3): ['Recepcion', 'Recepcion', 'Recepcion']
+- Zonas detectadas en el texto tras normalización: []
+- Contexto final enviado al LLM (Cantidad: 3): ['Recepcion', 'Recepcion', 'Recepcion']
+
+
+
+- Query recibida en la Red Léxica: 'Que sabes de la Oficina 1'
+- Documentos devueltos originalmente por la base (Cantidad: 3): ['Oficina 1', 'Almacén 1', 'Almacén 1']
+- Zonas detectadas en el texto tras normalización: []
+- Contexto final enviado al LLM (Cantidad: 3): ['Oficina 1', 'Almacén 1', 'Almacén 1']
+
+
+
+- Query recibida en la Red Léxica: 'La búsqueda independiente en español para la nueva pregunta sería:
+
+¿Qué sabes del [Baño]?
+
+(Note: La respuesta se basaría en el contexto y el mapa del sistema, utilizando el nombre exacto de una zona válida si es necesario)'
+- Documentos devueltos originalmente por la base (Cantidad: 3): ['Recepcion', 'Oficina 1', 'Almacén 1']
+- Zonas detectadas en el texto tras normalización: []
+- Contexto final enviado al LLM (Cantidad: 3): ['Recepcion', 'Oficina 1', 'Almacén 1']
+

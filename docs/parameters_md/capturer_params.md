@@ -17,7 +17,7 @@ Parámetros estructurales heredados por todas las estrategias de captura.
 
 | Parámetro | Tipo | Por Defecto | Descripción |
 | :--- | :---: | :---: | :--- |
-| `similarity_threshold` | `double` | `25.0` | Umbral porcentual del Error Cuadrático Medio (MSE). Implementa un patrón *Early Exit* para descartar fotogramas visualmente redundantes, optimizando la carga computacional del perceptor aguas abajo. |
+| `similarity_threshold` | `double` | `5.0` | Umbral porcentual del Error Cuadrático Medio (MSE). Implementa un patrón *Early Exit* para descartar fotogramas visualmente redundantes, optimizando la carga computacional del perceptor aguas abajo. |
 
 ## Captura de Vídeo (`video_capturer_node`)
 

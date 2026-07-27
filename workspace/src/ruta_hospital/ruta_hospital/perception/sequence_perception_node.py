@@ -10,9 +10,9 @@ from ruta_hospital.perception.base_vlm_perception import BaseVLMPerceptionNode
 DEFAULT_MODEL = 'moondream'
 
 class SequencePerceptionNode(BaseVLMPerceptionNode):
-    def __init__(self):
-        super().__init__('sequence_perception_node', default_model=DEFAULT_MODEL)    
-        self.perception_metrics["modelo_usado"] = self.vlm_model    
+    def __init__(self, start_service=True):
+        super().__init__('sequence_perception_node', start_service=start_service, default_model=DEFAULT_MODEL)    
+        self.perception_metrics["modelo_usado"] = self.vlm_model 
 
     def process_image(self, image_paths_str, context):
         '''Recibe múltiples rutas de frames separadas por coma y los manda al VLM'''
@@ -55,7 +55,7 @@ class SequencePerceptionNode(BaseVLMPerceptionNode):
         Aquí puedes ver personas {context.expected_activities}
 
         INSTRUCCIONES:
-            - Describe en un máximo de {self.self.model_word_limit} PALABRAS las actividades que las personas en esta secuencia temporal de imágenes están realizando
+            - Describe en un máximo de {self.model_word_limit} PALABRAS las actividades que las personas en esta secuencia temporal de imágenes están realizando
             - Dentro del límite incluye una MUY BREVE descripción de la persona o personas a las que te refieres
             - Si ves una situación que amenaza la vida (como una caída o alguien fumando), escribe "URGENTE" y descríbela brevemente
             - IGNORA a cualquier persona que se vea a lo lejos a través de una puerta o cristal. Describe ÚNICAMENTE lo que esté físicamente DENTRO de tu misma habitación
@@ -74,7 +74,7 @@ class SequencePerceptionNode(BaseVLMPerceptionNode):
             "stream": False,
             #"format": "json",
             "options": {
-                "num_predict": self.self.model_word_limit * 2,
+                "num_predict": self.model_word_limit * 2,
                 "temperature": 0.0,  # Hace las respuestas menos creativas y más predecibles
                 "seed": 42,
                 "stop": [
