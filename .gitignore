@@ -68,6 +68,8 @@ YOLO_tracking_debug/*
 YOLO_tracking_debug/tracking_*.jpg
 
 docs/autogenerate_metrics/*
+!docs/autogenerate_metrics/.gitkeep
+
 docs/diagrams_history/*
 docs/diagrams_history/*.png/*
 docs/diagrams_history/*.svg/*
