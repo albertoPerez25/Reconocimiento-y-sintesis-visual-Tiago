@@ -201,7 +201,7 @@ cd Reconocimiento-y-sintesis-visual-Tiago/workspace
 rm -rf build/ install/ log/
 
 # Recompilar y recargar el entorno
-colcon build --symlink-install --packages-select ruta_hospital
+colcon build --symlink-install
 source install/setup.bash
 
 ```
