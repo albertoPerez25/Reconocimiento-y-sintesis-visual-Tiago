@@ -11,6 +11,13 @@ Sistema en ROS2 para sintetizar mediante lenguaje natural todo lo observado por 
 
   <table>
     <tr>
+      <td align="center" colspan="2">
+        <img src="docs/media/cenital_nombres.png" alt="Vista Cenital con Zonas" width="100%"/>
+        <br />
+        <sub><b>Vista cenital con las distintas zonas</b></sub>
+      </td>
+    </tr>
+    <tr>
       <td align="center" width="50%">
         <img src="docs/media/streamlit_ui_simplified.png" alt="Interfaz Simplificada" width="100%"/>
         <br />
@@ -143,6 +150,21 @@ Reconocimiento-y-sintesis-visual-Tiago/
 
 ## Configuración
 
+**Nota sobre la instalación:** Este proyecto utiliza submódulos de Git para integrar varios paquetes. 
+
+Para descargar el proyecto completo con todas sus dependencias en un solo paso, puede utilizarse:
+```bash
+git clone --recurse-submodules <URL_DEL_REPOSITORIO>
+
+```
+
+Si ya se ha clonado el repositorio de forma estándar y las carpetas de los paquetes externos están vacías, pueden inicializarse ejecutando lo siguiente en la raíz del proyecto:
+
+```bash
+git submodule update --init --recursive
+
+```
+
 Evitar conflictos con variables de entorno de interfaces gráficas:
    ```bash
    unset GTK_PATH
@@ -219,15 +241,6 @@ Los componentes de simulación del robot y del entorno hospitalario se gestionan
 * **Entorno Hospitalario:** Basado en el escenario [AWS RoboMaker Hospital World](https://github.com/aws-robotics/aws-robomaker-hospital-world) (`aws-robomaker-hospital-world`).
 * **Plataforma TIAGo:** Integración de los paquetes oficiales de simulación y navegación de [PAL Robotics](https://github.com/pal-robotics) (`tiago_simulation`, `tiago_navigation` y `pmb2_navigation`, entre otros).
 * **Adaptaciones:** Se emplean versiones ajustadas de estos entornos para garantizar la compatibilidad con el sistema. Las modificaciones detalladas pueden consultarse directamente en los repositorios correspondientes.
-
-**Nota:** Al clonar el repositorio, se deben inicializar los submódulos ejecutando:
-```bash
-git clone --recurse-submodules <URL_DEL_REPOSITORIO>
-```
-Puede automatizarse ejecutando lo siguiente en `/workspace/src/`:
-```bash
-for d in */; do (cd "$d" && url=$(git config --get remote.origin.url) && [ -n "$url" ] && cd .. && git submodule add "$url" "${d%/}"); done
-```
 
 ## Guía de Ejecución
 
