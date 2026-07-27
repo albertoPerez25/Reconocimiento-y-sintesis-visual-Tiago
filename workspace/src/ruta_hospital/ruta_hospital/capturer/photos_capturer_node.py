@@ -7,7 +7,7 @@ import numpy as np
 from .base_capturer import BaseCaptureNode
 from hospital_interfaces.msg import LiveCapture
 
-DEFAULT_SIMILARITY_THRESHOLD = 25.0
+DEFAULT_SIMILARITY_THRESHOLD = 5.0 # sobre 100 (5.0 = 5%)
 
 class PhotosCapturerNode(BaseCaptureNode):
     '''Nodo encargado de guardar fotos en la ruta del robot'''

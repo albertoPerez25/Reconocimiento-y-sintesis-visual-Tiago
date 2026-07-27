@@ -89,7 +89,7 @@ def generate_launch_description():
                 name='patrol_node',
                 parameters=[{
                     'use_sim_time': True,
-                    'keep_temp_folders': True,
+                    'keep_temp_folders': False,
                     'capturer_node_name': 'photos_node',
                     'use_reranker': True
                 }],

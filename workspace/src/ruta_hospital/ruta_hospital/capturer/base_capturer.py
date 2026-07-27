@@ -40,7 +40,7 @@ class BaseCaptureNode(rclpy.node.Node, ABC):
         self.declare_parameter(CURRENT_SAVE_DIR_NAME, DEFAULT_SAVE_DIR) # Parámetro dinámico para la carpeta actual
         self.declare_parameter("target_angle", default_angle)
         self.declare_parameter('capture_mode', DEFAULT_CAPTURE_MODE) # 'image', 'sequence', o 'video'
-        #self.declare_parameter('current_zone', 'Desconocida')
+        self.declare_parameter('current_zone', 'Desconocida')
         self.current_zone_name = "Desconocida"
 
         self.last_image = None
