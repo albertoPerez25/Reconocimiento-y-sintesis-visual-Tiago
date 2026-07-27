@@ -195,7 +195,7 @@ Dado que `--symlink-install` enlaza rutas específicas de `setup.py`, si se rees
 
 ```bash
 # Navegar al directorio de trabajo
-cd ~/tfg/Reconocimiento-y-sintesis-visual-Tiago/workspace
+cd Reconocimiento-y-sintesis-visual-Tiago/workspace
 
 # Limpiar las carpetas de compilación
 rm -rf build/ install/ log/
@@ -358,7 +358,7 @@ ros2 run ruta_hospital system_evaluator_node --ros-args -p evaluation_name:="sys
 
 Todo el contenido de este repositorio se encuentra bajo la licencia **GNU GENERAL PUBLIC LICENSE Version 3 (GPL-v3)**, detallada al completo en el archivo **LICENSE**. 
 
-Se otorgan derechos para el uso privado y comercial, la modificación del código fuente y la libre distribución del software derivado. Asimismo, se incluye la concesión de derechos sobre las patentes asociadas por parte de cualquier contibución al proyecto.
+Se otorgan derechos para el uso privado y comercial, la modificación del código fuente y la libre distribución del software derivado. Asimismo, se incluye la concesión de derechos sobre las patentes asociadas por parte de cualquier contribución al proyecto.
 
 Cualquier software derivado que se distribuya debe publicar su código fuente bajo esta misma licencia GPL-v3. Se exige la inclusión de la licencia original, el aviso de copyright y la documentación de los cambios realizados, ofreciéndose el software "tal cual" (as is) sin garantías legales por parte de los autores.
 
