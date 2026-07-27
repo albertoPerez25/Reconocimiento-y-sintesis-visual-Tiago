@@ -53,7 +53,12 @@ DEFAULT_PATH_POINTS = [
 PKG_DIR = get_package_share_directory('ruta_hospital')
 
 DEFAULT_WAYPOINTS_PATH = os.path.join(PKG_DIR, "config", "route_waypoints.json")
-DEFAULT_PHOTOS_DIR = "/home/alberto/tfg/Reconocimiento-y-sintesis-visual-Tiago/datasets/hospital_photos/"
+REPO_ROOT_DIR = os.path.abspath(os.path.join(PKG_DIR, "..", "..", "..", "..", ".."))
+DEFAULT_PHOTOS_DIR = os.path.join(REPO_ROOT_DIR, "datasets", "hospital_photos", "")
+
+if not os.path.exists(os.path.join(REPO_ROOT_DIR, "datasets")):
+    DEFAULT_PHOTOS_DIR = os.path.join(os.path.expanduser("~"), "ruta_hospital_datasets", "hospital_photos", "")
+
 DEFAULT_KEEP_TEMP_FOLDERS = False
 DEFAULT_CAPTURER_NAME = "photos_node"
 DEFAULT_USE_RERANKER = False # también se puede configurar con una variable de entorno
@@ -354,9 +359,3 @@ def main(args=None):
 
 if __name__ == '__main__':
     main()
-
-# TODO LIST
-# Testear hacer varias vueltas -> hecho
-# Rehacer datasets (grande imagen y video) -> hecho
-# Testear imagen, secuencia y video -> falta imagen y secuencia ig, testar con evaluador, más rapido
-# memoria

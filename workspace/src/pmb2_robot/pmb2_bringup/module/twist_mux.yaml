@@ -1,2 +1,0 @@
-twist_mux:
-  launch: "pmb2_bringup twist_mux.launch.py"

@@ -18,14 +18,27 @@ from ruta_hospital.evaluation.base_evaluator import BaseEvaluatorNode
 from ruta_hospital.evaluation.base_evaluator import InferencePipelineError
 from ruta_hospital.utils.shared.semantic_map_utils import load_semantic_map, get_zone_name
 from hospital_interfaces.action import GenerateReport
+from ruta_hospital.evaluation.utils.context_compressor import ContextCompressor
+from langchain_core.documents import Document
+
 
 PKG_DIR = get_package_share_directory('ruta_hospital')
 
 DEFAULT_QUESTIONS_PATH = os.path.join(PKG_DIR, 'config', 'quest.json')
-DEFAULT_EVAL_FOLDER = "/home/alberto/tfg/Reconocimiento-y-sintesis-visual-Tiago/datasets/hospital_photos/vuelta_A/"
-DEFAULT_PERCEPTION_MODE = "image"
-DEFAULT_USE_RERANKER = False
+
+REPO_ROOT_DIR = os.path.abspath(os.path.join(PKG_DIR, "..", "..", "..", "..", ".."))
+DEFAULT_EVAL_FOLDER = os.path.join(REPO_ROOT_DIR, "datasets", "hospital_photos", "vuelta_A", "")
+
+if not os.path.exists(os.path.join(REPO_ROOT_DIR, "datasets")):
+    DEFAULT_EVAL_FOLDER = os.path.join(os.path.expanduser("~"), "ruta_hospital_datasets", "hospital_photos", "vuelta_A", "")
+
+DEFAULT_PERCEPTION_MODE = "image"  # 'sequence' para VLM temporal, 'image' para YOLO foto a foto, 'video' para clips de video
+DEFAULT_USE_RERANKER = True
 DEFAULT_RESUME_SESSION = True
+DEFAULT_EVAL_TARGET = "both" # 'short_only', 'summary_only', 'both'
+DEFAULT_CONTEXT_COMPRESSOR = False
+DEFAULT_ENFORCE_ZONE_MATCH = True
+
 
 @dataclass
 class MockLiveCapture:
@@ -57,7 +70,10 @@ class SystemEvaluatorNode(BaseEvaluatorNode):
         super().__init__('system_evaluator_node')
         # Reportero original para acceder a sus métodos
         self.reporter_logic = LLMReporterNode()
+        self.reporter_logic.eval_name = self.evaluation_name
+        self.reporter_logic.current_metrics["evaluacion_nombre"] = self.evaluation_name
         self.reporter_logic.keep_photos = True
+        self.context_compressor = ContextCompressor(llm=self.reporter_logic.vector_manager.llm)
 
         # Parametros
         self.declare_parameter('questions_path', DEFAULT_QUESTIONS_PATH)
@@ -65,6 +81,9 @@ class SystemEvaluatorNode(BaseEvaluatorNode):
         self.declare_parameter('perception_mode', DEFAULT_PERCEPTION_MODE)
         self.declare_parameter('use_reranker', DEFAULT_USE_RERANKER)
         self.declare_parameter('resume_session', DEFAULT_RESUME_SESSION)
+        self.declare_parameter('evaluation_target', DEFAULT_EVAL_TARGET) 
+        self.declare_parameter('use_context_compressor', DEFAULT_CONTEXT_COMPRESSOR) 
+        self.declare_parameter('enforce_zone_match', DEFAULT_ENFORCE_ZONE_MATCH) 
 
         quest_path = self.get_parameter('questions_path').get_parameter_value().string_value
         self.eval_folder_path = self.get_parameter('eval_folder_path').get_parameter_value().string_value
@@ -75,10 +94,16 @@ class SystemEvaluatorNode(BaseEvaluatorNode):
         resume_session = self.get_parameter('resume_session').get_parameter_value().bool_value
         self.reporter_logic.resume_session = resume_session
 
+        self.use_context_compressor = self.get_parameter('use_context_compressor').get_parameter_value().bool_value
+        enforce_zone_match = self.get_parameter('enforce_zone_match').get_parameter_value().bool_value
+        self.reporter_logic.vector_manager.enforce_zone_match = enforce_zone_match
+
         use_reranker = self.get_parameter('use_reranker').get_parameter_value().bool_value
         if use_reranker:
             self.reporter_logic.vector_manager.use_reranker = True
             self.reporter_logic.vector_manager.load_reranker_model_if_needed()
+
+        self.evaluation_target = self.get_parameter('evaluation_target').get_parameter_value().string_value
 
         default_map_path = os.path.join(PKG_DIR, 'config', 'semantic_map.json')
         self.declare_parameter('semantic_map_path', default_map_path)
@@ -105,7 +130,7 @@ class SystemEvaluatorNode(BaseEvaluatorNode):
             callback_group=self.action_cb_group
         )
         
-        self.get_logger().info("Nodo Evaluador listo. Llama al servicio '/evaluate_patrol_system'")
+        self.get_logger().info("Nodo Evaluador listo. Lanza la acción '/evaluate_patrol_system'")
 
     async def evaluate_callback(self, goal_handle):
         '''Orquesta el flujo de evaluación completo: obtención de datos (inferencia o lectura de disco), 
@@ -126,20 +151,22 @@ class SystemEvaluatorNode(BaseEvaluatorNode):
                 t_start_inference = time.time()
                 short_dict, summary_dict = await self.get_data_for_inference_and_evaluate()
 
+                inference_time = time.time() - t_start_inference
+
                 if self.evaluation_mode == "generate_only":
-                    inference_time = time.time() - t_start_inference
                     self.sync_metrics_from_reporter(inference_time, 0.0, total_init_time)
                     self.save_metrics()
 
                     goal_handle.succeed()
-                    result.summary = f"Generación completada. Respuestas guardadas en {self.answers_file}"
+                    result.final_report = f"Generación completada. Respuestas guardadas en {self.answers_file}"
                     return result
 
             t_start_ragas = time.time()
             self.ragas_evaluator.evaluate_system(
                 short_dict=short_dict,
                 summary_dict=summary_dict,
-                config_name=self.evaluation_name
+                config_name=self.evaluation_name,
+                target=self.evaluation_target
             )       
             ragas_time = time.time() - t_start_ragas
         
@@ -147,35 +174,24 @@ class SystemEvaluatorNode(BaseEvaluatorNode):
             self.save_metrics()
 
             goal_handle.succeed()
-            result.summary = f"Evaluación Ragas completada con éxito. Guardado en: {self.metrics_dir}"
+            result.final_report = f"Evaluación Ragas completada con éxito. Guardado en: {self.metrics_dir}"
             return result
             
         except InferencePipelineError as e:
             self.get_logger().error(str(e))
             goal_handle.abort()
-            result.summary = str(e)
+            result.final_report = str(e)
             return result
         
         except Exception as e:
             self.get_logger().error(f"Error inesperado durante la evaluación: {e}")
             goal_handle.abort()
-            result.summary = f"Fallo del sistema: {e}"
+            result.final_report = f"Fallo del sistema: {e}"
             return result
                 
     def sync_metrics_from_reporter(self, inference_time, ragas_time, total_init_time):
         '''Sincroniza y consolida las métricas de rendimiento y ejecución obtenidas desde el nodo reportero 
         instanciado.'''
-
-        rep_metrics = self.reporter_logic.current_metrics
-        
-        # tiempos y contadores
-        self.current_metrics["total_imagenes_procesadas"] = rep_metrics.get("total_imagenes_procesadas", 0)
-        self.current_metrics["tiempo_percepcion_segundos"] = rep_metrics.get("tiempo_percepcion_segundos", 0.0)
-        self.current_metrics["tiempo_llm_segundos"] = rep_metrics.get("tiempo_llm_segundos", 0.0)
-        
-        # verbosidad
-        self.current_metrics["caracteres_contexto_visual"] = rep_metrics.get("caracteres_contexto_visual", 0)
-        self.current_metrics["caracteres_informe_final"] = rep_metrics.get("caracteres_informe_final", 0)
         
         self.current_metrics["tiempo_inferencia_total_segundos"] = inference_time
         self.current_metrics["tiempo_ragas_evaluacion_segundos"] = ragas_time
@@ -203,6 +219,16 @@ class SystemEvaluatorNode(BaseEvaluatorNode):
 
         if not skip_inference:
             summary_text = await self._run_patrol_simulation()
+        elif self.evaluation_target == "summary_only":
+            self.get_logger().debug("Forzando regeneración de resumen desde FAISS existente.")
+            # Rehudratar FAISS antes de consolidar
+            highest_round = self.reporter_logic.vector_manager.get_highest_round_in_disk()
+            hospital_data_dict = self.reporter_logic.vector_manager.load_round_data_from_disk(highest_round)
+            summary_text = self.reporter_logic.vector_manager.generate_global_summary(hospital_data_dict, highest_round)
+            
+            # Actualizar el estado del reportero para que RAGAS tenga contexto al evaluar
+            self.reporter_logic.latest_global_context = json.dumps(hospital_data_dict, ensure_ascii=False)
+            self.reporter_logic.latest_final_summary = summary_text
         else:
             self.get_logger().info("Resume Session activo y FAISS detectado. Saltando simulación de perceptores...")
             # Forzar carga de FAISS a la RAM
@@ -221,8 +247,8 @@ class SystemEvaluatorNode(BaseEvaluatorNode):
 
     def _prepare_and_read_dataset(self):
         '''Prepara el entorno limpiando la caché y lee las filas válidas del CSV.'''
-        self.get_logger().info("Limpiando base vectorial para garantizar una evaluación aislada...")
         self.reporter_logic.vector_manager.clear_all_data()
+        self.get_logger().info("Limpieza de base vectorial ejecutada")
         
         # El reportero en producción empieza en 0 y suma 1 al consolidar. Lo alineamos.
         self.reporter_logic.current_round = 0 
@@ -284,7 +310,7 @@ class SystemEvaluatorNode(BaseEvaluatorNode):
             raise InferencePipelineError(f"No se procesó ninguna imagen/vídeo del CSV en: {self.eval_folder_path}.")
         
         print() # Salto de línea para no pisar la barra de progreso
-        self.get_logger().info(f"Se han inyectado {processed_files} eventos en FAISS exitosamente.")
+        self.get_logger().debug(f"Se han inyectado {processed_files} eventos en FAISS exitosamente.")
 
 
     async def _consolidate_patrol_report(self):
@@ -311,23 +337,58 @@ class SystemEvaluatorNode(BaseEvaluatorNode):
 
         self.get_logger().info("Generando respuestas LLM para evaluación RAGAS...")
         
-        # Recuperamos la "foto en RAM" exacta que usó el LLM
+        # Recupera la telemetría masiva en RAM y la parsea a una lista de strings estructurada
         hospital_data_dict = json.loads(self.reporter_logic.latest_global_context)
-        
-        # Parseo limpio para no penalizar 'context_precision' con ruido JSON
         context_texts = []
         for zone, info in hospital_data_dict.items():
             if info.get("eventos_recientes"):
                 context_texts.append(f"ZONA: {zone}\n{json.dumps(info, ensure_ascii=False)}")
             else:
                 context_texts.append(f"ZONA: {zone}\nSin eventos detectados, despejada.")
-        global_context_clean_text = "\n\n".join(context_texts)
 
+        raw_global_context_str = "\n".join(context_texts)
+        context_to_use =  raw_global_context_str
+
+        if self.use_context_compressor:  
+            # Convertirla lista de strings crudos en objetos Document de LangChain para el Map-Reduce
+            docs_to_compress = [Document(page_content=text) for text in context_texts]
+            
+            self.get_logger().debug("Map-Reduce para comprimir el contexto destinado al LLM Juez...")
+            compressed_context = self.context_compressor.compress_documents(docs_to_compress)
+
+            context_to_use = compressed_context 
+
+        t_init_llm = time.time()
+
+        # Pasamos a RAGAS el contexto reducido en lugar del global_context crudo
         short_dict, summary_dict = self.ragas_evaluator.generate_answers(
             vector_manager=self.reporter_logic.vector_manager,
-            global_context_json=global_context_clean_text, 
-            pregenerated_summary=pregenerated_summary
+            global_context_json=context_to_use,  
+            pregenerated_summary=pregenerated_summary,
+            target=self.evaluation_target
         )
+
+        t_end_llm = time.time()
+
+        # Preservar respuestas previas a no regenerar intactas
+        if self.evaluation_target != "both":
+            saved_data = self.load_intermediate_answers() or {}
+            if self.evaluation_target == "summary_only" and not short_dict:
+                short_dict = saved_data.get("short_dict", {})
+                self.get_logger().debug("Manteniendo respuestas cortas intactas desde el JSON.")
+            elif self.evaluation_target == "short_only" and not summary_dict:
+                summary_dict = saved_data.get("summary_dict", {})
+                self.get_logger().debug("Manteniendo respuestas de resumen intactas desde el JSON.")
+        
+        self.current_metrics["tiempo_ragas_generacion_respuestas_segundos"] = round(t_end_llm - t_init_llm, 2)
+        
+        total_chars = 0
+        if short_dict:
+            total_chars += sum(len(str(ans)) for ans in short_dict.values())
+        if summary_dict:
+            total_chars += sum(len(str(ans)) for ans in summary_dict.values())
+            
+        self.current_metrics["caracteres_ragas_respuestas_totales"] = total_chars
         
         if self.evaluation_mode in ["generate_only", "full"]:
             self.save_intermediate_answers({"short_dict": short_dict, "summary_dict": summary_dict})

@@ -10,10 +10,15 @@ import seaborn as sns
 # Tema para los gráficos
 sns.set_theme(style="whitegrid", palette="pastel")
 
+# Resolución dinámica de la raíz del proyecto
+SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
+PROJECT_ROOT = os.path.abspath(os.path.join(SCRIPT_DIR, ".."))
+BASE_METRICS_DIR = os.path.join(PROJECT_ROOT, "docs", "autogenerate_metrics", "")
+
 # Rutas por defecto
-JSON_PATH = "/home/alberto/tfg/Reconocimiento-y-sintesis-visual-Tiago/autogenerate_metrics/comparativa_modelos.json"
-RAGAS_DIR = "/home/alberto/tfg/Reconocimiento-y-sintesis-visual-Tiago/autogenerate_metrics/"
-OUTPUT_DIR = "/home/alberto/tfg/Reconocimiento-y-sintesis-visual-Tiago/autogenerate_metrics/"
+JSON_PATH = os.path.join(BASE_METRICS_DIR, "comparativa_modelos.json")
+RAGAS_DIR = BASE_METRICS_DIR
+OUTPUT_DIR = BASE_METRICS_DIR
 
 FINAL_SCORE_WITH_FAITHFULNESS = False
 
@@ -222,7 +227,7 @@ def generate_performance_summary(df, output_dir):
     print("   RESUMEN DE MÉTRICAS DE RENDIMIENTO (Valores Medios)")
     print("="*60)
     
-    summary = df.groupby('modelo_reportero').mean(numeric_only=True).round(2)
+    summary = df.groupby('evaluacion_nombre').mean(numeric_only=True).round(2)
     
     columns_to_show = {
         'tiempo_total_segundos': 'Tiempo Total (s)',
@@ -249,14 +254,14 @@ def generate_ragas_summary(df, output_dir):
 
 def generate_performance_plots(df, output_dir):
     """Genera las gráficas de rendimientos """
-    unique_models = df['modelo_reportero'].unique() # para ordenarlos
+    unique_models = df['evaluacion_nombre'].unique() # para ordenarlos
     ordered_labels = sorted(unique_models, key=lambda x: (x.replace('_JSON', ''), x))
 
     rot, align = get_dynamic_rotation(ordered_labels)
     
     # Tiempos de procesamiento
     plt.figure(figsize=(10, 6))
-    summary_times = df.groupby('modelo_reportero')[['tiempo_percepcion_segundos', 'tiempo_llm_segundos']].mean()
+    summary_times = df.groupby('evaluacion_nombre')[['tiempo_percepcion_segundos', 'tiempo_llm_segundos']].mean()
     summary_times = summary_times.reindex(ordered_labels)
 
     summary_times.plot(kind='bar', stacked=True, color=['#4C72B0', '#55A868'], figsize=(10, 6))
@@ -271,7 +276,7 @@ def generate_performance_plots(df, output_dir):
 
     # Latencia
     plt.figure(figsize=(8, 5))
-    sns.barplot(data=df, x='modelo_reportero', y='segundos_por_imagen', order=ordered_labels, errorbar='sd', capsize=.1)
+    sns.barplot(data=df, x='evaluacion_nombre', y='segundos_por_imagen', order=ordered_labels, errorbar='sd', capsize=.1)
     plt.title("Latencia del Modelo Visual", fontsize=14, pad=15)
     plt.xlabel("Modelo Utilizado", fontsize=12)
     plt.ylabel("Segundos por Imagen procesada", fontsize=12)
@@ -282,7 +287,7 @@ def generate_performance_plots(df, output_dir):
 
     # Análisis de verbosidad
     plt.figure(figsize=(10, 6))
-    summary_chars = df.groupby('modelo_reportero')[['caracteres_contexto_visual', 'caracteres_informe_final']].mean()
+    summary_chars = df.groupby('evaluacion_nombre')[['caracteres_contexto_visual', 'caracteres_informe_final']].mean()
     summary_chars = summary_chars.reindex(ordered_labels)
     summary_chars.plot(kind='bar', width=0.7, color=['#C44E52', '#8172B3'], figsize=(10, 6))
     plt.title("Análisis de Verbosidad (Texto procesado)", fontsize=14, pad=15)
@@ -296,8 +301,8 @@ def generate_performance_plots(df, output_dir):
 
     # Estabilidad (boxplot)
     plt.figure(figsize=(8, 6))
-    sns.boxplot(data=df, x='modelo_reportero', y='tiempo_total_segundos', order=ordered_labels, palette="Set2")
-    sns.stripplot(data=df, x='modelo_reportero', y='tiempo_total_segundos', color=".3", size=6, alpha=0.6)
+    sns.boxplot(data=df, x='evaluacion_nombre', y='tiempo_total_segundos', order=ordered_labels, palette="Set2")
+    sns.stripplot(data=df, x='evaluacion_nombre', y='tiempo_total_segundos', color=".3", size=6, alpha=0.6)
     plt.title("Estabilidad del Tiempo de Ejecución (Boxplot)", fontsize=14, pad=15)
     plt.xlabel("Modelo Utilizado", fontsize=12)
     plt.ylabel("Tiempo Total (Segundos)", fontsize=12)

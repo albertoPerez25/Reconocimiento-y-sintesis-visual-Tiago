@@ -1,1 +1,0 @@
-/home/alberto/tfg/Reconocimiento-y-sintesis-visual-Tiago/workspace/build/ruta_hospital/launch_files/keep_temp_video_hospital_rute.launch.py

@@ -12,19 +12,36 @@ from ragas.metrics import (
     context_precision,
     context_recall,
     context_entity_recall,
-    _noise_sensitivity
+    answer_similarity,
+    _noise_sensitivity,
+    AspectCritic
 )
 from langchain_ollama import ChatOllama, OllamaEmbeddings
 from ragas.run_config import RunConfig
 from ruta_hospital.utils.commons.api_utils import call_ollama_api 
 from ruta_hospital.utils.shared import vector_manager
 
+# Metricas custom que no usan LLMs
+from ruta_hospital.evaluation.utils.custom_metrics import RougeScoreMetric, HHEMFidelity, BERTScoreMetric
+rouge_metric = RougeScoreMetric()
+hhem_metric = HHEMFidelity()
+bert_metric = BERTScoreMetric()
+
 class OllamaParams:
-    def __init__(self, ollama_url = "http://localhost:11434", evaluator_llm_model = "llama3", evaluator_embed_model = "nomic-embed-text"):
+    def __init__(self, ollama_url = "http://localhost:11434", 
+                 evaluator_llm_model = "llama3", 
+                 evaluator_embed_model = "nomic-embed-text", 
+                 api_key=None,
+                 provider="local"):
+        
         self.ollama_url=ollama_url
         self.evaluator_llm_model = evaluator_llm_model
         self.evaluator_embed_model = evaluator_embed_model
-        self.reporter_llm_model = None # TODO
+        #self.reporter_llm_model = None 
+
+        # Preparado para APIs cloud # TODO
+        self.api_key = api_key
+        self.provider = provider
 
 class EvaluatorRunParams:
     def __init__(self, system_workers = 4, system_timeout = 420, perceptor_workers = 4, perceptors_timeout = 420, max_words = 300, max_stored_rounds = 5):
@@ -36,9 +53,10 @@ class EvaluatorRunParams:
         self.max_stored_rounds = max_stored_rounds
 
 class EvalContext:
-    def __init__(self, global_json, pregenerated_summary=None):
+    def __init__(self, global_json, pregenerated_summary=None, reduced_context=None):
         self.global_json = global_json
         self.pregenerated_summary = pregenerated_summary
+        self.reduced_context = reduced_context
 
 class RagasEvaluator:
     def __init__(self, quest_path, metrics_dir, ollama_params, run_params, logger = None):
@@ -52,10 +70,12 @@ class RagasEvaluator:
         self.evaluator_llm = ChatOllama(model=ollama_params.evaluator_llm_model, 
                                         base_url=ollama_params.ollama_url, 
                                         temperature=0.0, # Evita que Llama-3 añada texto extra al JSON
-                                        format="json")
+                                        num_ctx=4096, #8192 # aumentado del default (2048) para intentar evitar errores summary (contexto grande)
+                                        seed=42 
+                                        )#format="json" quitado para intentar evitar errores en el summary
         self.evaluator_embeddings = OllamaEmbeddings(model=ollama_params.evaluator_embed_model, base_url=ollama_params.ollama_url)
 
-    def evaluate_system(self, short_dict, summary_dict, config_name=""):
+    def evaluate_system(self, short_dict, summary_dict, config_name="", target='both'):
         '''Genera respuestas y ejecuta Ragas'''
         # El nombre se inyecta justo antes de evaluar garantizando que esté actualizado
         for d in [short_dict, summary_dict]: 
@@ -74,31 +94,40 @@ class RagasEvaluator:
             #_noise_sensitivity # TODO: Comprobar si aumenta demasiado el tiempo de evaluación
         ]
         
-        df_short = self.run_evaluation_subset(
-            data_dict=short_dict,
-            metrics=short_metrics,
-            eval_type_name='short',
-            config_name=config_name
-        )
+        df_short = None
+        if target in ['both', 'short_only']:
+            df_short = self.run_evaluation_subset(
+                data_dict=short_dict,
+                metrics=short_metrics,
+                eval_type_name='short',
+                config_name=config_name
+            )
         if df_short is not None:
             results_dfs.append(df_short)
 
         # Evaluar resumen
-        df_summary = self.run_evaluation_subset(
-            data_dict=summary_dict,
-            metrics=[answer_correctness, faithfulness, summarization_score],
-            eval_type_name='summary',
-            config_name=config_name,
-            column_map={
-                "question": "question",
-                "answer": "answer",
-                "contexts": "contexts",
-                "ground_truth": "ground_truth",
-                "reference_contexts": "reference_contexts"
-            }
-        )
-        if df_summary is not None:
-            results_dfs.append(df_summary)
+        df_summary = None
+        if target in ['both', 'summary_only']: 
+            
+            summary_metrics = [
+                answer_similarity,    # Ragas Nativo (Semántica por Embeddings)
+                rouge_metric,         # Cobertura algorítmica (Sustituto de context_recall)
+                hhem_metric,           # Fidelidad NLI (Sustituto de los Critics de Ragas)
+                bert_metric,
+                #context_recall, 
+                #context_entity_recall, 
+                #faithfulness          # Funciona a veces 
+                #summarization_score # da timeout haga lo que haga
+            ]
+
+            df_summary = self.run_evaluation_subset(
+                data_dict=summary_dict,
+                metrics=summary_metrics, # faithfulness y answer_correctness no funciona, ni su reemplazo aspect critic
+                eval_type_name='summary',
+                config_name=config_name
+            )
+            if df_summary is not None and not df_summary.empty:
+                results_dfs.append(df_summary)
 
         if results_dfs:
             df_final = pd.concat(results_dfs, ignore_index=True)
@@ -136,7 +165,7 @@ class RagasEvaluator:
         df['evaluation_name'] = config_name if config_name else eval_type_name
         return df
 
-    def generate_answers(self, vector_manager, global_context_json, pregenerated_summary=None, reduced_context=None):
+    def generate_answers(self, vector_manager, global_context_json, pregenerated_summary=None, reduced_context=None, target='both'):
         '''Usa el LLM para responder a las preguntas basándose solo en la patrulla'''
         with open(self.quest_path, 'r', encoding='utf-8') as f:
             questions_data = json.load(f)
@@ -150,7 +179,8 @@ class RagasEvaluator:
 
         eval_context = EvalContext(
             global_json=global_context_json,
-            pregenerated_summary=pregenerated_summary
+            pregenerated_summary=pregenerated_summary,
+            reduced_context=reduced_context # Pasa el parámetro que recibe la función
         )
 
         rag_chain = vector_manager.get_conversational_chain()
@@ -162,9 +192,9 @@ class RagasEvaluator:
                 continue
             question_type = item.get("type", "short") # asume short para retrocompatibilidad con archivos legacy
             
-            if question_type == "summary":
+            if question_type == "summary" and target in ['both', 'summary_only']:
                 self.process_summary_question(item, eval_context, summary_eval_data)
-            else:
+            elif question_type == "short" and target in ['both', 'short_only']:
                 self.process_short_question(item, short_eval_data, rag_chain)
                 
         return short_eval_data, summary_eval_data
@@ -174,29 +204,27 @@ class RagasEvaluator:
         question = item["question"]
         ground_truth = item["ground_truth"]
         
+        llm_answer, default_question_for_ragas = self.generate_summary_answer(
+            eval_context.global_json, eval_context.pregenerated_summary
+        )
+
+        # si hay pregunta en el JSON se usa esa
         if not question or str(question).strip() == "":
-            llm_answer, question_for_ragas = self.generate_summary_answer(
-                eval_context.global_json, eval_context.pregenerated_summary
-            )
+            question_for_ragas = default_question_for_ragas
         else:
-            llm_answer, question_for_ragas = self.generate_short_answer(eval_context.global_json, question)
-
-        # Marcado como riesgo en revisión hecha con IA. TODO: Comprobar
-        #context_to_use = [eval_context.pregenerated_summary] if eval_context.pregenerated_summary else [eval_context.global_json] 
-
-        context_to_use = [eval_context.global_json]
+            question_for_ragas = str(question)
 
         self.add_record_to_dataset(summary_eval_data, {
             "question": question_for_ragas,
             "answer": llm_answer.strip(),
             "ground_truth": ground_truth,
-            "contexts": context_to_use,
-            "reference_contexts": context_to_use
+            "contexts": [eval_context.global_json], 
+            "reference_contexts": [eval_context.global_json] 
         })
         
         if self.logger:
             self.logger.debug(f"Resumen generado: {llm_answer.strip()}")
-            self.logger.debug(f"Contexto pasado a RAGAS: {context_to_use}")
+            self.logger.debug("Contextos separados empaquetados para RAGAS.")
 
     def process_short_question(self, item, short_eval_data, rag_chain):
         '''Responde y empaqueta preguntas cortas usando RAG de LangChain'''
@@ -255,10 +283,10 @@ class RagasEvaluator:
         return llm_answer, question_for_ragas
 
     def add_record_to_dataset(self, dataset, record):
-        '''Añade una nueva fila de datos al diccionario columnar de RAGAS'''
+        '''Añade una nueva fila de datos al diccionario de RAGAS'''
         for key, value in record.items():
-            if key in dataset:
-                dataset[key].append(value)
+            # setdefault crea la lista vacía si la clave no existe, y luego hace el append
+            dataset.setdefault(key, []).append(value)
     
     def evaluate_perception(self, eval_dict, config_name="", model_name="perception_model"):
         '''Genera respuestas imagen por imagen y ejecuta Ragas para el perceptor a partir de un diccionario'''
