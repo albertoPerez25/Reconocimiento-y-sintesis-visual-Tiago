@@ -1,1 +1,0 @@
-/home/alberto/tfg/Reconocimiento-y-sintesis-visual-Tiago/workspace/build/ruta_hospital/launch_files/hospital_slam.launch.py

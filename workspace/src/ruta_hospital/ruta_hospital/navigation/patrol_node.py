@@ -359,9 +359,3 @@ def main(args=None):
 
 if __name__ == '__main__':
     main()
-
-# TODO LIST
-# Testear hacer varias vueltas -> hecho
-# Rehacer datasets (grande imagen y video) -> hecho
-# Testear imagen, secuencia y video -> falta imagen y secuencia ig, testar con evaluador, más rapido
-# memoria

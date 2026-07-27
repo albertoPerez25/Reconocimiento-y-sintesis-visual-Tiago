@@ -1,7 +1,7 @@
 import os
 from ament_index_python.packages import get_package_share_directory
 from launch import LaunchDescription
-from launch.actions import IncludeLaunchDescription, TimerAction
+from launch.actions import IncludeLaunchDescription, TimerAction, AppendEnvironmentVariable
 from launch.launch_description_sources import PythonLaunchDescriptionSource
 from launch_ros.actions import Node
 from launch.actions import IncludeLaunchDescription, TimerAction, ExecuteProcess
@@ -15,6 +15,18 @@ def generate_launch_description():
     nav2_params_path = os.path.join(pkg_dir, 'config', 'nav2_params.yaml') 
     ekf_params_path = os.path.join(pkg_dir, 'config', 'ekf.yaml')
     rviz_config_path = os.path.join(pkg_dir, 'rviz_configs', 'slam_config.rviz')
+
+
+    # Configuración de rutas para modelos de Gazebo
+    home_dir = os.path.expanduser('~')
+    workspace_path = os.path.join(home_dir, 'tfg/Reconocimiento-y-sintesis-visual-Tiago/workspace')
+    hospital_models = os.path.join(workspace_path, 'src/aws-robomaker-hospital-world/models')
+    hospital_fuel = os.path.join(workspace_path, 'src/aws-robomaker-hospital-world/fuel_models')
+    
+    set_model_path = AppendEnvironmentVariable(
+        'GAZEBO_MODEL_PATH',
+        f"{hospital_models}:{hospital_fuel}:{os.path.expanduser('~/.gazebo/models')}"
+    )
 
     # Gazebo sin brazo
     tiago_gazebo_dir = get_package_share_directory('tiago_gazebo')
@@ -122,6 +134,7 @@ def generate_launch_description():
 
     # Descripcion del Launch
     ld = LaunchDescription()
+    ld.add_action(set_model_path)
     ld.add_action(gazebo_cmd)
     #ld.add_action(headless_enforcer)
     ld.add_action(relay_cmd)

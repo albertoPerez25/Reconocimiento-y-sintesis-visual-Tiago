@@ -52,7 +52,7 @@ La arquitectura de software se divide en subsistemas asíncronos distribuidos me
 
 ## Requisitos Previos
 * **Sistema Operativo**: Ubuntu 22.04 LTS.
-* **Middleware**: ROS 2 (Humble).
+* **Middleware**: [ROS 2 (Humble)](https://docs.ros.org/en/humble/index.html).
 * **Simulador**: Gazebo y AWS RoboMaker Hospital World.
 * **Inteligencia Artificial y Análisis**: Ollama (API local activa), FAISS, LangChain, Ultralytics (YOLOv8/11), Pandas, Seaborn.
 * **Lenguaje**: Python 3.10+.
@@ -163,6 +163,52 @@ Configurar los recursos del mundo simulado:
    export HOSPITAL_FUEL=$(pwd)/src/aws-robomaker-hospital-world/fuel_models
    export GAZEBO_MODEL_PATH=$GAZEBO_MODEL_PATH:$HOSPITAL_MODELS:$HOSPITAL_FUEL
    ```
+
+### Solución de Problemas y Depuración de Compilación (`symlink-install`)
+
+Al utilizar `colcon build` con la opción `--symlink-install` durante la compilación se crean enlaces simbólicos en la carpeta `install/` apuntando directamente a los archivos fuente en `src/`. Esto es útil durante el desarrollo, ya que cualquier cambio en scripts de Python o configuraciones `.yaml`/`.json` surtirá efecto inmediatamente sin tener que volver a ejecutar `colcon build`.
+
+**Atención al mover o renombrar archivos:**
+Dado que `--symlink-install` enlaza rutas específicas de `setup.py`, si se reestructuran las carpetas, los enlaces se romperán, resultando en errores al intentar lanzar los nodos. Para solucionar esto de raíz, se limpia la caché y se regenera el espacio de trabajo:
+
+```bash
+# Navegar al directorio de trabajo
+cd ~/tfg/Reconocimiento-y-sintesis-visual-Tiago/workspace
+
+# Limpiar las carpetas de compilación
+rm -rf build/ install/ log/
+
+# Recompilar y recargar el entorno
+colcon build --symlink-install --packages-select ruta_hospital
+source install/setup.bash
+
+```
+
+### Modelos de Actores Humanos (Mixamo)
+
+En la simulación se han usado modelos de [Adobe Mixamo](https://www.mixamo.com/#/), pero debido a restricciones de redistribución en su licencia, los modelos 3D en bruto y las texturas de algunos humanos virtuales no se incluyen en este repositorio.
+
+Para que el entorno `hospital.world` cargue sin errores, es necesario descargar modelos y colocarlos en el directorio local de modelos de Gazebo (por defecto `~/.gazebo/models/`). El sistema espera encontrar las siguientes carpetas:
+
+* `actor_doctor` (Animación requerida: `running.dae`)
+* `actor_Joe` (Animación requerida: `walking.dae`)
+* `actor_Kate` (Animación requerida: `walking.dae`)
+* `actor_remy` (Animación requerida: `walking.dae`)
+* `actor_Sophie` (Animación requerida: `walking.dae`)
+* `actor_Suzie` (Animación requerida: `walking.dae`)
+* `actor_theboss` (Animación requerida: `walking.dae`)
+
+**Estructura de directorios esperada:**
+Cada uno de los actores debe mantener la estructura estándar de modelos de Gazebo. Por ejemplo, para el actor Kate:
+
+```text
+~/.gazebo/models/actor_Kate/
+├── model.config
+├── walking.dae
+└── textures/
+    ├── Ch21_1001_Diffuse.png
+    └── ... (resto de texturas)
+```
 
 ## Proyectos Relacionados
 

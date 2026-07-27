@@ -13,8 +13,8 @@ SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 PROJECT_ROOT = os.path.abspath(os.path.join(SCRIPT_DIR, ".."))
 
 # CONSTANTES DE CONFIGURACIÓN 
-DIAGRAMS_FOLDER = os.path.join(PROJECT_ROOT, "docs", "diagrams", "s9", "mermaid", "memoria", "ch4") 
-OUTPUT_FOLDER = os.path.join(PROJECT_ROOT, "docs", "diagrams", "s9", "mermaid", "output")             
+DIAGRAMS_FOLDER = os.path.join(PROJECT_ROOT, "docs", "diagrams_history", "s9", "mermaid", "memoria", "ch4") 
+OUTPUT_FOLDER = os.path.join(PROJECT_ROOT, "docs", "diagrams_history", "s9", "mermaid", "output")             
 DEFAULT_FORMAT = "pdf"                    
 CHROME_INSTALLATION = shutil.which("google-chrome-stable") or "/usr/bin/google-chrome-stable"
 SCALE_FACTOR = 12                         # DEPRECATED: Mantenido por compatibilidad, aunque no se pase al cmd
