@@ -1,0 +1,31 @@
+# Visión Artificial y Percepción
+opencv-python>=4.8.0
+numpy>=1.24.0
+ultralytics>=8.2.0
+
+# LLM, Orquestación y RAG 
+langchain>=0.2.0
+langchain-community
+langchain-ollama
+langchain-text-splitters
+faiss-cpu>=1.7.4
+lark
+sentence-transformers
+requests
+
+# Evaluación del Sistema (RAGAS y Métricas Custom)
+ragas
+pandas
+datasets
+torch
+transformers
+rouge-score
+bert-score
+nltk
+
+# Interfaz Web 
+streamlit>=1.35.0
+
+# Visualización y Análisis de Datos (Pipeline de Experimentos)
+matplotlib>=3.7.0
+seaborn>=0.12.0

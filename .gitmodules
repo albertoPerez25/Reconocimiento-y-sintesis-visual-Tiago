@@ -1,0 +1,51 @@
+[submodule "workspace/src/aws-robomaker-hospital-world"]
+	path = workspace/src/aws-robomaker-hospital-world
+	url = https://github.com/albertoPerez25/aws-robomaker-hospital-world-with-human-activity
+[submodule "workspace/src/pal_gazebo_worlds"]
+	path = workspace/src/pal_gazebo_worlds
+	url = https://github.com/albertoPerez25/pal-gazebo-worlds-fork
+[submodule "workspace/src/pmb2_robot"]
+	path = workspace/src/pmb2_robot
+	url = https://github.com/albertoPerez25/pmb2_robot-fork
+[submodule "workspace/src/launch_pal"]
+	path = workspace/src/launch_pal
+	url = https://github.com/pal-robotics/launch_pal.git
+[submodule "workspace/src/m-explore-ros2"]
+	path = workspace/src/m-explore-ros2
+	url = https://github.com/robo-friends/m-explore-ros2.git
+[submodule "workspace/src/pal_gripper"]
+	path = workspace/src/pal_gripper
+	url = https://github.com/pal-robotics/pal_gripper.git
+[submodule "workspace/src/pal_hey5"]
+	path = workspace/src/pal_hey5
+	url = https://github.com/pal-robotics/pal_hey5.git
+[submodule "workspace/src/pal_navigation_cfg_public"]
+	path = workspace/src/pal_navigation_cfg_public
+	url = https://github.com/pal-robotics/pal_navigation_cfg_public.git
+[submodule "workspace/src/pal_robotiq_gripper"]
+	path = workspace/src/pal_robotiq_gripper
+	url = https://github.com/pal-robotics/pal_robotiq_gripper.git
+[submodule "workspace/src/pal_urdf_utils"]
+	path = workspace/src/pal_urdf_utils
+	url = https://github.com/pal-robotics/pal_urdf_utils.git
+[submodule "workspace/src/play_motion2"]
+	path = workspace/src/play_motion2
+	url = https://github.com/pal-robotics/play_motion2.git
+[submodule "workspace/src/pmb2_navigation"]
+	path = workspace/src/pmb2_navigation
+	url = https://github.com/pal-robotics/pmb2_navigation.git
+[submodule "workspace/src/tiago_moveit_config"]
+	path = workspace/src/tiago_moveit_config
+	url = https://github.com/pal-robotics/tiago_moveit_config.git
+[submodule "workspace/src/tiago_navigation"]
+	path = workspace/src/tiago_navigation
+	url = https://github.com/pal-robotics/tiago_navigation.git
+[submodule "workspace/src/tiago_robot"]
+	path = workspace/src/tiago_robot
+	url = https://github.com/pal-robotics/tiago_robot.git
+[submodule "workspace/src/tiago_simulation"]
+	path = workspace/src/tiago_simulation
+	url = https://github.com/pal-robotics/tiago_simulation.git
+[submodule "workspace/src/urdf_test"]
+	path = workspace/src/urdf_test
+	url = https://github.com/pal-robotics/urdf_test.git

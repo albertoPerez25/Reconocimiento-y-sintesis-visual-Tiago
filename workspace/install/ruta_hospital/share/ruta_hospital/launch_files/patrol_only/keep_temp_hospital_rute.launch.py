@@ -1,0 +1,1 @@
+/home/alberto/tfg/Reconocimiento-y-sintesis-visual-Tiago/workspace/build/ruta_hospital/launch_files/patrol_only/keep_temp_hospital_rute.launch.py

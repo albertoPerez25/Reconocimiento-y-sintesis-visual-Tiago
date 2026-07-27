@@ -1,0 +1,1 @@
+/home/alberto/tfg/Reconocimiento-y-sintesis-visual-Tiago/workspace/build/hospital_interfaces/rosidl_typesupport_introspection_cpp/hospital_interfaces/srv/detail/analyze_activity__rosidl_typesupport_introspection_cpp.hpp

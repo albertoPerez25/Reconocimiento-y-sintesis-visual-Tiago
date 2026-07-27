@@ -1,0 +1,132 @@
+[
+  {
+    "question": "",
+    "ground_truth": "El presente resumen global consolida la actividad y seguridad del hospital cubriendo todas las zonas patrulladas. En el ámbito de emergencias, se registra una alerta crítica en la Habitación Compartida 2 debido a una trabajadora tirada en el suelo que requiere asistencia inmediata. Asimismo, se detecta en el pasillo a una persona corriendo, lo que genera cierto riesgo. En el pasillo también hay una empleada que traslada a un paciente en silla de ruedas y otra persona andando. Por otro lado, la actividad clínica incluye una intervención quirúrgica activa en el Quirófano 2 con tres profesionales atendiendo a un paciente en camilla, mientras que las habitaciones reflejan un estado de ocupación controlado, con un paciente descansando en la Habitación Compartida 1, una mujer sentada en la cama de la Habitación Individual 4 y tareas de supervisión de pie en las Habitaciones Compartidas 4 y 5. En las áreas comunes, la Recepción registra alta ocupación con una empleada en el mostrador frente a dos visitantes de pie y cinco personas sentadas, entre ellas adultos con móviles y un niño leyendo, a la vez que la Sala Común muestra a dos personas de pie usando sus teléfonos y la Oficina 2 cuenta con una empleada inactiva en su escritorio. El resto de instalaciones, incluyendo las Habitaciones Individuales 1, 2 y 3, la Habitación Compartida 3, la Oficina 1, Baños 1 y 2, y las Escaleras 1 y 2, se encuentran completamente vacías y despejadas.",
+    "type": "summary"
+  },
+  {
+    "question": "¿El pasillo está completamente vacío o hay personas transitando por él?",
+    "ground_truth": "Hay varias personas, una caminando, otra corriendo y una trabajadora del hospital llevando a un paciente en silla de ruedas"
+  },
+  {
+    "question": "En la Habitación Compartida 4, ¿las personas detectadas están acostadas en las camas o hay alguien de pie/sentado?",
+    "ground_truth": "Hay dos pacientes en las camas y una trabajadora de pie al lado de uno de los pacientes"
+  },
+  {
+    "question": "¿Cuántas personas hay actualmente en la Sala Común?",
+    "ground_truth": "En la sala común hay dos personas de pie con el móvil, frente a frente"
+  },
+  {
+    "question": "En la zona de Recepción, ¿qué actividades se están haciendo?",
+    "ground_truth": "Hay cuatro personas de pie esperando o hablando, un hombre con el móvil, una mujer con un bolso y un hombre y mujer dando vueltas. En las sillas se ven a varias sentadas, algunas con el móvil y un niño leyendo un libro"
+  },
+  {
+    "question": "En la zona de Recepción, ¿hay algún trabajador tras el mostrador?",
+    "ground_truth": "Sí, hay una trabajadora de pie tras el mostrador"
+  },
+  {
+    "type": "short",
+    "question": "En la zona de Recepción, ¿hay alguien frente al mostrador?",
+    "ground_truth": "Sí, hay dos personas de pie frente al mostrador, un hombre con el móvil y una mujer con un bolso"
+  },
+  {
+    "type": "short",
+    "question": "¿Cuántas personas en total se detectan sentadas en las filas de sillas de espera de la Recepción?",
+    "ground_truth": "Hay cinco personas sentadas"
+  },
+  {
+    "type": "short",
+    "question": "¿Hay algún niño en las filas de sillas de espera de la Recepción?",
+    "ground_truth": "Sí, hay un niño leyendo un libro"
+  },
+  {
+    "type": "short",
+    "question": "¿Hay alguna persona en la zona de Escaleras 1 que esté obstaculizando el paso o molestando?",
+    "ground_truth": "No hay nadie en Escaleras 1"
+  },
+  {
+    "type": "short",
+    "question": "¿Se ha detectado la presencia de alguna persona obstaculizando el paso o sentada en los peldaños de las Escaleras 2?",
+    "ground_truth": "No hay nadie en las escaleras 2."
+  },
+  {
+    "type": "short",
+    "question": "¿Se observa a alguien manipulando objetos, estanterías o cajas dentro del Almacén 1?",
+    "ground_truth": "No hay nadie en el Almacén 1"
+  },
+  {
+    "type": "short",
+    "question": "¿Se observa a personal médico o de mantenimiento transportando suministros dentro del Almacén 2?",
+    "ground_truth": "No se observa a nadie en el Almacén 2"
+  },
+  {
+    "type": "short",
+    "question": "¿Hay algún médico, enfermera o paciente presente en la Habitación Individual 1?",
+    "ground_truth": "No hay nadie, la habitación individual 1 se encuentra completamente vacía y despejada"
+  },
+  {
+    "type": "short",
+    "question": "¿Se encuentra ocupada con algún paciente o completamente vacía la Habitación Individual 2?",
+    "ground_truth": "No hay nadie en la Habitación Individual 2, está vacía"
+  },
+  {
+    "type": "short",
+    "question": "¿Qué actividad o personal de enfermería se detecta dentro de la Habitación Individual 3?",
+    "ground_truth": "No hay actividad o personal de enfermería presentes en la Habitación Individual 3"
+  },
+  {
+    "type": "short",
+    "question": "¿Qué postura o actividad tiene la paciente que ocupa la cama de la Habitación Individual 4?",
+    "ground_truth": "Es una mujer y se encuentra sentada en la cama"
+  },
+  {
+    "type": "short",
+    "question": "¿Qué hace la persona que se encuentra dentro de la Habitación Compartida 1?",
+    "ground_truth": "Se encuentra tumbada en la cama"
+  },
+  {
+    "type": "short",
+    "question": "¿Se encuentra algún paciente descansando en las camas de la Habitación Compartida 2 o qué situación anómala se observa en su interior?",
+    "ground_truth": "No hay nadie en las camas, pero se detecta una emergencia crítica con una trabajadora tirada en el suelo que requiere asistencia inmediata"
+  },
+  {
+    "type": "short",
+    "question": "¿Se observa algún paciente descansando o trabajador del hospital dentro de la Habitación Compartida 3?",
+    "ground_truth": "No hay nadie en la Habitación Compartida 3"
+  },
+  {
+    "type": "short",
+    "question": "En la Habitación Compartida 5, ¿hay algún trabajador (persona de pie) acompañando a los pacientes acostados?",
+    "ground_truth": "Sí, hay un trabajador de pie cerca a una cama con un paciente"
+  },
+  {
+    "type": "short",
+    "question": "¿Hay personal administrativo trabajando o realizando alguna tarea en la Oficina 1?",
+    "ground_truth": "No hay personal presente en la Oficina 1"
+  },
+  {
+    "type": "short",
+    "question": "Con respecto a la Oficina 2, ¿la empleada detectada se encuentra activa y de pie o está sentada en su escritorio sin realizar tareas?",
+    "ground_truth": "Se encuentra sentada detrás del escritorio y no parece estar realizando ninguna actividad"
+  },
+  {
+    "type": "short",
+    "question": "La zona designada como Baño 1, ¿se encuentra actualmente ocupada o vacía?",
+    "ground_truth": "No, la zona se encuentra completamente vacía y despejada"
+  },
+  {
+    "type": "short",
+    "question": "¿Se encuentra vacío o con personas transitando el Baño 2?",
+    "ground_truth": "Se encuentra completamente vacío y despejado"
+  },
+  {
+    "type": "short",
+    "question": "¿Se detecta alguna persona presente o actividad quirúrgica en el interior del Quirófano 1?",
+    "ground_truth": "El Quirófano 1 se encuentra vacío"
+  },
+  {
+    "type": "short",
+    "question": "¿Cuántos trabajadores del hospital se encuentran participando simultáneamente en la intervención dentro del Quirófano 2?",
+    "ground_truth": "Hay tres trabajadores del hospital realizando la intervención"
+  }
+]

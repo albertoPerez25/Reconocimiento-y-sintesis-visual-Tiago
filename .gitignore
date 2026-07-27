@@ -49,3 +49,27 @@ qtcreator-*
 
 # Catkin custom files
 CATKIN_IGNORE
+#workspace/src/pal_gazebo_worlds
+
+workspace/log/*
+workspace/datasets/hospital_photos/*
+workspace/datasets/hospital_photos__/*
+workspace/datasets/hospital_photos_/*
+workspace/datasets/hospital_photos*
+
+datasets/hospital_photos/*
+datasets/hospital_photos__/*
+datasets/hospital_photos_/*
+datasets/hospital_photos*
+
+datasets/*
+
+YOLO_tracking_debug/*
+YOLO_tracking_debug/tracking_*.jpg
+
+docs/autogenerate_metrics/*
+docs/diagrams_history/*
+docs/diagrams_history/*.png/*
+docs/diagrams_history/*.svg/*
+docs/diagrams_history/*.jpg/*
+docs/metrics_history_data/*
